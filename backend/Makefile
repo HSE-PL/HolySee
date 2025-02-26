@@ -1,7 +1,7 @@
 CC := clang++
-CCFLAGS := -Wall -fsanitize=leak -fsanitize=address
+CCFLAGS := -std=c++23 -Wall -fsanitize=leak -fsanitize=address
 
-SRC := main.cpp json2ir.cpp
+SRC := main.cpp json2ir.cpp ir.cpp
 
 EXE := ./build/exec
 

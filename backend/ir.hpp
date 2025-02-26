@@ -3,6 +3,7 @@
 #include "json.hpp"
 #include <ostream>
 #include <string>
+#include <variant>
 #include <vector>
 
 using namespace std;
@@ -14,22 +15,27 @@ enum class IType {
   Print,
 };
 
-enum class VType { Int };
+enum class VType { Int, Unit, Ref };
 
 VType string2type(string type);
 IType string2instr(string instr);
 
-struct Value {
+struct Arg {
   VType type;
+  Arg(json &value);
   string name;
-  Value(json &value);
 };
 
-class Instr {
+struct Value {
+  VType type;
+  variant<string, int> val;
+};
+
+struct Instr {
   IType op;
   VType type;
-  string dest;
-  vector<string> args;
+  optional<string> dest;
+  vector<Value> args;
 
 public:
   Instr(json &instr);
@@ -37,7 +43,7 @@ public:
 
 class Function {
   string name;
-  vector<Value> args;
+  vector<Arg> args;
   VType type;
   vector<Instr> instrs;
 
