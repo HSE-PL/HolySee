@@ -9,15 +9,14 @@ using namespace std;
 using namespace nlohmann;
 
 unordered_map<VType, string> t2s = {
-    {VType::Int, "int"},
+    {VType::Int, "int"}, {VType::Unit, "unit"}, {VType::Ref, "var"},
     //
 };
 
 unordered_map<IType, string> i2s = {
-    {IType::Const, "const"},
-    {IType::Add, "add"},
-    {IType::Print, "print"},
-};
+    {IType::Const, "const"}, {IType::Add, "add"},   {IType::Print, "print"},
+    {IType::Ret, "ret"},     {IType::Call, "call"}, {IType::Br, "br"},
+    {IType::Jmp, "j"}};
 
 unordered_map<string, VType> s2t = {
     {"int", VType::Int},
@@ -25,21 +24,21 @@ unordered_map<string, VType> s2t = {
 };
 
 unordered_map<string, IType> s2i = {
-    {"const", IType::Const},
-    {"add", IType::Add},
-    {"print", IType::Print},
+    {"const", IType::Const}, {"add", IType::Add},   {"print", IType::Print},
+    {"ret", IType::Ret},     {"call", IType::Call}, {"br", IType::Br},
+    {"jmp", IType::Jmp},
 };
 
 VType string2type(string type) {
   if (!s2t.contains(type)) {
-    throw NotImplemented();
+    throw NotImplemented("such type doesn't exist" + type);
   }
   return s2t.at(type);
 }
 
 IType string2instr(string instr) {
   if (!s2i.contains(instr)) {
-    throw NotImplemented();
+    throw NotImplemented("such instruction doesn't exist" + instr);
   }
   return s2i.at(instr);
 }
@@ -61,16 +60,32 @@ Instr::Instr(json &instr) {
   } else {
     dest = nullopt;
   }
-  // TODO: make this work
-  /*if (instr.contains("value")) {*/
-  /*  args.push_back(instr["value"]);*/
-  /*} else if (instr.contains("args")) {*/
-  /*  for (auto it : instr["args"]) {*/
-  /*    args.push_back(it);*/
-  /*  }*/
-  /*} else {*/
-  /*  throw NotImplemented();*/
-  /*}*/
+  assert(instr.contains("funcs") || instr.contains("labels") ||
+         instr.contains("value") || instr.contains("args"));
+  if (instr.contains("funcs")) {
+    args.push_back(Value(VType::Func, (string)(instr["funcs"][0])));
+  }
+  if (instr.contains("labels")) {
+    switch (op) {
+    case IType::Br:
+      args.push_back(Value(VType::Label, (string)(instr["labels"][0])));
+      args.push_back(Value(VType::Label, (string)(instr["labels"][1])));
+      break;
+    case IType::Jmp:
+      args.push_back(Value(VType::Label, (string)(instr["labels"][0])));
+    default:
+      throw NotImplemented(
+          "somehow mixed up and labels are in wrong instruction" + i2s[op]);
+    }
+    args.push_back(Value(VType::Label, (string)(instr["labels"][0])));
+  }
+  if (instr.contains("value")) {
+    args.push_back(Value(VType::Int, (int)instr["value"]));
+  } else if (instr.contains("args")) {
+    for (auto it : instr["args"]) {
+      args.push_back(Value(VType::Ref, (string)it));
+    }
+  }
 }
 
 Function::Function(json &fn) {
@@ -92,17 +107,26 @@ ostream &operator<<(ostream &stream, const Function &fn) {
   }
   stream << ") {" << endl;
   for (auto &it : fn.instrs) {
-    stream << i2s[it.op] << " : " << t2s[it.type] << " ";
     if (it.dest.has_value()) {
       stream << *it.dest;
+      stream << ": " << t2s[it.type];
+      stream << " = ";
+    } else {
+      assert(it.type == VType::Unit);
+      stream << "_: unit = ";
     }
+    stream << i2s[it.op];
     for (auto &iterargs : it.args) {
       switch (iterargs.val.index()) {
       case 0:
-        stream << " " << get<0>(iterargs.val);
+        stream << " " << get<0>(iterargs.val).first;
+        stream << " " << get<0>(iterargs.val).second;
         break;
       case 1:
         stream << " " << get<1>(iterargs.val);
+        break;
+      case 2:
+        stream << " " << get<2>(iterargs.val);
       }
     }
     stream << endl;

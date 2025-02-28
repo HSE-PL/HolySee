@@ -1,5 +1,8 @@
 #include "ir.hpp"
 #include "json.hpp"
+#include <iostream>
+
+using namespace std;
 
 using namespace nlohmann;
 
@@ -9,7 +12,9 @@ vector<Function> json2ir(json &info) {
   auto fns = info["functions"];
   vector<Function> functions;
   for (auto fn : fns) {
-    functions.push_back(fn2ir(fn));
+    auto func = fn2ir(fn);
+    functions.push_back(func);
+    cout << func;
   }
   return functions;
 }

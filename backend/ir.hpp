@@ -13,9 +13,19 @@ enum class IType {
   Add,
   Const,
   Print,
+  Ret,
+  Call,
+  Jmp,
+  Br,
 };
 
-enum class VType { Int, Unit, Ref };
+enum class VType {
+  Int,
+  Unit,
+  Ref,
+  Label,
+  Func,
+};
 
 VType string2type(string type);
 IType string2instr(string instr);
@@ -28,7 +38,9 @@ struct Arg {
 
 struct Value {
   VType type;
-  variant<string, int> val;
+  variant<pair<string, string>, string, int> val;
+  Value(VType type, variant<pair<string, string>, string, int> val)
+      : type(type), val(val) {}
 };
 
 struct Instr {
