@@ -13,8 +13,8 @@ vector<Function> json2ir(json &info) {
   vector<Function> functions;
   for (auto fn : fns) {
     auto func = fn2ir(fn);
-    functions.push_back(func);
     cout << func;
+    functions.push_back(func);
   }
   return functions;
 }

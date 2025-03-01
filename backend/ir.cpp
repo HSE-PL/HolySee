@@ -1,6 +1,9 @@
 #include "ir.hpp"
 #include "backend.hpp"
+#include "json.hpp"
 
+#include <filesystem>
+#include <iostream>
 #include <optional>
 #include <ostream>
 #include <unordered_map>
@@ -9,29 +12,33 @@ using namespace std;
 using namespace nlohmann;
 
 unordered_map<VType, string> t2s = {
-    {VType::Int, "int"}, {VType::Unit, "unit"}, {VType::Ref, "var"},
+    {VType::Int, "int"},
+    {VType::Unit, "unit"},
+    {VType::Ref, "var"},
+    {VType::Bool, "bool"},
     //
 };
 
 unordered_map<IType, string> i2s = {
     {IType::Const, "const"}, {IType::Add, "add"},   {IType::Print, "print"},
     {IType::Ret, "ret"},     {IType::Call, "call"}, {IType::Br, "br"},
-    {IType::Jmp, "j"}};
+    {IType::Jmp, "j"},       {IType::Eq, "eq"},     {IType::Sub, "sub"},
+};
 
 unordered_map<string, VType> s2t = {
-    {"int", VType::Int},
+    {"int", VType::Int}, {"bool", VType::Bool},
     //
 };
 
 unordered_map<string, IType> s2i = {
     {"const", IType::Const}, {"add", IType::Add},   {"print", IType::Print},
     {"ret", IType::Ret},     {"call", IType::Call}, {"br", IType::Br},
-    {"jmp", IType::Jmp},
+    {"jmp", IType::Jmp},     {"eq", IType::Eq},     {"sub", IType::Sub},
 };
 
 VType string2type(string type) {
   if (!s2t.contains(type)) {
-    throw NotImplemented("such type doesn't exist" + type);
+    throw NotImplemented(" such type doesn't exist " + type);
   }
   return s2t.at(type);
 }
@@ -90,9 +97,17 @@ Instr::Instr(json &instr) {
 
 Function::Function(json &fn) {
   name = fn["name"];
+  Block b = Block(name, vector<Instr>());
   for (auto it : fn["instrs"]) {
-    instrs.push_back(Instr(it));
+    if (it.contains("label")) {
+      blocks.push_back(b);
+      b = Block(it["label"], vector<Instr>());
+      continue;
+    }
+    auto instr = Instr(it);
+    b.add_instr(Instr(it));
   }
+  blocks.push_back(b);
   for (auto it : fn["args"]) {
     args.push_back(Arg(it));
   }
@@ -106,30 +121,34 @@ ostream &operator<<(ostream &stream, const Function &fn) {
     stream << it.name << ": " << t2s[it.type];
   }
   stream << ") {" << endl;
-  for (auto &it : fn.instrs) {
-    if (it.dest.has_value()) {
-      stream << *it.dest;
-      stream << ": " << t2s[it.type];
-      stream << " = ";
-    } else {
-      assert(it.type == VType::Unit);
-      stream << "_: unit = ";
-    }
-    stream << i2s[it.op];
-    for (auto &iterargs : it.args) {
-      switch (iterargs.val.index()) {
-      case 0:
-        stream << " " << get<0>(iterargs.val).first;
-        stream << " " << get<0>(iterargs.val).second;
-        break;
-      case 1:
-        stream << " " << get<1>(iterargs.val);
-        break;
-      case 2:
-        stream << " " << get<2>(iterargs.val);
+  for (auto &block : fn.blocks) {
+    stream << block.name << ":" << endl;
+
+    for (auto &it : block.instrs) {
+      if (it.dest.has_value()) {
+        stream << *it.dest;
+        stream << ": " << t2s[it.type];
+        stream << " = ";
+      } else {
+        assert(it.type == VType::Unit);
+        stream << "_: unit = ";
       }
+      stream << i2s[it.op];
+      for (auto &iterargs : it.args) {
+        switch (iterargs.val.index()) {
+        case 0:
+          stream << " " << get<0>(iterargs.val).first;
+          stream << " " << get<0>(iterargs.val).second;
+          break;
+        case 1:
+          stream << " " << get<1>(iterargs.val);
+          break;
+        case 2:
+          stream << " " << get<2>(iterargs.val);
+        }
+      }
+      stream << endl;
     }
-    stream << endl;
   }
   return stream;
 }

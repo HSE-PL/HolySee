@@ -11,16 +11,19 @@ using namespace nlohmann;
 
 enum class IType {
   Add,
+  Sub,
   Const,
   Print,
   Ret,
   Call,
   Jmp,
   Br,
+  Eq,
 };
 
 enum class VType {
   Int,
+  Bool,
   Unit,
   Ref,
   Label,
@@ -53,11 +56,18 @@ public:
   Instr(json &instr);
 };
 
+struct Block {
+  string name;
+  vector<Instr> instrs;
+  Block(string name, vector<Instr> instrs) : name(name), instrs(instrs) {}
+  void add_instr(Instr instr) { instrs.push_back(instr); }
+};
+
 class Function {
   string name;
   vector<Arg> args;
   VType type;
-  vector<Instr> instrs;
+  vector<Block> blocks;
 
 public:
   Function(json &fn);

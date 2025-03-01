@@ -6,7 +6,7 @@ SRC := main.cpp json2ir.cpp ir.cpp
 EXE := ./build/exec
 
 run: cmp
-	cat ./examples/call.json | $(EXE)
+	cat ./examples/ack.json | $(EXE)
 	rm $(EXE)
 
 build/:
