@@ -60,16 +60,40 @@ struct Block {
   string name;
   vector<Instr> instrs;
   Block(string name, vector<Instr> instrs) : name(name), instrs(instrs) {}
+  Block(vector<Instr> instrs) : instrs(instrs) {}
   void add_instr(Instr instr) { instrs.push_back(instr); }
 };
 
-class Function {
+struct Function {
   string name;
   vector<Arg> args;
   VType type;
   vector<Block> blocks;
 
-public:
   Function(json &fn);
   friend ostream &operator<<(ostream &o, const Function &fn);
+};
+
+struct Program {
+  vector<Function> fns;
+  Program(vector<Function> fns) : fns(fns) {}
+  friend ostream &operator<<(ostream &o, const Program &fn);
+};
+
+class Pass {
+public:
+  virtual void pass(Function &fn) = 0;
+};
+
+class PassManager {
+  Program program;
+
+public:
+  PassManager(Program p) : program(p) {}
+  void pass(Pass &pass) {
+    for (auto &fn : program.fns) {
+      pass.pass(fn);
+    }
+  }
+  friend ostream &operator<<(ostream &o, const PassManager &fn);
 };

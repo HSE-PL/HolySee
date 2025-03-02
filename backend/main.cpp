@@ -13,5 +13,6 @@ int main() {
     input += line;
   }
   json inpJson = json::parse(input);
-  auto fns = json2ir(inpJson);
+  auto program = json2ir(inpJson);
+  cout << program;
 }

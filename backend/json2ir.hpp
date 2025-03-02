@@ -6,4 +6,4 @@
 
 using namespace nlohmann;
 
-vector<Function> json2ir(json &info);
+PassManager json2ir(json &info);

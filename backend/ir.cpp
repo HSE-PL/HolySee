@@ -2,8 +2,6 @@
 #include "backend.hpp"
 #include "json.hpp"
 
-#include <filesystem>
-#include <iostream>
 #include <optional>
 #include <ostream>
 #include <unordered_map>
@@ -113,12 +111,27 @@ Function::Function(json &fn) {
   }
 }
 
+ostream &operator<<(ostream &stream, const Program &p) {
+  for (auto &fn : p.fns) {
+    stream << fn << endl;
+  }
+  return stream;
+}
+
+ostream &operator<<(ostream &stream, const PassManager &p) {
+  stream << p.program;
+  return stream;
+}
+
+// TODO: abstract part out of here and to same method for instr
 ostream &operator<<(ostream &stream, const Function &fn) {
   stream << t2s[fn.type] << " ";
   stream << fn.name;
   stream << "(";
+  auto sep = "";
   for (auto &it : fn.args) {
-    stream << it.name << ": " << t2s[it.type];
+    stream << sep << it.name << ": " << t2s[it.type];
+    sep = ", ";
   }
   stream << ") {" << endl;
   for (auto &block : fn.blocks) {
