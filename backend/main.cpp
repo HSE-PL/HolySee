@@ -1,5 +1,5 @@
-#include "json.hpp"
-#include "json2ir.hpp"
+#include "json/json.hpp"
+#include "json/json2ir.hpp"
 #include <cstdio>
 #include <iostream>
 

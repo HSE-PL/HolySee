@@ -1,6 +1,6 @@
 #include "ir.hpp"
-#include "backend.hpp"
-#include "json.hpp"
+#include "../backend.hpp"
+#include "../json/json.hpp"
 
 #include <optional>
 #include <ostream>

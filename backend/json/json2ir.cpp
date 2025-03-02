@@ -1,6 +1,5 @@
-#include "ir.hpp"
+#include "../ir/ir.hpp"
 #include "json.hpp"
-#include <iostream>
 
 using namespace std;
 

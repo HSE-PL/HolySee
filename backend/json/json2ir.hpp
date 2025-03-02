@@ -1,7 +1,6 @@
 #pragma once
 
-#include "backend.hpp"
-#include "ir.hpp"
+#include "../ir/ir.hpp"
 #include "json.hpp"
 
 using namespace nlohmann;

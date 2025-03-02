@@ -1,8 +1,7 @@
 CC := clang++
 CCFLAGS := -std=c++23 -Wall -fsanitize=leak -fsanitize=address
 
-SRC := main.cpp json2ir.cpp ir.cpp
-
+SRC := $(shell find . -name '*.cpp')
 EXE := ./build/exec
 
 run: cmp
