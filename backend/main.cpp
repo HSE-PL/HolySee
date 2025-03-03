@@ -1,3 +1,5 @@
+#include "ir/ir.hpp"
+#include "test_pass.hpp"
 #include "json/json.hpp"
 #include "json/json2ir.hpp"
 #include <cstdio>
@@ -12,7 +14,9 @@ int main() {
   while (std::getline(std::cin, line)) {
     input += line;
   }
-  json inpJson = json::parse(input);
-  auto program = json2ir(inpJson);
-  cout << program;
+  json inp_json = json::parse(input);
+  auto pass_manager = json2ir(inp_json);
+  TestPass lp = TestPass();
+  pass_manager.pass(lp);
+  /*cout << program;*/
 }

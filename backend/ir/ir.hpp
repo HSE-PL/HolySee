@@ -54,6 +54,7 @@ struct Instr {
 
 public:
   Instr(json &instr);
+  friend ostream &operator<<(ostream &o, const Instr &fn);
 };
 
 struct Block {
@@ -62,6 +63,7 @@ struct Block {
   Block(string name, vector<Instr> instrs) : name(name), instrs(instrs) {}
   Block(vector<Instr> instrs) : instrs(instrs) {}
   void add_instr(Instr instr) { instrs.push_back(instr); }
+  friend ostream &operator<<(ostream &o, const Block &fn);
 };
 
 struct Function {
@@ -80,9 +82,15 @@ struct Program {
   friend ostream &operator<<(ostream &o, const Program &fn);
 };
 
-class Pass {
+class Pass {};
+
+class GPass : public Pass {
 public:
-  virtual void pass(Function &fn) = 0;
+  virtual void pass(Program &p) = 0;
+};
+class LPass : public Pass {
+public:
+  virtual void pass(Function &f) = 0;
 };
 
 class PassManager {
@@ -90,10 +98,11 @@ class PassManager {
 
 public:
   PassManager(Program p) : program(p) {}
-  void pass(Pass &pass) {
+  void pass(LPass &pass) {
     for (auto &fn : program.fns) {
       pass.pass(fn);
     }
   }
+  void pass(GPass &pass) { pass.pass(program); }
   friend ostream &operator<<(ostream &o, const PassManager &fn);
 };

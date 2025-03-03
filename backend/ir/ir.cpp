@@ -24,7 +24,10 @@ unordered_map<IType, string> i2s = {
 };
 
 unordered_map<string, VType> s2t = {
-    {"int", VType::Int}, {"bool", VType::Bool},
+    {"int", VType::Int},
+    {"bool", VType::Bool},
+    {"var", VType::Ref},
+    {"unit", VType::Unit},
     //
 };
 
@@ -94,6 +97,7 @@ Instr::Instr(json &instr) {
 }
 
 Function::Function(json &fn) {
+  assert(s2i.size() == i2s.size() && t2s.size() == s2t.size());
   name = fn["name"];
   Block b = Block(name, vector<Instr>());
   for (auto it : fn["instrs"]) {
@@ -122,6 +126,40 @@ ostream &operator<<(ostream &stream, const PassManager &p) {
   stream << p.program;
   return stream;
 }
+ostream &operator<<(ostream &stream, const Instr &instr) {
+  if (instr.dest.has_value()) {
+    stream << *instr.dest;
+    stream << ": " << t2s[instr.type];
+    stream << " = ";
+  } else {
+    assert(instr.type == VType::Unit);
+    stream << "_: unit = ";
+  }
+  stream << i2s[instr.op];
+  for (auto &iterargs : instr.args) {
+    switch (iterargs.val.index()) {
+    case 0:
+      stream << " " << get<0>(iterargs.val).first;
+      stream << " " << get<0>(iterargs.val).second;
+      break;
+    case 1:
+      stream << " " << get<1>(iterargs.val);
+      break;
+    case 2:
+      stream << " " << get<2>(iterargs.val);
+    }
+  }
+  stream << endl;
+  return stream;
+}
+
+ostream &operator<<(ostream &stream, const Block &block) {
+  stream << block.name << ":" << endl;
+  for (auto &instr : block.instrs) {
+    stream << instr;
+  }
+  return stream;
+}
 
 // TODO: abstract part out of here and to same method for instr
 ostream &operator<<(ostream &stream, const Function &fn) {
@@ -135,33 +173,8 @@ ostream &operator<<(ostream &stream, const Function &fn) {
   }
   stream << ") {" << endl;
   for (auto &block : fn.blocks) {
-    stream << block.name << ":" << endl;
-
-    for (auto &it : block.instrs) {
-      if (it.dest.has_value()) {
-        stream << *it.dest;
-        stream << ": " << t2s[it.type];
-        stream << " = ";
-      } else {
-        assert(it.type == VType::Unit);
-        stream << "_: unit = ";
-      }
-      stream << i2s[it.op];
-      for (auto &iterargs : it.args) {
-        switch (iterargs.val.index()) {
-        case 0:
-          stream << " " << get<0>(iterargs.val).first;
-          stream << " " << get<0>(iterargs.val).second;
-          break;
-        case 1:
-          stream << " " << get<1>(iterargs.val);
-          break;
-        case 2:
-          stream << " " << get<2>(iterargs.val);
-        }
-      }
-      stream << endl;
-    }
+    stream << block;
   }
+  stream << "}";
   return stream;
 }
