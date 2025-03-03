@@ -1,6 +1,4 @@
 #pragma once
+#include "alloca/Allocator.hpp"
 
-class GarbageCollector {
-public:
-  GarbageCollector() = default;
-};
+class GarbageCollector : public Allocator {};
