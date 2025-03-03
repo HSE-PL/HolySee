@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../ir/ir.hpp"
+#include "../ir/pass/pass_manager.hpp"
 #include "json.hpp"
 
 using namespace nlohmann;

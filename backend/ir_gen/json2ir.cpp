@@ -1,4 +1,4 @@
-#include "../ir/ir.hpp"
+#include "json2ir.hpp"
 #include "json.hpp"
 
 using namespace std;

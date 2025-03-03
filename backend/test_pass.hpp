@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ir/ir.hpp"
+#include "ir/pass/pass.hpp"
 
-class TestPass : public LPass {
-  void pass(Function &f);
+class TestPass : public BPass {
+  void pass(Block &b);
 };
