@@ -35,8 +35,12 @@ std::ostream &operator<<(std::ostream &stream, const Instr &instr) {
       stream << " " << v;
     }
   } break;
-  default:
+  case VType::Bool:
+  case VType::Int:
     stream << " " << instr.vals.cnumber();
+    break;
+  default:
+    throw NotImplemented("Instr out" + t2s[instr.vals.type()]);
   }
   stream << std::endl;
   return stream;
