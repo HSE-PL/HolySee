@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <stdexcept>
 
 class NotImplemented : public std::logic_error {

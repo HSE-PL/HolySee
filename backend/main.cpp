@@ -1,10 +1,8 @@
-#include "ir_gen/json2ir.hpp"
+#include "ir_gen/json_translate.hpp"
 #include "test_pass.hpp"
-#include <cstdio>
 #include <iostream>
 
 using namespace std;
-using namespace nlohmann;
 
 int main() {
   string input;
@@ -12,9 +10,7 @@ int main() {
   while (std::getline(std::cin, line)) {
     input += line;
   }
-  json inp_json = json::parse(input);
-  auto pass_manager = json2ir(inp_json);
+  auto pass_manager = JsonTranslator::json2pm(input);
   TestPass lp = TestPass();
   pass_manager.pass(lp);
-  /*cout << program;*/
 }

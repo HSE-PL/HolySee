@@ -1,14 +1,14 @@
 #pragma once
 
-#include "../program/program.hpp"
 #include "pass.hpp"
 
 class PassManager {
-  Program program;
+  friend class JsonTranslator;
 
-public:
+  Program program;
   PassManager(Program p) : program(p) {}
 
+public:
   void pass(BPass &pass) {
     for (auto &fn : program.fns) {
       for (auto &blocks : fn.blocks) {
