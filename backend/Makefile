@@ -1,5 +1,5 @@
-CC := ccache clang++
-CCFLAGS := -std=c++23 -Wall -fsanitize=leak -fsanitize=address
+CC := zig c++ 
+CCFLAGS := -std=c++23 -Wall -lasan -fsanitize=leak -fsanitize=address
 
 SRC := $(shell find . -name '*.cpp')
 EXE := ./build/exec

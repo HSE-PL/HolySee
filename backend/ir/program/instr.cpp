@@ -11,18 +11,32 @@ std::ostream &operator<<(std::ostream &stream, const Instr &instr) {
     stream << "_: unit = ";
   }
   stream << i2s[instr.op];
-  for (auto &iterargs : instr.args) {
-    switch (iterargs.val.index()) {
-    case 0:
-      stream << " " << get<0>(iterargs.val).first;
-      stream << " " << get<0>(iterargs.val).second;
-      break;
-    case 1:
-      stream << " " << get<1>(iterargs.val);
-      break;
-    case 2:
-      stream << " " << get<2>(iterargs.val);
+  switch (instr.vals.type()) {
+  case VType::Func:
+  case VType::Label: {
+    std::string label;
+    label = instr.vals.clabel();
+    stream << " " << label;
+  } break;
+  case VType::Refs:
+  case VType::Branches: {
+    std::pair<std::string, std::string> h;
+    h = instr.vals.cbranches();
+    stream << " " << h.first;
+    stream << " " << h.second;
+  } break;
+  case VType::Ref: {
+    auto h = instr.vals.cref();
+    stream << " " << h;
+  } break;
+  case VType::VArg: {
+    auto h = instr.vals.cargs();
+    for (auto &&v : h) {
+      stream << " " << v;
     }
+  } break;
+  default:
+    stream << " " << instr.vals.cnumber();
   }
   stream << std::endl;
   return stream;

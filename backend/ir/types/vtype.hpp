@@ -8,8 +8,11 @@ enum class VType {
   Bool,
   Unit,
   Ref,
-  Label,
+  Refs,
   Func,
+  VArg,
+  Label,
+  Branches,
 };
 
 VType string2type(std::string type);

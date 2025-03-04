@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fn.hpp"
+#include <vector>
 
 class Program {
   friend class JsonTranslator;

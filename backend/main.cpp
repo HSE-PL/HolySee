@@ -1,4 +1,4 @@
-#include "ir_gen/json_translate.hpp"
+#include "ir_gen/json/json_translator.hpp"
 #include "test_pass.hpp"
 #include <iostream>
 
@@ -10,7 +10,9 @@ int main() {
   while (std::getline(std::cin, line)) {
     input += line;
   }
-  auto pass_manager = JsonTranslator::json2pm(input);
-  TestPass lp = TestPass();
-  pass_manager.pass(lp);
+  auto translator = JsonTranslator();
+  auto pass_manager = translator.toIR(input);
+  cout << pass_manager;
+  /*TestPass lp = TestPass();*/
+  /*pass_manager.pass(lp);*/
 }

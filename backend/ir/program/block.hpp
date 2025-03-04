@@ -1,6 +1,7 @@
 #pragma once
 
 #include "instr.hpp"
+#include <vector>
 
 struct Block {
   std::string name;
