@@ -5,10 +5,10 @@ SRC := $(shell find . -name '*.cpp')
 EXE := ./build/exec
 
 run: cmp
-	cat ./examples/ack.json | $(EXE)
+	@cat ./examples/tdce/simple.json | $(EXE) | brili -p
 
 jrun:
-	cat ./examples/ack.json | $(EXE)
+	@cat ./examples/tdce/simple.json | $(EXE)
 
 clean:
 	rm $(EXE)
@@ -18,4 +18,4 @@ build/:
 	@mkdir build/
 
 cmp: build/
-	$(CC) $(CCFLAGS) $(SRC) -o $(EXE)
+	@$(CC) $(CCFLAGS) $(SRC) -o $(EXE)

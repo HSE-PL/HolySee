@@ -171,11 +171,11 @@ static void fn2ir(nlohmann::json &fn, Function &func) {
   } else {
     func.type = VType::Unit;
   }
-  Block b = Block(func.name, std::vector<Instr>());
+  Block b = Block(func.name, std::list<Instr>());
   for (auto it : fn["instrs"]) {
     if (it.contains("label")) {
       func.blocks.push_back(b);
-      b = Block(it["label"], std::vector<Instr>());
+      b = Block(it["label"], std::list<Instr>());
       continue;
     }
     b.add_instr(instr(it));
