@@ -2,6 +2,6 @@
 
 #include "ir/pass/pass.hpp"
 
-class TestPass : public BPass {
+class TestPass : public LPass {
   void pass(Block &b);
 };

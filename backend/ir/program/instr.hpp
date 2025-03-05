@@ -21,6 +21,7 @@ public:
     std::swap(args, other.args);
     return *this;
   }
+  bool operator==(const BranchArgs &other) const = default;
   BranchArgs(BranchArgs &&other) { std::swap(args, other.args); }
   std::string &cond() { return std::get<0>(args); }
   std::string ccond() const { return std::get<0>(args); }
@@ -54,6 +55,7 @@ public:
     std::swap(val_, other.val_);
     std::swap(type_, other.type_);
   }
+  bool operator==(const Val &other) const = default;
   VType type() const { return type_; }
   Value val() const { return val_; }
   RefPair crefp() const { return std::get<0>(val_); }
@@ -78,6 +80,7 @@ public:
   VType type;
   std::optional<std::string> dest;
   Val vals;
+  bool operator==(const Instr &other) const = default;
 
   friend std::ostream &operator<<(std::ostream &o, const Instr &fn);
 };

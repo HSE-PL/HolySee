@@ -1,4 +1,5 @@
 #include "cli.hpp"
+#include "../opt/tdce.hpp"
 #include "argh.h"
 
 #include "../ir_gen/json/json_translator.hpp"
@@ -14,5 +15,8 @@ void Runner::run(int argc, char *argv[]) {
   }
   auto translator = JsonTranslator();
   auto pass_manager = translator.toIR(input);
+  TDCEPass tdce;
+  pass_manager.pass(tdce);
+  std::cout << pass_manager << std::endl;
   translator.toStream(std::cout, pass_manager);
 }

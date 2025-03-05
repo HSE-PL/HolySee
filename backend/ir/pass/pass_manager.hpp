@@ -10,18 +10,18 @@ class PassManager {
 
 public:
   Program &program() { return program_; }
-  void pass(BPass &pass) {
+  void pass(LPass &pass) {
     for (auto &fn : program_.fns) {
       for (auto &blocks : fn.blocks) {
         pass.pass(blocks);
       }
     }
   }
-  void pass(LPass &pass) {
+  void pass(GPass &pass) {
     for (auto &fn : program_.fns) {
       pass.pass(fn);
     }
   }
-  void pass(GPass &pass) { pass.pass(program_); }
+  void pass(IPass &pass) { pass.pass(program_); }
   friend std::ostream &operator<<(std::ostream &o, const PassManager &fn);
 };
