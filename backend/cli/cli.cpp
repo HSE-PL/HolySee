@@ -16,7 +16,8 @@ void Runner::run(int argc, char *argv[]) {
   auto translator = JsonTranslator();
   auto pass_manager = translator.toIR(input);
   TDCEPass tdce;
+  std::cout << pass_manager << std::endl;
   pass_manager.pass(tdce);
   std::cout << pass_manager << std::endl;
-  translator.toStream(std::cout, pass_manager);
+  /*translator.toStream(std::cout, pass_manager);*/
 }

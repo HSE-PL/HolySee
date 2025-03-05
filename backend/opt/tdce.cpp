@@ -5,7 +5,7 @@
 
 using std::unordered_set, std::string;
 
-void unused(Block &block) {
+void unused_trivial(Block &block) {
   unordered_set<string> declared_and_unused;
   for (auto it = block.instrs.begin(); it != block.instrs.end(); ++it) {
     switch (it->op) {
@@ -53,8 +53,15 @@ void unused(Block &block) {
   for (auto it = block.instrs.begin(); it != block.instrs.end(); ++it) {
     if (it->dest.has_value() && declared_and_unused.contains(*it->dest)) {
       it = block.instrs.erase(it);
+      --block.size;
     }
   }
 }
 
-void TDCEPass::pass(Block &b) { unused(b); }
+void TDCEPass::pass(Block &b) {
+  size_t old_size;
+  do {
+    old_size = b.size;
+    unused_trivial(b);
+  } while (old_size != b.size);
+}
