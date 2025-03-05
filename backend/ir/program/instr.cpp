@@ -2,6 +2,7 @@
 #include "../../backend.hpp"
 
 std::ostream &operator<<(std::ostream &stream, const Instr &instr) {
+  stream << "  ";
   if (instr.dest.has_value()) {
     stream << *instr.dest;
     stream << ": " << t2s[instr.type];
@@ -12,18 +13,29 @@ std::ostream &operator<<(std::ostream &stream, const Instr &instr) {
   }
   stream << i2s[instr.op];
   switch (instr.vals.type()) {
-  case VType::Func:
+  case VType::Func: {
+    auto fn = instr.vals.cfncall();
+    stream << " " << fn.first;
+    for (auto &&arg : fn.second) {
+      stream << " " << arg;
+    }
+  } break;
   case VType::Label: {
     std::string label;
     label = instr.vals.clabel();
     stream << " " << label;
   } break;
-  case VType::Refs:
-  case VType::Branches: {
-    std::pair<std::string, std::string> h;
-    h = instr.vals.cbranches();
+  case VType::Refs: {
+    auto h = instr.vals.crefp();
     stream << " " << h.first;
     stream << " " << h.second;
+
+  } break;
+  case VType::Branches: {
+    auto h = instr.vals.cbranches();
+    stream << " " << h.ccond();
+    stream << " " << h.ctrueb();
+    stream << " " << h.cfalseb();
   } break;
   case VType::Ref: {
     auto h = instr.vals.cref();

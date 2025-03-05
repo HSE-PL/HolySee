@@ -5,22 +5,23 @@
 class PassManager {
   friend class JsonTranslator;
 
-  Program program;
-  PassManager(Program p) : program(p) {}
+  Program program_;
+  PassManager(Program p) : program_(p) {}
 
 public:
+  Program &program() { return program_; }
   void pass(BPass &pass) {
-    for (auto &fn : program.fns) {
+    for (auto &fn : program_.fns) {
       for (auto &blocks : fn.blocks) {
         pass.pass(blocks);
       }
     }
   }
   void pass(LPass &pass) {
-    for (auto &fn : program.fns) {
+    for (auto &fn : program_.fns) {
       pass.pass(fn);
     }
   }
-  void pass(GPass &pass) { pass.pass(program); }
+  void pass(GPass &pass) { pass.pass(program_); }
   friend std::ostream &operator<<(std::ostream &o, const PassManager &fn);
 };

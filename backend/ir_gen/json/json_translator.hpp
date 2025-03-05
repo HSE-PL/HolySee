@@ -7,5 +7,5 @@ class JsonTranslator final : public IrTranslator<std::string> {
 public:
   JsonTranslator() = default;
   PassManager toIR(std::string);
-  /*std::ostream toSpec(std::ostream &stream, const PassManager &pm);*/
+  std::ostream &toStream(std::ostream &stream, const PassManager &pm);
 };

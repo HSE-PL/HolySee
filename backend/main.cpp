@@ -12,7 +12,8 @@ int main() {
   }
   auto translator = JsonTranslator();
   auto pass_manager = translator.toIR(input);
-  cout << pass_manager;
+  /*cout << pass_manager;*/
+  translator.toStream(std::cout, pass_manager);
   /*TestPass lp = TestPass();*/
   /*pass_manager.pass(lp);*/
 }
