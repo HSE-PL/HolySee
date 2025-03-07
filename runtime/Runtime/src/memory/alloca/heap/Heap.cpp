@@ -11,7 +11,7 @@ void Heap<T>::append(T a) {
 }
 
 template <ItemForHeap T>
-void Heap<T>::decrease_key(T element, size_t new_key) {
-  keys.erase(element);
-  element.key_for_heap()
+void Heap<T>::replace(T old_el, T new_el) {
+  keys.erase(old_el);
+  keys.insert(new_el);
 }
