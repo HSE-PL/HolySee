@@ -5,11 +5,11 @@ namespace sp {
   inline size_t pagesize = 1 << 12;
   inline void*  spd;
 
-  inline void change(int prot);
+  void change(int prot);
 
-  inline void off();
+  void off();
 
-  inline void on();
+  void on();
 
-  inline void init(void** spdptr);
+  void init(void** spdptr);
 } // namespace sp

@@ -17,6 +17,13 @@ public:
   const size_t   t_size;
   std::vector<T> items;
 
-  Region(size_t start_region, size_t count_items,
-         size_t t_size);
+  size_t count_empty;
+  Region(size_t start_region, size_t count_items, size_t t_size,
+         size_t region_tier)
+      : start(start_region), count(count_items), size(count * t_size),
+        t_size(t_size), items(), count_empty(0) {
+    for (int i = 0; i < count_items;
+         items.push_back(T(t_size, start_region + t_size * i++, region_tier)))
+      ;
+  }
 };

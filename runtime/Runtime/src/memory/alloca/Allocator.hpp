@@ -17,4 +17,6 @@ public:
   ~Allocator() override = default;
 
   virtual size_t alloc(size_t object_size);
+
+  void add_active(size_t index);
 };

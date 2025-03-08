@@ -20,15 +20,11 @@ namespace rt {
 
   namespace signals {
 
-    void handler(int sig, siginfo_t* info,
-                 void* context) {
-      if (info->si_addr != sp::spd &&
-          gc.has_value())
+    void handler(int sig, siginfo_t* info, void* context) {
+      if (info->si_addr != sp::spd && gc.has_value())
         _exit(1);
 
-      gc.value().cleaning(
-          info,
-          static_cast<ucontext_t*>(context));
+      gc.value().cleaning(info, static_cast<ucontext_t*>(context));
       // TODO implement this shit
     }
 
@@ -43,30 +39,35 @@ namespace rt {
         exit(1);
       }
     }
-  }; // namespace signals
+  } // namespace signals
 
 
   inline void init(void* __start, void** spdptr) {
     signals::init();
     sp::init(spdptr);
 
-    size_t size  = (1 << 14) * sp::pagesize;
+    size_t size  = (1 << 5) * sp::pagesize;
     auto   start = sys::salloc(size);
 
-    gc.emplace(GarbageCollector(
-        reinterpret_cast<size_t>(start), size));
+    gc.emplace(GarbageCollector(reinterpret_cast<size_t>(start), size));
+    gc.value().print();
+    gc.value().alloc(8000);
+    gc.value().print();
+    gc.value().alloc(2000);
+    gc.value().print();
+    gc.value().alloc(3000);
+    gc.value().print();
+    gc.value().alloc(13000);
+    gc.value().print();
   }
 
-}; // namespace rt
+} // namespace rt
 
-extern "C" void __rt_init(void*  __start,
-                          void** spdptr) {
+extern "C" void __rt_init(void* __start, void** spdptr) {
   rt::init(__start, spdptr);
 }
 
 extern "C" void* __halloc(size_t size) {
-  return rt::gc.has_value()
-             ? reinterpret_cast<void*>(
-                   rt::gc->alloc(size))
-             : nullptr;
+  return rt::gc.has_value() ? reinterpret_cast<void*>(rt::gc->alloc(size))
+                            : nullptr;
 }

@@ -1,5 +1,5 @@
-#include <stddef.h>
 #pragma once
+#include <stddef.h>
 
 extern "C" void __rt_init(void*  __start,
                           void** spdptr);
