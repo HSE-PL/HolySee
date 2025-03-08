@@ -15,15 +15,15 @@ template <typename T>
 struct Comparator {
   using is_transparent = void;
 
-  bool operator()(const T& a, const T& b) const {
-    return a.key_for_heap() != b.key_for_heap()
-               ? a.key_for_heap() < b.key_for_heap()
-               : a.uniq_for_heap() < b.uniq_for_heap();
+  bool operator()(const T* a, const T* b) const {
+    return a->key_for_heap() != b->key_for_heap()
+               ? a->key_for_heap() < b->key_for_heap()
+               : a->uniq_for_heap() < b->uniq_for_heap();
   }
 
-  bool operator()(const T& a, size_t n) const { return a.key_for_heap() < n; }
+  bool operator()(const T* a, size_t n) const { return a->key_for_heap() < n; }
 
-  bool operator()(size_t n, const T& b) const { return n < b.key_for_heap(); }
+  bool operator()(size_t n, const T* b) const { return n < b->key_for_heap(); }
 };
 
 template <ItemForHeap T>
@@ -32,9 +32,9 @@ public:
   virtual ~Heap() = default;
   Heap()          = default;
 
-  std::set<T, Comparator<T>> keys;
+  std::set<T*, Comparator<T>> keys;
 
-  T get_min_more_then(size_t n) {
+  T* get_min_more_then(size_t n) {
     auto el = keys.lower_bound(n);
     if (el == keys.end())
       throw std::runtime_error("very big object (size: " + std::to_string(n) +
@@ -42,13 +42,13 @@ public:
     return *el;
   }
 
-  void append(T a) { keys.insert(a); }
+  void append(T* a) { keys.insert(a); }
 
-  void del(T a) { keys.erase(a); }
+  void del(T* a) { keys.erase(a); }
 
   // 4 debug
-  void printSetTree(typename std::set<T>::iterator it,
-                    typename std::set<T>::iterator end, int depth = 0) {
+  void printSetTree(typename std::set<T*>::iterator it,
+                    typename std::set<T*>::iterator end, int depth = 0) {
     if (it == end)
       return;
 
@@ -57,7 +57,7 @@ public:
 
     for (int i = 0; i < depth; ++i)
       std::cout << "    ";
-    std::cout << (*it).uniq_for_heap() << ":" << (*it).key_for_heap() << "\n";
+    std::cout << (*it)->uniq_for_heap() << ":" << (*it)->key_for_heap() << "\n";
 
     if (it != end)
       printSetTree(it, it, depth + 1);

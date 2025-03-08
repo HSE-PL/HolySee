@@ -52,20 +52,20 @@ Allocator::Allocator(size_t start_heap, size_t size_heap)
 size_t Allocator::alloc(size_t object_size) {
   auto arena = get_min_more_then(object_size);
   std::cout << "alloca " << object_size << std::endl;
-  size_t start_new_object = arena.cur;
-  if (start_new_object == arena.start)
-    add_active(arena.tier);
+  size_t start_new_object = arena->cur;
+  if (start_new_object == arena->start)
+    add_active(arena->tier);
   // print();
   del(arena);
   // print();
-  arena.cur += object_size;
+  arena->cur += object_size;
   append(arena);
   // print();
   return start_new_object;
 }
 
 void Allocator::add_active(size_t index) {
-  auto new_active = *regions[index].pull.back();
+  auto new_active = regions[index].pull.back();
   regions[index].pull.pop_back();
 
   // regions[index].count_empty++;
@@ -84,15 +84,14 @@ Arena* Allocator::arena_by_ptr(size_t ptr) const {
 }
 
 void Allocator::free_arena(Arena* a) {
-  // Heap::del(a);
-  std::cout << a->key_for_heap();
-  keys.erase(*a);
+  del(a);
+  keys.erase(a);
   a->cur = a->start;
   regions[a->tier].pull.push_back(a);
 }
 
 void Allocator::free(size_t ptr) {
-  std::cout << "free " << ptr << std::endl;
+  std::cout << "free     " << ptr << std::endl;
   std::cout << "on arena " << arena_by_ptr(ptr)->start << std::endl;
 
   free_arena(arena_by_ptr(ptr));

@@ -58,7 +58,7 @@ namespace rt {
 
 #define gcv gc.value()
     gcv.print();
-    auto p1 = gc.value().alloc(8000);
+    auto p1 = gcv.alloc(8000);
     gcv.print();
     gcv.alloc(2000);
     gcv.print();
@@ -66,7 +66,9 @@ namespace rt {
     gcv.print();
     gcv.alloc(13000);
     gcv.print();
-    gcv.free(p1);
+    auto p2 = gcv.alloc(32);
+    gcv.print();
+    gcv.free(p2);
     gcv.print();
   }
 
