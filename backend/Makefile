@@ -8,7 +8,8 @@ run: cmp
 	@cat ./examples/tdce/double-pass.json | $(EXE)
 
 test: cmp
-	@cat ./examples/tdce/simple.json | $(EXE) | brili -p
+	# @cat ./examples/tdce/double-pass.json | brili -p 2 2
+	@cat ./examples/tdce/double-pass.json | $(EXE) | brili -p 2 2
 
 jrun:
 	@cat ./examples/tdce/simple.json | $(EXE)

@@ -3,6 +3,9 @@
 #include "../types/itype.hpp"
 #include "../types/vtype.hpp"
 #include <iostream>
+#include <iterator>
+#include <list>
+#include <memory>
 #include <optional>
 #include <utility>
 #include <variant>
@@ -72,6 +75,48 @@ public:
   FnCall cfncall() const { return std::get<4>(val_); }
   int cnumber() const { return std::get<5>(val_); }
   int &number() { return std::get<5>(val_); }
+};
+
+enum class ValType {
+  Ref,
+  Int,
+  Bool,
+  Label,
+  Unit,
+};
+
+class Value {
+protected:
+  ValType t;
+  Value(ValType vt) : t(vt) {}
+
+public:
+  ValType type() const { return t; }
+  virtual ~Value() = 0;
+};
+
+class Ref final : public Value {
+  std::string name_;
+  Ref(ValType vt, std::string name) : Value(vt), name_(name) {}
+
+public:
+  std::string name() { return name_; }
+};
+
+class Instruction {
+  using CAItt = std::list<std::shared_ptr<Value>>::const_iterator;
+  using AItt = std::list<std::shared_ptr<Value>>::iterator;
+  std::shared_ptr<Value> dest;
+  std::list<std::shared_ptr<Value>> args;
+  IType itype;
+  ValType vtype;
+
+public:
+  CAItt cbegin() const { return args.cbegin(); }
+  CAItt cend() const { return args.cend(); }
+  AItt begin() { return args.begin(); }
+  AItt end() { return args.end(); }
+  ValType type() const { return vtype; }
 };
 
 class Instr {

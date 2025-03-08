@@ -11,7 +11,7 @@ std::unordered_map<std::string, VType> s2t = {
 
 std::unordered_map<VType, std::string> t2s = {
     {VType::Int, "int"},
-    {VType::Unit, "unit"},
+    {VType::Unit, "uint"},
     {VType::Ref, "var"},
     {VType::Bool, "bool"},
     //

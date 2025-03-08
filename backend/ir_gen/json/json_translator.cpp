@@ -146,6 +146,9 @@ static Instr instr(nlohmann::json &instr) {
       }
       ins.vals = Val(VType::VArg, vec);
     } break;
+    case IType::Const: {
+
+    } break;
     case IType::Call: {
       auto funcname = instr["funcs"][0];
       std::vector<std::string> vec;
