@@ -46,7 +46,7 @@ public:
 
   void del(T a) { keys.erase(a); }
 
-  // для отладочки
+  // 4 debug
   void printSetTree(typename std::set<T>::iterator it,
                     typename std::set<T>::iterator end, int depth = 0) {
     if (it == end)

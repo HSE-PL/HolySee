@@ -19,4 +19,10 @@ public:
   virtual size_t alloc(size_t object_size);
 
   void add_active(size_t index);
+
+  [[nodiscard]] Arena* arena_by_ptr(size_t ptr) const;
+
+  void free(size_t ptr);
+
+  void free_arena(Arena* a);
 };

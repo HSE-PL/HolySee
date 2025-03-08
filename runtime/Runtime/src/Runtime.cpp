@@ -6,6 +6,7 @@
 #include <csignal>
 #include <cstddef>
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 #include <optional>
 #include <pthread.h>
@@ -46,19 +47,27 @@ namespace rt {
     signals::init();
     sp::init(spdptr);
 
-    size_t size  = (1 << 5) * sp::pagesize;
-    auto   start = sys::salloc(size);
+    size_t heap_size = (1 << 5) * sp::pagesize;
 
-    gc.emplace(GarbageCollector(reinterpret_cast<size_t>(start), size));
-    gc.value().print();
-    gc.value().alloc(8000);
-    gc.value().print();
-    gc.value().alloc(2000);
-    gc.value().print();
-    gc.value().alloc(3000);
-    gc.value().print();
-    gc.value().alloc(13000);
-    gc.value().print();
+    void* heap_start = sys::salloc(heap_size);
+
+    gc.emplace(
+        GarbageCollector(reinterpret_cast<size_t>(heap_start), heap_size));
+    if (!gc.has_value())
+      throw std::runtime_error("gc bobo");
+
+#define gcv gc.value()
+    gcv.print();
+    auto p1 = gc.value().alloc(8000);
+    gcv.print();
+    gcv.alloc(2000);
+    gcv.print();
+    gcv.alloc(3000);
+    gcv.print();
+    gcv.alloc(13000);
+    gcv.print();
+    gcv.free(p1);
+    gcv.print();
   }
 
 } // namespace rt

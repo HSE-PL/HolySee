@@ -24,9 +24,10 @@ std::vector<size_t> partion_of_pages(size_t count_pages) {
   return counts;
 }
 
-Allocator::Allocator(const size_t start_heap, const size_t size_heap)
+Allocator::Allocator(size_t start_heap, size_t size_heap)
     : Heap(), start(start_heap), size(size_heap),
       regions(std::vector<Region<Arena>>()) {
+  printf("heap on\n%zx\n%zx\n", start_heap, start_heap + size_heap);
   /*
    * variant of regions "double-double"
    * each egion is +- equal in size
@@ -54,16 +55,45 @@ size_t Allocator::alloc(size_t object_size) {
   size_t start_new_object = arena.cur;
   if (start_new_object == arena.start)
     add_active(arena.tier);
+  // print();
   del(arena);
+  // print();
   arena.cur += object_size;
   append(arena);
+  // print();
   return start_new_object;
 }
 
 void Allocator::add_active(size_t index) {
-  auto new_active = regions[index].items.back();
-  regions[index].items.pop_back();
+  auto new_active = *regions[index].pull.back();
+  regions[index].pull.pop_back();
 
-  regions[index].count_empty++;
+  // regions[index].count_empty++;
   append(new_active);
+}
+
+Arena* Allocator::arena_by_ptr(size_t ptr) const {
+  int index;
+  for (index = 0; index < regions.size() && ptr >= regions[index].start;
+       ++index)
+    ;
+  --index;
+  auto offset  = ptr - regions[index].start;
+  auto a_index = offset / regions[index].t_size;
+  return regions[index].items[a_index];
+}
+
+void Allocator::free_arena(Arena* a) {
+  // Heap::del(a);
+  std::cout << a->key_for_heap();
+  keys.erase(*a);
+  a->cur = a->start;
+  regions[a->tier].pull.push_back(a);
+}
+
+void Allocator::free(size_t ptr) {
+  std::cout << "free " << ptr << std::endl;
+  std::cout << "on arena " << arena_by_ptr(ptr)->start << std::endl;
+
+  free_arena(arena_by_ptr(ptr));
 }
