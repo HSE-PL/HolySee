@@ -74,7 +74,6 @@ void Allocator::add_active(size_t index) {
   // regions[index].count_empty++;
 
   std::cout << "call append new_active\n" << new_active << std::endl;
-  print();
   append(new_active);
   std::cout << "return from add_active\n";
 }

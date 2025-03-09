@@ -22,9 +22,15 @@ struct Comparator {
                : a->uniq_for_heap() < b->uniq_for_heap();
   }
 
-  bool operator()(const T* a, size_t n) const { return a->key_for_heap() < n; }
+  bool operator()(const T* a, size_t n) const {
+    std::cout << a << std::endl;
+    return a->key_for_heap() < n;
+  }
 
-  bool operator()(size_t n, const T* b) const { return n < b->key_for_heap(); }
+  bool operator()(size_t n, const T* b) const {
+    std::cout << b << std::endl;
+    return n < b->key_for_heap();
+  }
 };
 
 template <ItemForHeap T>
