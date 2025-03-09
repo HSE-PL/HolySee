@@ -18,9 +18,9 @@ public:
     delete fn;
     fn = new Fn(t, name);
   }
-  Fn build() { return *fn; }
+  std::shared_ptr<Fn> build() { return std::make_shared<Fn>(*fn); }
   FnBuilder &setName(std::string name) {
-    fn->name = name;
+    fn->name_ = name;
     return *this;
   }
   FnBuilder &setType(Type t) {

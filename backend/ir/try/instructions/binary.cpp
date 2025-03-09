@@ -40,3 +40,15 @@ Br::Br(vptr cond, vptr l1, vptr l2) {
   args.push_back(l1);
   args.push_back(l2);
 }
+
+Eq::Eq(vptr dest, vptr c1, vptr c2) {
+  assert(dest->type() == ValType::Ref);
+  assert(std::dynamic_pointer_cast<Ref>(dest)->vtype() == Type::Bool);
+  assert(c1->type() == ValType::Ref);
+  assert(c2->type() == ValType::Ref);
+  assert(std::dynamic_pointer_cast<Ref>(c1)->vtype() == Type::Bool);
+  assert(std::dynamic_pointer_cast<Ref>(c2)->vtype() == Type::Bool);
+  dest_ = dest;
+  args.push_back(c1);
+  args.push_back(c2);
+}

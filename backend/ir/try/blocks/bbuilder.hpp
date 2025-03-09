@@ -10,7 +10,7 @@ class BBuilder {
 public:
   BBuilder(std::string name) { block = new BBlock(name); }
   ~BBuilder() { delete block; }
-  BBlock build() { return *block; }
+  std::shared_ptr<BBlock> build() { return std::make_shared<BBlock>(*block); }
   BBuilder &reset(std::string name) {
     delete block;
     block = new BBlock(name);
@@ -45,6 +45,12 @@ public:
     block->addInstr(IFactory::createConst(d1, operand));
     return *this;
   }
+  BBuilder &createRet(Type t, std::string ret) {
+    auto operand = VFactory::createRef(t, ret);
+    block->addInstr(IFactory::createRet(operand));
+
+    return *this;
+  }
   BBuilder &createRetInt(std::string ret) {
     auto operand = VFactory::createIntRef(ret);
     block->addInstr(IFactory::createRet(operand));
@@ -67,6 +73,15 @@ public:
     auto pdest = VFactory::createRef(fntype, dest);
 
     block->addInstr(IFactory::createCall(fname, pdest, arglist));
+
+    return *this;
+  }
+  BBuilder &createEq(std::string dest, std::string c1, std::string c2) {
+    auto pdest = VFactory::createBoolRef(dest);
+    auto pc1 = VFactory::createBoolRef(c1);
+    auto pc2 = VFactory::createBoolRef(c2);
+
+    block->addInstr(IFactory::createEq(pdest, pc1, pc2));
 
     return *this;
   }

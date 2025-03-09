@@ -11,15 +11,16 @@ class Fn {
   using CBItt = std::list<std::shared_ptr<BBlock>>::const_iterator;
   using BItt = std::list<std::shared_ptr<BBlock>>::iterator;
   Type type_;
-  std::string name;
+  std::string name_;
   std::list<std::shared_ptr<BBlock>> blocks;
   std::list<vptr> args;
-  Fn(Type type_, std::string name) : type_(type_), name(name) {}
+  Fn(Type type_, std::string name) : type_(type_), name_(name) {}
   Fn(const Fn &other) = default;
   void addBlock(std::shared_ptr<BBlock> b) { blocks.push_back(b); }
   void addArg(vptr arg) { args.push_back(arg); }
 
 public:
+  std::string name() { return name_; }
   Type type() { return type_; }
   CBItt cbegin() const { return blocks.cbegin(); }
   CBItt cend() const { return blocks.cend(); }

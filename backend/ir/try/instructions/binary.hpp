@@ -20,3 +20,8 @@ class Br final : public Instruction {
   friend class IFactory;
   Br(vptr cond, vptr l1, vptr l2);
 };
+
+class Eq final : public Instruction {
+  friend class IFactory;
+  Eq(vptr dest, vptr c1, vptr c2);
+};

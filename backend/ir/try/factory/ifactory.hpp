@@ -34,4 +34,7 @@ public:
   static iptr createPrint(std::list<vptr> args) {
     return std::make_shared<Print>(args);
   }
+  static iptr createEq(vptr dest, vptr c1, vptr c2) {
+    return std::make_shared<Eq>(dest, c1, c2);
+  }
 };
