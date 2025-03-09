@@ -25,11 +25,11 @@ void IOStreamer::dest(Instruction &instr) {
 }
 
 void IOStreamer::args(Instruction &instr) {
-  for (auto &&it = instr.begin(); it != instr.end(); ++it) {
+  for (auto it = instr.begin(); it != instr.end(); ++it) {
     it->get()->accept(*this);
-    if (++it != instr.end()) {
-      stream << ", ";
-    }
+    /*if ((it + 1) != instr.end()) {*/
+    /*  stream << ", ";*/
+    /*}*/
   }
   stream << ";" << std::endl;
 }
@@ -104,7 +104,6 @@ void IOStreamer::visit(Program &program) {
   for (auto &&fn : program.funcs) {
     fn.second->accept(*this);
   }
-  std::cout << "hi" << std::endl;
 }
 void IOStreamer::visit(BBlock &b) {
   for (auto &&instr : b.instrs) {
@@ -112,6 +111,7 @@ void IOStreamer::visit(BBlock &b) {
   }
 }
 void IOStreamer::visit(Fn &fn) {
+  std::cout << "hi" << std::endl;
   for (auto &&block : fn.blocks) {
     block->accept(*this);
   }

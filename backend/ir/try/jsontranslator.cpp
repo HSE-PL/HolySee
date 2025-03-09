@@ -162,29 +162,31 @@ std::shared_ptr<Fn> func(json &fn, JTranslationCtx &ctx) {
   if (fn.contains("type")) {
     t = s2tt.at(fn.at("type"));
   }
-  /*FnBuilder builder(t, name);*/
-  /*if (fn.contains("args")) {*/
-  /*  for (auto &&arg : fn.at("args")) {*/
-  /*    auto argtype = s2tt.at(arg.at("type"));*/
-  /*    auto argname = arg.at("name");*/
-  /*    builder.addArg(argtype, argname);*/
-  /*  }*/
-  /*}*/
-  /*BBuilder block_builder(name);*/
-  /*for (auto &it : fn.at("instrs")) {*/
-  /*  if (it.contains("label")) {*/
-  /*    block_builder.reset(it.at("label"));*/
-  /*    continue;*/
-  /*  }*/
-  /*  parse_instr(block_builder, it, ctx);*/
-  /*  if (terminators.contains(it.at("op"))) {*/
-  /*    builder.addBlock(block_builder.build());*/
-  /*  }*/
-  /*}*/
-  /*return builder.build();*/
-  auto function = new Fn(Type::Int, string("he"));
-  auto ptr = std::shared_ptr<Fn>(function);
-  return ptr;
+  FnBuilder builder(t, name);
+  if (fn.contains("args")) {
+    for (auto &&arg : fn.at("args")) {
+      auto argtype = s2tt.at(arg.at("type"));
+      auto argname = arg.at("name");
+      builder.addArg(argtype, argname);
+    }
+  }
+  BBuilder block_builder(name);
+  for (auto &it : fn.at("instrs")) {
+    if (it.contains("label")) {
+      block_builder.reset(it.at("label"));
+      continue;
+    }
+    parse_instr(block_builder, it, ctx);
+    std::cout << it.at("op") << std::endl;
+    if (terminators.contains(it.at("op"))) {
+      std::cout << "hehe" << std::endl;
+      builder.addBlock(block_builder.build());
+    }
+  }
+  if (!fn.contains("type")) {
+    builder.addBlock(block_builder.build());
+  }
+  return builder.build();
 }
 
 Program toIR(std::string &jsonstr) {

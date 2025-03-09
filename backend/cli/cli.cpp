@@ -17,17 +17,6 @@ void Runner::run(int argc, char *argv[]) {
     input += line;
   }
   auto ir = toIR(input);
-  /*auto io = IOStreamer(std::cout);*/
-  /*ir.accept(io);*/
-  std::cout << "hello?" << std::endl;
-  for (auto &&lol : ir.funcs) {
-    std::cout << lol.second.use_count() << std::endl;
-  }
-  /*auto translator = JsonTranslator();*/
-  /*auto pass_manager = translator.toIR(input);*/
-  /*TDCEPass tdce;*/
-  /*std::cout << pass_manager << std::endl;*/
-  /*pass_manager.pass(tdce);*/
-  /*std::cout << pass_manager << std::endl;*/
-  /*translator.toStream(std::cout, pass_manager);*/
+  auto io = IOStreamer(std::cout);
+  ir.accept(io);
 }
