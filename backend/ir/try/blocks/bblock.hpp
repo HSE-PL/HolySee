@@ -1,12 +1,12 @@
 #pragma once
 
-#include "instruction.hpp"
+#include "../instructions/instruction.hpp"
 #include <memory>
 
 class BBlock {
   friend class BBuilder;
-  using CAItt = std::list<std::shared_ptr<Instruction>>::const_iterator;
-  using AItt = std::list<std::shared_ptr<Instruction>>::iterator;
+  using CIItt = std::list<std::shared_ptr<Instruction>>::const_iterator;
+  using IItt = std::list<std::shared_ptr<Instruction>>::iterator;
   std::string name;
   std::list<std::shared_ptr<Instruction>> instrs;
   BBlock(std::string name) : name(name) {}
@@ -19,8 +19,8 @@ class BBlock {
   void addInstr(std::shared_ptr<Instruction> instr) { instrs.push_back(instr); }
 
 public:
-  CAItt cbegin() const { return instrs.cbegin(); }
-  CAItt cend() const { return instrs.cend(); }
-  AItt begin() { return instrs.begin(); }
-  AItt end() { return instrs.end(); }
+  CIItt cbegin() const { return instrs.cbegin(); }
+  CIItt cend() const { return instrs.cend(); }
+  IItt begin() { return instrs.begin(); }
+  IItt end() { return instrs.end(); }
 };

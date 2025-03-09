@@ -1,5 +1,5 @@
 #include "binary.hpp"
-#include "value.hpp"
+#include "../value.hpp"
 #include <cassert>
 #include <memory>
 

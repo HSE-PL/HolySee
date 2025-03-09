@@ -1,14 +1,15 @@
 #pragma once
 
+#include "../factory/ifactory.hpp"
+#include "../factory/vfactory.hpp"
 #include "bblock.hpp"
-#include "ifactory.hpp"
-#include "vfactory.hpp"
 
 class BBuilder {
   BBlock *block;
 
 public:
   BBuilder(std::string name) { block = new BBlock(name); }
+  ~BBuilder() { delete block; }
   BBlock build() { return *block; }
   BBuilder &reset(std::string name) {
     delete block;

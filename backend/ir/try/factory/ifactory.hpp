@@ -1,9 +1,8 @@
 #pragma once
 
-#include "binary.hpp"
-#include "unary.hpp"
-#include "value.hpp"
-#include "vararg.hpp"
+#include "../instructions/binary.hpp"
+#include "../instructions/unary.hpp"
+#include "../instructions/vararg.hpp"
 #include <memory>
 
 // it's not exactly *traditional* factory, but it serves same purposes.

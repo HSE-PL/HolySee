@@ -1,6 +1,6 @@
 #pragma once
 
-#include "value.hpp"
+#include "../value.hpp"
 #include <memory>
 
 // it's not exactly *traditional* factory, but it serves same purposes.

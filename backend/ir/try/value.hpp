@@ -47,15 +47,6 @@ public:
   virtual ~Label() = default;
 };
 
-/*class FCall final : public Value {*/
-/*  std::string fname_;*/
-/*  FCall(std::string fname) : Value(ValType::FCall), fname_(fname) {}*/
-/**/
-/*public:*/
-/*  std::string fname() { return fname_; }*/
-/*  virtual ~FCall() = default;*/
-/*};*/
-
 class Int final : public Value {
   friend class VFactory;
   int val_;
