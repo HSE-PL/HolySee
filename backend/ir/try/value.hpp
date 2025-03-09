@@ -35,7 +35,7 @@ class Ref final : public Value {
   std::string name_;
 
 public:
-  Ref(Type t, std::string name) : Value(ValType::Ref), name_(name) {}
+  Ref(Type t, std::string name) : Value(ValType::Ref), type_(t), name_(name) {}
   Ref(const Ref &other) = default;
   std::string name() { return name_; }
   Type vtype() { return type_; }

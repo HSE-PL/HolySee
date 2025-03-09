@@ -101,10 +101,10 @@ void IOStreamer::visit(Bool &boolean) {
 void IOStreamer::visit(Unit &unit) { stream << t2ss.at(Type::Unit); }
 
 void IOStreamer::visit(Program &program) {
-  std::cout << "hi" << std::endl;
   for (auto &&fn : program.funcs) {
     fn.second->accept(*this);
   }
+  std::cout << "hi" << std::endl;
 }
 void IOStreamer::visit(BBlock &b) {
   for (auto &&instr : b.instrs) {
@@ -112,7 +112,7 @@ void IOStreamer::visit(BBlock &b) {
   }
 }
 void IOStreamer::visit(Fn &fn) {
-  for (auto &&fn : fn.blocks) {
-    fn->accept(*this);
+  for (auto &&block : fn.blocks) {
+    block->accept(*this);
   }
 }

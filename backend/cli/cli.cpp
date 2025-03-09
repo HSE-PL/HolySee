@@ -6,18 +6,23 @@
 #include "../ir/try/jsontranslator.hpp"
 #include "../ir/try/streamers/iostreamer.hpp"
 #include <iostream>
+#include <ostream>
 
 void Runner::run(int argc, char *argv[]) {
-  auto cmdl = argh::parser(argc, argv);
-  auto opts_enabled = cmdl[{"O1", "opt"}];
+  /*auto cmdl = argh::parser(argc, argv);*/
+  /*auto opts_enabled = cmdl[{"O1", "opt"}];*/
   std::string input;
   std::string line;
   while (std::getline(std::cin, line)) {
     input += line;
   }
   auto ir = toIR(input);
-  auto io = IOStreamer(std::cout);
-  ir.accept(io);
+  /*auto io = IOStreamer(std::cout);*/
+  /*ir.accept(io);*/
+  std::cout << "hello?" << std::endl;
+  for (auto &&lol : ir.funcs) {
+    std::cout << lol.second.use_count() << std::endl;
+  }
   /*auto translator = JsonTranslator();*/
   /*auto pass_manager = translator.toIR(input);*/
   /*TDCEPass tdce;*/
