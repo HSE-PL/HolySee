@@ -16,6 +16,7 @@ struct Comparator {
   using is_transparent = void;
 
   bool operator()(const T* a, const T* b) const {
+    std::cout << "check " << a << " ? " << b << std::endl;
     return a->key_for_heap() != b->key_for_heap()
                ? a->key_for_heap() < b->key_for_heap()
                : a->uniq_for_heap() < b->uniq_for_heap();
@@ -42,7 +43,11 @@ public:
     return *el;
   }
 
-  void append(T* a) { keys.insert(a); }
+  void append(T* a) {
+    std::cout << "call insert\n";
+    keys.insert(a);
+    std::cout << "insert end\n";
+  }
 
   void del(T* a) { keys.erase(a); }
 

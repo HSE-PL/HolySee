@@ -20,7 +20,7 @@ void sp::on() {
 void sp::init(void** spdptr) {
   spd = sys::salloc(pagesize);
   if (!spd)
-    throw std::runtime_error(
-        "salloc return shit in sp::init\n");
+    throw std::runtime_error("salloc return shit in sp::init\n");
+  std::cout << "spd on: " << spd << std::endl;
   *spdptr = spd;
 }

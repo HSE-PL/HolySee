@@ -13,18 +13,25 @@
 #include <sys/mman.h>
 #include <sys/ucontext.h>
 #include <thread>
+#include <threads/Threads.hpp>
 #include <unistd.h>
 
 namespace rt {
 
   std::optional<GarbageCollector> gc;
+#define gcv gc.value()
+  std::optional<threads::Threads> thrds;
+#define thrdsv thrds.value()
+
 
   namespace signals {
 
     void handler(int sig, siginfo_t* info, void* context) {
+      // for (;;)
+      // ;
+      std::cout << info->si_addr << " " << sp::spd << std::endl;
       if (info->si_addr != sp::spd && gc.has_value())
-        _exit(1);
-
+        _exit(228);
       gc.value().cleaning(info, static_cast<ucontext_t*>(context));
       // TODO implement this shit
     }
@@ -55,21 +62,30 @@ namespace rt {
         GarbageCollector(reinterpret_cast<size_t>(heap_start), heap_size));
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
+    thrds.emplace(threads::Threads());
+    // for (;;)
+    //   ;
 
-#define gcv gc.value()
-    gcv.print();
-    auto p1 = gcv.alloc(8000);
-    gcv.print();
-    gcv.alloc(2000);
-    gcv.print();
-    gcv.alloc(3000);
-    gcv.print();
-    gcv.alloc(13000);
-    gcv.print();
-    auto p2 = gcv.alloc(32);
-    gcv.print();
-    gcv.free(p2);
-    gcv.print();
+    std::cout << "start __start: " << __start << std::endl;
+    thrdsv.append(std::thread(reinterpret_cast<void (*)()>(__start)));
+
+    for (;;)
+      ;
+    // gcv.print();
+    // auto p1 = gcv.alloc(7770);
+    // gcv.print();
+    // gcv.alloc(2000);
+    // gcv.print();
+    // gcv.alloc(3000);
+    // gcv.print();
+    // gcv.alloc(13000);
+    // gcv.print();
+    // auto p2 = gcv.alloc(32); // gcv.print(); // gcv.free(p2); // gcv.print();
+    // for (;;) {
+    //   gcv.alloc(1000);
+    //   gcv.print();
+    // }
+    // ((void (*)(void))__start)();
   }
 
 } // namespace rt
@@ -81,4 +97,8 @@ extern "C" void __rt_init(void* __start, void** spdptr) {
 extern "C" void* __halloc(size_t size) {
   return rt::gc.has_value() ? reinterpret_cast<void*>(rt::gc->alloc(size))
                             : nullptr;
+}
+
+extern "C" void __GC() {
+  rt::gc.value().GC();
 }

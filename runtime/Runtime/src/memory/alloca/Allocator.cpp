@@ -51,25 +51,32 @@ Allocator::Allocator(size_t start_heap, size_t size_heap)
 
 size_t Allocator::alloc(size_t object_size) {
   auto arena = get_min_more_then(object_size);
-  std::cout << "alloca " << object_size << std::endl;
+  std::cout << "alloca " << object_size << " on arena " << arena << std::endl;
   size_t start_new_object = arena->cur;
+  std::cout << start_new_object << std::endl;
   if (start_new_object == arena->start)
     add_active(arena->tier);
-  // print();
+
+  std::cout << "try to del\n";
   del(arena);
-  // print();
+  std::cout << "arena was del\n";
   arena->cur += object_size;
   append(arena);
-  // print();
+  std::cout << "arena was replace\n";
   return start_new_object;
 }
 
 void Allocator::add_active(size_t index) {
+  std::cout << "call add active\n";
   auto new_active = regions[index].pull.back();
   regions[index].pull.pop_back();
 
   // regions[index].count_empty++;
+
+  std::cout << "call append new_active\n" << new_active << std::endl;
+  print();
   append(new_active);
+  std::cout << "return from add_active\n";
 }
 
 Arena* Allocator::arena_by_ptr(size_t ptr) const {
