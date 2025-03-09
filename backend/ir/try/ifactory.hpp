@@ -6,6 +6,8 @@
 #include "vararg.hpp"
 #include <memory>
 
+// it's not exactly *traditional* factory, but it serves same purposes.
+//
 // NOTE: whole reason for this class' existence is that at some
 // point in  the future i want to offload creating new dest's to here.
 class IFactory {

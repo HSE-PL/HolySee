@@ -3,6 +3,7 @@
 #include "value.hpp"
 #include <memory>
 
+// it's not exactly *traditional* factory, but it serves same purposes.
 class VFactory {
   using vptr = std::shared_ptr<Value>;
 
