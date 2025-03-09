@@ -4,21 +4,28 @@
 #include <cassert>
 
 class Call : public Instruction {
-  friend class IFactory;
+  friend class IOStreamer;
   std::string fname;
 
+public:
   Call(std::string fname, vptr dest, std::list<vptr> arglist) : fname(fname) {
     assert(dest->type() == ValType::Ref);
     dest_ = dest;
     args = arglist;
   }
+
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
+  virtual ~Call() = default;
 };
 
 class Print : public Instruction {
-  friend class IFactory;
+  friend class IOStreamer;
 
+public:
   Print(std::list<vptr> arglist) {
     dest_ = nullptr;
     args = arglist;
   }
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
+  virtual ~Print() = default;
 };

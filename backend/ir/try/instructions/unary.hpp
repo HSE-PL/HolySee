@@ -5,7 +5,9 @@
 #include <memory>
 
 class Const : public Instruction {
-  friend class IFactory;
+  friend class IOStreamer;
+
+public:
   Const(vptr dest, vptr val) {
     assert(dest->type() == ValType::Ref);
     assert(val->type() == ValType::Const);
@@ -13,10 +15,14 @@ class Const : public Instruction {
     dest_ = dest;
     args.push_back(val);
   }
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
+  virtual ~Const() = default;
 };
 
 class Jmp : public Instruction {
-  friend class IFactory;
+  friend class IOStreamer;
+
+public:
   Jmp(vptr label) {
     assert(label->type() == ValType::Label);
     args.push_back(label);
@@ -24,10 +30,14 @@ class Jmp : public Instruction {
     dest_ = nullptr;
     /*dest_ = std::make_shared<Value>(new Unit());*/
   }
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
+  virtual ~Jmp() = default;
 };
 
 class Ret : public Instruction {
-  friend class IFactory;
+  friend class IOStreamer;
+
+public:
   Ret(vptr val) {
     assert(val->type() == ValType::Ref);
     args.push_back(val);
@@ -35,4 +45,6 @@ class Ret : public Instruction {
     dest_ = nullptr;
     /*dest_ = std::make_shared<Value>(new Unit());*/
   }
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
+  virtual ~Ret() = default;
 };

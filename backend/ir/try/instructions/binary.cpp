@@ -1,6 +1,7 @@
 #include "binary.hpp"
 #include "../value.hpp"
 #include <cassert>
+#include <iostream>
 #include <memory>
 
 using std::shared_ptr;
@@ -13,6 +14,8 @@ Add::Add(vptr dest, vptr val1, vptr val2) {
   assert(dest->type() == ValType::Ref);
   assert(val1->type() == ValType::Ref);
   assert(val2->type() == ValType::Ref);
+  auto valoo = std::dynamic_pointer_cast<Ref>(val1);
+  std::cout << typeid(valoo).name() << std::endl;
   assert(std::dynamic_pointer_cast<Ref>(val1)->vtype() == Type::Int);
   assert(std::dynamic_pointer_cast<Ref>(val2)->vtype() == Type::Int);
   dest_ = dest;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "streamers/iostreamer.hpp"
 #include <string>
 
 enum class ValType {
@@ -16,57 +17,66 @@ enum class Type {
 };
 
 class Value {
+  friend class IOStreamer;
+
 protected:
   ValType t;
-  Value(ValType vt) : t(vt) {}
 
 public:
+  Value(ValType vt) : t(vt) {}
   ValType type() const { return t; }
-  virtual ~Value() = 0;
+  virtual void accept(IOStreamer &io) = 0;
+  virtual ~Value() {}
 };
 
 class Ref final : public Value {
-  friend class VFactory;
+  friend class IOStreamer;
   Type type_;
   std::string name_;
-  Ref(Type t, std::string name) : Value(ValType::Ref), name_(name) {}
 
 public:
+  Ref(Type t, std::string name) : Value(ValType::Ref), name_(name) {}
+  Ref(const Ref &other) = default;
   std::string name() { return name_; }
   Type vtype() { return type_; }
-  virtual ~Ref() = default;
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
 };
 
 class Label final : public Value {
-  friend class VFactory;
+  friend class IOStreamer;
   std::string label_;
-  Label(std::string label) : Value(ValType::Label), label_(label) {}
 
 public:
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
+  Label(std::string label) : Value(ValType::Label), label_(label) {}
+  Label(const Label &other) = default;
   std::string label() { return label_; }
-  virtual ~Label() = default;
 };
 
 class Int final : public Value {
-  friend class VFactory;
+  friend class IOStreamer;
   int val_;
-  Int(int val) : Value(ValType::Const), val_(val) {}
 
 public:
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
+  Int(int val) : Value(ValType::Const), val_(val) {}
+  Int(const Int &other) = default;
   int val() { return val_; }
-  virtual ~Int() = default;
 };
 
 class Bool final : public Value {
-  friend class VFactory;
+  friend class IOStreamer;
   bool val_;
-  Bool(bool val) : Value(ValType::Const), val_(val) {}
 
 public:
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
+  Bool(bool val) : Value(ValType::Const), val_(val) {}
+  Bool(const Bool &other) = default;
   bool val() { return val_; }
-  virtual ~Bool() = default;
 };
 
 struct Unit final : public Value {
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
   Unit() : Value(ValType::Nothing) {}
+  Unit(const Unit &other) = default;
 };

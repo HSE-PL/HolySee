@@ -12,6 +12,7 @@ protected:
   std::shared_ptr<Value> dest_;
   std::list<std::shared_ptr<Value>> args;
   ValType vtype;
+  friend class IOStreamer;
 
 public:
   CAItt cbegin() const { return args.cbegin(); }
@@ -19,5 +20,6 @@ public:
   AItt begin() { return args.begin(); }
   AItt end() { return args.end(); }
   ValType type() const { return vtype; }
-  /*std::shared_ptr<Value> dest() { return dest_; }*/
+  virtual void accept(IOStreamer &io) = 0;
+  virtual ~Instruction() {};
 };
