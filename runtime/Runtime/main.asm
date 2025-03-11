@@ -12,13 +12,11 @@ start:
 
 main:
   mov rdi, 3000
-  call __halloc ;<-------
-  jmp $
+  call __halloc
   push rax
-;  jmp $
+  jmp $
   push 42
   push 228
-  ret
 ;  call __GC
   mov rax, [spd]
   test rax, [rax]

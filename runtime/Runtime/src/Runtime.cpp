@@ -7,7 +7,6 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
-#include <functional>
 #include <iostream>
 #include <optional>
 #include <pthread.h>
@@ -20,7 +19,10 @@
 namespace rt {
 
   std::optional<GarbageCollector> gc;
+#define gcv gc.value()
   std::optional<threads::Threads> thrds;
+#define thrdsv thrds.value()
+
 
   namespace signals {
 
@@ -53,8 +55,7 @@ namespace rt {
   } // namespace signals
 
 
-  inline void init(void (&__start)(),
-                   void** spdptr) {
+  inline void init(void* __start, void** spdptr) {
     signals::init();
     sp::init(spdptr);
 
@@ -68,21 +69,36 @@ namespace rt {
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
     thrds.emplace(threads::Threads());
+    // for (;;)
+    //   ;
 
     std::cout << "start __start: " << __start
               << std::endl;
+    thrdsv.append(std::thread(
+        reinterpret_cast<void (&)()>(__start)));
 
-    // adition a thread in which sigfault
-    thrds->append(__start);
-
-    // __halloc(300);
     for (;;)
       ;
+    // gcv.print();
+    // auto p1 = gcv.alloc(7770);
+    // gcv.print();
+    // gcv.alloc(2000);
+    // gcv.print();
+    // gcv.alloc(3000);
+    // gcv.print();
+    // gcv.alloc(13000);
+    // gcv.print();
+    // auto p2 = gcv.alloc(32); // gcv.print(); //
+    // gcv.free(p2); // gcv.print(); for (;;) {
+    //   gcv.alloc(1000);
+    //   gcv.print();
+    // }
+    // ((void (*)(void))__start)();
   }
 
 } // namespace rt
 
-extern "C" void __rt_init(void (&__start)(),
+extern "C" void __rt_init(void*  __start,
                           void** spdptr) {
   rt::init(__start, spdptr);
 }
@@ -90,8 +106,7 @@ extern "C" void __rt_init(void (&__start)(),
 extern "C" void* __halloc(size_t size) {
   return rt::gc.has_value()
              ? reinterpret_cast<void*>(
-                   rt::gc->alloc(
-                       size)) //<--------
+                   rt::gc->alloc(size))
              : nullptr;
 }
 
