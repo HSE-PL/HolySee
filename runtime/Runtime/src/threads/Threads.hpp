@@ -51,6 +51,7 @@ namespace threads {
       // pool.insert(std::make_unique<std::thread>(
       //     std::move(thrd)));
       std::cout << "thrd append\n";
+      t.join();
     }
   };
 } // namespace threads
