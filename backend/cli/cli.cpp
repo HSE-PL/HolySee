@@ -1,16 +1,12 @@
 #include "cli.hpp"
-/*#include "../opt/tdce.hpp"*/
+#include "../ir/json/jsontranslator.hpp"
+#include "../ir/streamers/iostreamer.hpp"
 #include "argh.h"
-/**/
-/*#include "../ir_gen/json/json_translator.hpp"*/
-#include "../ir/try/jsontranslator.hpp"
-#include "../ir/try/streamers/iostreamer.hpp"
 #include <iostream>
-#include <ostream>
 
 void Runner::run(int argc, char *argv[]) {
-  /*auto cmdl = argh::parser(argc, argv);*/
-  /*auto opts_enabled = cmdl[{"O1", "opt"}];*/
+  auto cmdl = argh::parser(argc, argv);
+  auto opts_enabled = cmdl[{"O1", "opt"}];
   std::string input;
   std::string line;
   while (std::getline(std::cin, line)) {

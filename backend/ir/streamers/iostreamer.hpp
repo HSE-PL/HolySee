@@ -25,6 +25,7 @@ class IOStreamer {
   std::ostream &stream;
   void args(Instruction &instr);
   void dest(Instruction &instr);
+  void parameters(Fn &func);
 
 public:
   IOStreamer(std::ostream &stream) : stream(stream) {}

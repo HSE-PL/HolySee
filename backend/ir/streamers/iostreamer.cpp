@@ -7,6 +7,7 @@
 #include "../instructions/vararg.hpp"
 #include "../program.hpp"
 #include <iostream>
+#include <iterator>
 #include <unordered_map>
 
 // nagovnokozheno krepko
@@ -27,11 +28,10 @@ void IOStreamer::dest(Instruction &instr) {
 void IOStreamer::args(Instruction &instr) {
   for (auto it = instr.begin(); it != instr.end(); ++it) {
     it->get()->accept(*this);
-    /*if ((it + 1) != instr.end()) {*/
-    /*  stream << ", ";*/
-    /*}*/
+    if ((std::next(it)) != instr.end()) {
+      stream << ", ";
+    }
   }
-  stream << ";" << std::endl;
 }
 
 void IOStreamer::visit(Add &add) {
@@ -107,12 +107,26 @@ void IOStreamer::visit(Program &program) {
 }
 void IOStreamer::visit(BBlock &b) {
   for (auto &&instr : b.instrs) {
+    stream << "  ";
     instr->accept(*this);
+    stream << std::endl;
   }
 }
+void IOStreamer::parameters(Fn &func) {
+  for (auto it = func.args.begin(); it != func.args.end(); ++it) {
+    it->get()->accept(*this);
+    if ((std::next(it)) != func.args.end()) {
+      stream << ", ";
+    }
+  }
+}
+
 void IOStreamer::visit(Fn &fn) {
-  std::cout << "hi" << std::endl;
+  stream << t2ss.at(fn.type()) << " " << fn.name() << "(";
+  parameters(fn);
+  stream << ") {" << std::endl;
   for (auto &&block : fn.blocks) {
     block->accept(*this);
   }
+  stream << "}" << std::endl;
 }

@@ -1,7 +1,7 @@
-#include "blocks/bbuilder.hpp"
-#include "fnbuilder.hpp"
-#include "program.hpp"
-#include "json/json.hpp"
+#include "../blocks/bbuilder.hpp"
+#include "../fnbuilder.hpp"
+#include "../program.hpp"
+#include "json.hpp"
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -177,9 +177,7 @@ std::shared_ptr<Fn> func(json &fn, JTranslationCtx &ctx) {
       continue;
     }
     parse_instr(block_builder, it, ctx);
-    std::cout << it.at("op") << std::endl;
     if (terminators.contains(it.at("op"))) {
-      std::cout << "hehe" << std::endl;
       builder.addBlock(block_builder.build());
     }
   }

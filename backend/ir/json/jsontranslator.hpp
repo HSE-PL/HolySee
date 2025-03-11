@@ -1,4 +1,4 @@
 #pragma once
 
-#include "program.hpp"
+#include "../program.hpp"
 Program toIR(std::string &jsonstr);
