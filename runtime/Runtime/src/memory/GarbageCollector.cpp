@@ -1,6 +1,6 @@
 #include "GarbageCollector.hpp"
 #include "safepoints/Safepoint.hpp"
-
+#include "utils/log.h"
 GarbageCollector::GarbageCollector(
     size_t start_heap, size_t size_heap)
     : Allocator(start_heap, size_heap),
@@ -10,8 +10,7 @@ GarbageCollector::GarbageCollector(
 size_t
 GarbageCollector::alloc(size_t size_object) {
 
-  std::cout << memory << "\\" << size
-            << std::endl;
+  log << memory << "\\" << size << "\n";
   if (memory < 3 * (size >> 2))
     GC();
 
@@ -20,7 +19,7 @@ GarbageCollector::alloc(size_t size_object) {
 }
 
 void GarbageCollector::GC() {
-  std::cout << "calling GC\n";
+  log << "calling GC\n";
   sp::off();
 }
 
@@ -29,9 +28,8 @@ void GarbageCollector::cleaning(
   size_t ssp =
       context->uc_mcontext.gregs[REG_RSP];
   for (int i = 0; i < 10; ++i) {
-    std::cout << *reinterpret_cast<size_t*>(ssp +
-                                            8 * i)
-              << std::endl;
+    log << *reinterpret_cast<size_t*>(ssp + 8 * i)
+        << "\n";
   }
   throw std::runtime_error("bebebe");
   // TODO implement this shit

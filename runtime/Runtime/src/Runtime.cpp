@@ -3,6 +3,7 @@
 #include "safepoints/Safepoint.hpp"
 #include "system/System.hpp"
 
+#include "utils/log.h"
 #include <assert.h>
 #include <csignal>
 #include <cstddef>
@@ -17,6 +18,8 @@
 #include <threads/Threads.hpp>
 #include <unistd.h>
 
+void cpp__start();
+
 namespace rt {
 
   std::optional<GarbageCollector> gc;
@@ -28,8 +31,8 @@ namespace rt {
                  void* context) {
       // for (;;)
       // ;
-      std::cout << info->si_addr << " " << sp::spd
-                << std::endl;
+      log << info->si_addr << " " << sp::spd
+          << "\n";
       if (info->si_addr != sp::spd &&
           gc.has_value())
         _exit(228);
@@ -68,17 +71,14 @@ namespace rt {
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
     thrds.emplace();
-    // for (;;)
-    //   ;
 
-    std::cout << "start __start: "
-              << reinterpret_cast<size_t>(__start)
-              << std::endl;
+    log << "start __start: "
+        << reinterpret_cast<size_t>(__start)
+        << "\n";
     // __start();
     thrds->append(__start);
 
-    std::cout << "returning\n";
-
+    log << "returning\n";
     for (;;)
       ;
   }
@@ -100,4 +100,10 @@ extern "C" void* __halloc(size_t size) {
 
 extern "C" void __GC() {
   rt::gc.value().GC();
+}
+
+void cpp__start() {
+  __halloc(3000);
+  for (;;)
+    ;
 }

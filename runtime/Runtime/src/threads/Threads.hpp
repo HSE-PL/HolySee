@@ -2,6 +2,7 @@
 #include <iostream>
 #include <set>
 #include <thread>
+#include <utils/log.h>
 namespace threads {
 
   static size_t hash_id(
@@ -45,13 +46,12 @@ namespace threads {
     Threads() : was_sp(0) {}
 
     void append(void (&func)()) {
-      std::cout << "try to append thrd\n";
+      log << "try to append thrd\n";
 
       std::thread t(func);
       // pool.insert(std::make_unique<std::thread>(
       //     std::move(thrd)));
-      std::cout << "thrd " << t.get_id()
-                << " append\n";
+      log << "thrd " << t.get_id() << " append\n";
       t.join();
     }
   };

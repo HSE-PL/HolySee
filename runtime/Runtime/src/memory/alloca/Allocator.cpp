@@ -1,5 +1,5 @@
 #include "Allocator.hpp"
-
+#include "utils/log.h"
 
 std::vector<size_t>
 partion_of_pages(size_t count_pages) {
@@ -35,8 +35,9 @@ Allocator::Allocator(size_t start_heap,
                      size_t size_heap)
     : Heap(), start(start_heap), size(size_heap),
       regions(std::vector<Region<Arena>>()) {
-  printf("heap on\n%zx\n%zx\n", start_heap,
-         start_heap + size_heap);
+  log << "heap on\n"
+      << start_heap << "\n"
+      << start_heap + size_heap << "\n";
   /*
    * variant of regions "double-double"
    * each egion is +- equal in size
@@ -60,33 +61,33 @@ Allocator::Allocator(size_t start_heap,
 
 size_t Allocator::alloc(size_t object_size) {
   auto arena = get_min_more_then(object_size);
-  std::cout << "alloca " << object_size
-            << " on arena " << arena << std::endl;
+  log << "alloca " << object_size << " on arena "
+      << arena << "\n";
   size_t start_new_object = arena->cur;
-  std::cout << start_new_object << std::endl;
+  log << start_new_object << "\n";
   if (start_new_object == arena->start)
     add_active(arena->tier);
 
-  std::cout << "try to del\n";
+  log << "try to del\n";
   del(arena);
-  std::cout << "arena was del\n";
+  log << "arena was del\n";
   arena->cur += object_size;
   append(arena);
-  std::cout << "arena was replace\n";
+  log << "arena was replace\n";
   return start_new_object;
 }
 
 void Allocator::add_active(size_t index) {
-  std::cout << "call add active\n";
+  log << "call add active\n";
   auto new_active = regions[index].pull.back();
   regions[index].pull.pop_back();
 
   // regions[index].count_empty++;
 
-  std::cout << "call append new_active\n"
-            << new_active << std::endl;
+  log << "call append new_active\n"
+      << new_active << "\n";
   append(new_active);
-  std::cout << "return from add_active\n";
+  log << "return from add_active\n";
 }
 
 Arena* Allocator::arena_by_ptr(size_t ptr) const {
@@ -109,10 +110,9 @@ void Allocator::free_arena(Arena* a) {
 }
 
 void Allocator::free(size_t ptr) {
-  std::cout << "free     " << ptr << std::endl;
-  std::cout << "on arena "
-            << arena_by_ptr(ptr)->start
-            << std::endl;
+  log << "free     " << ptr << "\n";
+  log << "on arena " << arena_by_ptr(ptr)->start
+      << "\n";
 
   free_arena(arena_by_ptr(ptr));
 }

@@ -1,8 +1,15 @@
 [BITS 64]
+default rel
 extern __rt_init
 extern __halloc
 extern __GC
 global start
+global main
+
+%macro _call 1
+    and rsp, -16
+    call %1
+%endmacro
 
 section .text
 start:
@@ -12,12 +19,9 @@ start:
 
 main:
   mov rdi, 3000
-  call __halloc
-  push rax
+  _call __halloc
   jmp $
-  push 42
-  push 228
-;  call __GC
+  _call __GC
   mov rax, [spd]
   test rax, [rax]
 

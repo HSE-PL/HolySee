@@ -1,4 +1,5 @@
 #pragma once
+#include "utils/log.h"
 #include <concepts>
 #include <cstddef>
 #include <iostream>
@@ -22,25 +23,24 @@ struct Comparator {
   using is_transparent = void;
 
   bool operator()(const T* a, const T* b) const {
-    std::cout << "check " << a << " ? " << b
-              << std::endl;
+    log << "check " << a << " ? " << b << "\n";
     auto cond =
         a->key_for_heap() != b->key_for_heap()
             ? a->key_for_heap() <
                   b->key_for_heap()
             : a->uniq_for_heap() <
                   b->uniq_for_heap();
-    std::cout << "end of check\n";
+    log << "end of check\n";
     return cond;
   }
 
   bool operator()(const T* a, size_t n) const {
-    std::cout << a << std::endl;
+    log << a << "\n";
     return a->key_for_heap() < n;
   }
 
   bool operator()(size_t n, const T* b) const {
-    std::cout << b << std::endl;
+    log << b << "\n";
     return n < b->key_for_heap();
   }
 };
@@ -66,15 +66,14 @@ public:
   }
 
   void append(T* a) {
-    std::cout << "try to get _mutex, ";
+    log << "try to get _mutex, ";
     _mutex.lock();
-    std::cout << "call insert int thread: "
-              << std::this_thread::get_id()
-              << "\n";
+    log << "call insert int thread: "
+        << std::this_thread::get_id() << "\n";
     keys.insert(a);
-    std::cout << "insert end, ";
+    log << "insert end, ";
     _mutex.unlock();
-    std::cout << "_mutex unlock\n";
+    log << "_mutex unlock\n";
   }
 
   void del(T* a) {
@@ -95,17 +94,17 @@ public:
     printSetTree(right, end, depth + 1);
 
     for (int i = 0; i < depth; ++i)
-      std::cout << "    ";
-    std::cout << (*it)->uniq_for_heap() << ":"
-              << (*it)->key_for_heap() << "\n";
+      log << "    ";
+    log << (*it)->uniq_for_heap() << ":"
+        << (*it)->key_for_heap() << "\n";
 
     if (it != end)
       printSetTree(it, it, depth + 1);
   }
 
   void print() {
-    std::cout << "=====>\n";
+    log << "=====>\n";
     printSetTree(keys.begin(), keys.end());
-    std::cout << "<=====\n";
+    log << "<=====\n";
   }
 };

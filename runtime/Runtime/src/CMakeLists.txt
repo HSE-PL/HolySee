@@ -10,6 +10,7 @@ add_library(src STATIC
         threads/Threads.cpp
         threads/Horoutine.cpp
         threads/Horoutine.hpp
+        utils/log.h
 )
 
 target_include_directories(src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
