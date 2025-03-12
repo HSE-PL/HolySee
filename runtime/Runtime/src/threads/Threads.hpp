@@ -50,7 +50,8 @@ namespace threads {
       std::thread t(func);
       // pool.insert(std::make_unique<std::thread>(
       //     std::move(thrd)));
-      std::cout << "thrd append\n";
+      std::cout << "thrd " << t.get_id()
+                << " append\n";
       t.join();
     }
   };

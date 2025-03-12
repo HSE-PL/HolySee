@@ -3,6 +3,7 @@
 #include "safepoints/Safepoint.hpp"
 #include "system/System.hpp"
 
+#include <assert.h>
 #include <csignal>
 #include <cstddef>
 #include <cstdio>
@@ -20,7 +21,6 @@ namespace rt {
 
   std::optional<GarbageCollector> gc;
   std::optional<threads::Threads> thrds;
-
 
   namespace signals {
 
@@ -62,18 +62,19 @@ namespace rt {
 
     void* heap_start = sys::salloc(heap_size);
 
-    gc.emplace(GarbageCollector(
+    gc.emplace(
         reinterpret_cast<size_t>(heap_start),
-        heap_size));
+        heap_size);
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
-    thrds.emplace(threads::Threads());
+    thrds.emplace();
     // for (;;)
     //   ;
 
     std::cout << "start __start: "
               << reinterpret_cast<size_t>(__start)
               << std::endl;
+    // __start();
     thrds->append(__start);
 
     std::cout << "returning\n";
@@ -90,6 +91,7 @@ extern "C" void __rt_init(void (&__start)(),
 }
 
 extern "C" void* __halloc(size_t size) {
+  assert(size);
   return rt::gc.has_value()
              ? reinterpret_cast<void*>(
                    rt::gc->alloc(size))
