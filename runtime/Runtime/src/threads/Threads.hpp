@@ -1,58 +1,44 @@
 #pragma once
+#include "Horoutine.hpp"
+
+#include <assert.h>
 #include <iostream>
+#include <optional>
 #include <set>
 #include <thread>
 #include <utils/log.h>
 namespace threads {
-
-  static size_t hash_id(
-      const std::unique_ptr<std::thread>& thrd) {
-    return std::hash<std::thread::id>{}(
-        thrd->get_id());
-  }
-
   struct ThreadComparator {
     using is_transparent = void;
 
-    bool operator()(
-        const std::unique_ptr<std::thread>& a,
-        const std::unique_ptr<std::thread>& b)
-        const {
-      return hash_id(a) < hash_id(b);
+    bool operator()(const Horoutine& a,
+                    const Horoutine& b) const {
+      return a.start_sp <= b.start_sp;
     }
 
-    bool operator()(
-        const std::unique_ptr<std::thread>& a,
-        size_t n) const {
-      return hash_id(a) < n;
+    bool operator()(const Horoutine& a,
+                    size_t           n) const {
+      return a.start_sp < n;
     }
 
-    bool
-    operator()(size_t n,
-               const std::unique_ptr<std::thread>&
-                   b) const {
-      return n < hash_id(b);
+    bool operator()(size_t           n,
+                    const Horoutine& b) const {
+      return n < b.start_sp;
     }
   };
 
   class Threads {
-    std::set<std::unique_ptr<std::thread>,
-             ThreadComparator>
-        pool;
-
   public:
+    static Threads& instance();
+    std::set<Horoutine, ThreadComparator> pool;
+    std::mutex                            _mutex;
+
     size_t was_sp;
 
     Threads() : was_sp(0) {}
 
-    void append(void (&func)()) {
-      log << "try to append thrd\n";
+    void append(void (&func)());
 
-      std::thread t(func);
-      // pool.insert(std::make_unique<std::thread>(
-      //     std::move(thrd)));
-      log << "thrd " << t.get_id() << " append\n";
-      t.join();
-    }
+    Horoutine get(size_t sp);
   };
 } // namespace threads

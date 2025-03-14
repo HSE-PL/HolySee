@@ -15,19 +15,35 @@ section .text
 start:
   lea rdi, [main]
   lea rsi, [spd]
-  call __rt_init
+  mov rdx, rsp
+  _call __rt_init
+  mov rax, 60
+  mov rdi, 7
+  syscall
 
 main:
+push 0x12345678
+  push 0x42
+  push 0x42
+  push 0x42
+  push 0x42
+  push 0x42
   mov rdi, 3000
+  push 0x228
   _call __halloc
-  jmp $
+  push 0x337
+;  jmp $
   _call __GC
+  push 0x24126
+  push 0x23126
+  push 0x22126
   mov rax, [spd]
   test rax, [rax]
 
   mov rax, 60
   mov rdi, 42
   syscall
+  jmp $
 
 section .data
 spd:

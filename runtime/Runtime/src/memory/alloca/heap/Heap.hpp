@@ -1,5 +1,6 @@
 #pragma once
 #include "utils/log.h"
+#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <iostream>
@@ -58,10 +59,7 @@ public:
     _mutex.lock();
     auto el = keys.lower_bound(n);
     _mutex.unlock();
-    if (el == keys.end())
-      throw std::runtime_error(
-          "very big object (size: " +
-          std::to_string(n) + ")");
+    assert(el != keys.end());
     return *el;
   }
 

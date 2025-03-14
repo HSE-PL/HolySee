@@ -17,13 +17,9 @@
 #include <thread>
 #include <threads/Threads.hpp>
 #include <unistd.h>
-
-void cpp__start();
-
 namespace rt {
 
   std::optional<GarbageCollector> gc;
-  std::optional<threads::Threads> thrds;
 
   namespace signals {
 
@@ -36,9 +32,9 @@ namespace rt {
       if (info->si_addr != sp::spd &&
           gc.has_value())
         _exit(228);
-      gc.value().cleaning(
-          info,
-          static_cast<ucontext_t*>(context));
+      log << "ok\n";
+      gc->cleaning(info, static_cast<ucontext_t*>(
+                             context));
       // TODO implement this shit
     }
 
@@ -57,7 +53,8 @@ namespace rt {
 
 
   inline void init(void (&__start)(),
-                   void** spdptr) {
+                   void** spdptr, void* sp) {
+    log << "main stack: " << sp << "\n";
     signals::init();
     sp::init(spdptr);
 
@@ -70,13 +67,11 @@ namespace rt {
         heap_size);
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
-    thrds.emplace();
 
     log << "start __start: "
         << reinterpret_cast<size_t>(__start)
         << "\n";
-    // __start();
-    thrds->append(__start);
+    threads::Threads::instance().append(__start);
 
     log << "returning\n";
     for (;;)
@@ -86,11 +81,13 @@ namespace rt {
 } // namespace rt
 
 extern "C" void __rt_init(void (&__start)(),
-                          void** spdptr) {
-  rt::init(__start, spdptr);
+                          void** spdptr,
+                          void*  sp) {
+  rt::init(__start, spdptr, sp);
 }
 
 extern "C" void* __halloc(size_t size) {
+  std::cout << "alloca " << size << "\n";
   assert(size);
   return rt::gc.has_value()
              ? reinterpret_cast<void*>(
@@ -100,10 +97,4 @@ extern "C" void* __halloc(size_t size) {
 
 extern "C" void __GC() {
   rt::gc.value().GC();
-}
-
-void cpp__start() {
-  __halloc(3000);
-  for (;;)
-    ;
 }
