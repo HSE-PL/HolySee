@@ -31,13 +31,13 @@ partion_of_pages(size_t count_pages) {
   return counts;
 }
 
-Allocator::Allocator(size_t start_heap,
-                     size_t size_heap)
-    : Heap(), start(start_heap), size(size_heap),
-      regions(std::vector<Region<Arena>>()) {
+Allocator::Allocator(size_t start, size_t size)
+    : Heap(), start_(start), size_(size),
+      emplaced_(start, start + size),
+      regions_(std::vector<Region<Arena>>()) {
   log << "heap on\n"
-      << start_heap << "\n"
-      << start_heap + size_heap << "\n";
+      << start << "\n"
+      << start + size << "\n";
   /*
    * variant of regions "double-double"
    * each egion is +- equal in size
@@ -46,11 +46,11 @@ Allocator::Allocator(size_t start_heap,
 
   auto counts = partion_of_pages(count_pages);
 
-  size_t cur    = start_heap;
+  size_t cur    = start;
   size_t a_size = 1 << 12;
   size_t i      = 0;
   for (const size_t c : counts) {
-    regions.emplace_back(cur, c, a_size, i);
+    regions_.emplace_back(cur, c, a_size, i);
 
     add_active(i++);
 
@@ -60,6 +60,7 @@ Allocator::Allocator(size_t start_heap,
 }
 
 size_t Allocator::alloc(size_t object_size) {
+  mutex_.lock();
   auto arena = get_min_more_then(object_size);
   log << "alloca " << object_size << " on arena "
       << arena << "\n";
@@ -74,13 +75,16 @@ size_t Allocator::alloc(size_t object_size) {
   arena->cur += object_size;
   append(arena);
   log << "arena was replace\n";
+  emplaced_.set(start_new_object);
+  mutex_.unlock();
   return start_new_object;
 }
 
 void Allocator::add_active(size_t index) {
+  mutex_.lock();
   log << "call add active\n";
-  auto new_active = regions[index].pull.back();
-  regions[index].pull.pop_back();
+  auto new_active = regions_[index].pull.back();
+  regions_[index].pull.pop_back();
 
   // regions[index].count_empty++;
 
@@ -88,31 +92,63 @@ void Allocator::add_active(size_t index) {
       << new_active << "\n";
   append(new_active);
   log << "return from add_active\n";
+  mutex_.unlock();
 }
 
 Arena* Allocator::arena_by_ptr(size_t ptr) const {
   int index;
-  for (index = 0; index < regions.size() &&
-                  ptr >= regions[index].start;
+  for (index = 0; index < regions_.size() &&
+                  ptr >= regions_[index].start;
        ++index)
     ;
   --index;
-  auto offset  = ptr - regions[index].start;
-  auto a_index = offset / regions[index].t_size;
-  return regions[index].items[a_index];
+  auto offset  = ptr - regions_[index].start;
+  auto a_index = offset / regions_[index].t_size;
+  return regions_[index].items[a_index];
 }
 
 void Allocator::free_arena(Arena* a) {
+  mutex_.lock();
   del(a);
   keys.erase(a);
   a->cur = a->start;
-  regions[a->tier].pull.push_back(a);
+  regions_[a->tier].pull.push_back(a);
+  mutex_.unlock();
 }
 
 void Allocator::free(size_t ptr) {
+  mutex_.lock();
   log << "free     " << ptr << "\n";
   log << "on arena " << arena_by_ptr(ptr)->start
       << "\n";
+  auto abp = arena_by_ptr(ptr);
+  emplaced_.clear(abp->start,
+                  abp->start + abp->size);
+  free_arena(abp);
+  mutex_.unlock();
+}
 
-  free_arena(arena_by_ptr(ptr));
+void BitMap::set(size_t n) {
+  mutex_.lock();
+  Bitset::set(map(n));
+  mutex_.unlock();
+}
+
+size_t BitMap::get(size_t n) {
+  mutex_.lock();
+  auto res = Bitset::get(map(n));
+  mutex_.unlock();
+  return res;
+}
+
+void BitMap::clear() {
+  mutex_.lock();
+  Bitset::clear();
+  mutex_.unlock();
+}
+
+void BitMap::clear(size_t from, size_t to) {
+  mutex_.lock();
+  Bitset::clear(map(from), map(to));
+  mutex_.unlock();
 }

@@ -48,36 +48,39 @@ struct Comparator {
 
 template <ItemForHeap T>
 class Heap {
+  std::mutex mutex_;
+
+protected:
+  std::set<T*, Comparator<T>> keys;
+
 public:
   virtual ~Heap() = default;
   Heap()          = default;
 
-  std::set<T*, Comparator<T>> keys;
-  std::mutex                  _mutex;
 
   T* get_min_more_then(size_t n) {
-    _mutex.lock();
+    mutex_.lock();
     auto el = keys.lower_bound(n);
-    _mutex.unlock();
+    mutex_.unlock();
     assert(el != keys.end());
     return *el;
   }
 
   void append(T* a) {
     log << "try to get _mutex, ";
-    _mutex.lock();
+    mutex_.lock();
     log << "call insert int thread: "
         << std::this_thread::get_id() << "\n";
     keys.insert(a);
     log << "insert end, ";
-    _mutex.unlock();
+    mutex_.unlock();
     log << "_mutex unlock\n";
   }
 
   void del(T* a) {
-    _mutex.lock();
+    mutex_.lock();
     keys.erase(a);
-    _mutex.unlock();
+    mutex_.unlock();
   }
 
   // 4 debug

@@ -1,18 +1,45 @@
 #pragma once
 #include "Arena.hpp"
+#include "Bitset.hpp"
 #include "Region.hpp"
 #include "heap/Heap.hpp"
 
-class Allocator : public Heap<Arena> {
-  const size_t start;
+class BitMap : Bitset {
+  uint64_t   from_;
+  uint64_t   to_;
+  std::mutex mutex_;
 
-  std::vector<Region<Arena>> regions{};
-
-protected:
-  const size_t size;
+  size_t map(size_t n) {
+    assert(from_ <= n);
+    assert(n < to_);
+    return (n - from_) / 8;
+  }
 
 public:
-  Allocator(size_t start_heap, size_t size_heap);
+  BitMap(uint64_t from, uint64_t to)
+      : Bitset(from - to), from_(from), to_(to) {}
+
+  void set(size_t n);
+
+  size_t get(size_t n);
+
+  void clear();
+
+  void clear(size_t from, size_t to);
+};
+
+class Allocator : public Heap<Arena> {
+  const size_t start_;
+
+  std::vector<Region<Arena>> regions_{};
+  std::recursive_mutex       mutex_;
+
+protected:
+  const size_t size_;
+  BitMap       emplaced_;
+
+public:
+  Allocator(size_t start, size_t size);
 
   ~Allocator() override = default;
 
@@ -20,7 +47,8 @@ public:
 
   void add_active(size_t index);
 
-  [[nodiscard]] Arena* arena_by_ptr(size_t ptr) const;
+  [[nodiscard]] Arena*
+  arena_by_ptr(size_t ptr) const;
 
   void free(size_t ptr);
 
