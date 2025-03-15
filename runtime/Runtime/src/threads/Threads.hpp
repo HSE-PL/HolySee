@@ -1,8 +1,10 @@
 #pragma once
 #include "Horoutine.hpp"
+#include "ThreadSafeCounter.hpp"
 
 #include <assert.h>
 #include <iostream>
+#include <memory/GarbageCollector.hpp>
 #include <optional>
 #include <set>
 #include <thread>
@@ -11,34 +13,55 @@ namespace threads {
   struct ThreadComparator {
     using is_transparent = void;
 
-    bool operator()(const Horoutine& a,
-                    const Horoutine& b) const {
+    bool operator()(const Horoutine& a, const Horoutine& b) const {
       return a.start_sp <= b.start_sp;
     }
 
-    bool operator()(const Horoutine& a,
-                    size_t           n) const {
+    bool operator()(const Horoutine& a, size_t n) const {
       return a.start_sp < n;
     }
 
-    bool operator()(size_t           n,
-                    const Horoutine& b) const {
+    bool operator()(size_t n, const Horoutine& b) const {
       return n < b.start_sp;
     }
   };
 
   class Threads {
+    size_t counter_;
+
+    std::binary_semaphore sp_;
+
+    std::set<Horoutine, ThreadComparator> pool_;
+    std::mutex                            mutex_;
+
+    bool releaseIfAll(std::binary_semaphore& sem) {
+      guard(mutex_);
+      if (pool_.size() == ++counter_) {
+        counter_ = 0;
+        sem.release();
+        return true;
+      }
+      return false;
+    }
+
   public:
     static Threads& instance();
-    std::set<Horoutine, ThreadComparator> pool;
-    std::mutex                            _mutex;
 
-    size_t was_sp;
+    void waitEndSp();
+    void waitEndRooting();
 
-    Threads() : was_sp(0) {}
+    std::binary_semaphore rooting_;
+    std::binary_semaphore marking_;
+
+    Threads() : sp_(0), rooting_(0) {
+    }
 
     void append(void (&func)());
 
+    size_t count() {
+      return pool_.size();
+    }
+
     Horoutine get(size_t sp);
-  };
+  }; // namespace threads
 } // namespace threads

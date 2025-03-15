@@ -16,6 +16,7 @@ start:
   lea rdi, [main]
   lea rsi, [spd]
   mov rdx, rsp
+  lea rcx, [table]
   _call __rt_init
   mov rax, 60
   mov rdi, 7
@@ -48,3 +49,9 @@ push 0x12345678
 section .data
 spd:
   dq 0
+section .rodata
+table:
+dq 2 ; size
+dq 0x10 ; sizeof linkedlist (128)
+dq 0x18 ; sizeof heap (129)
+

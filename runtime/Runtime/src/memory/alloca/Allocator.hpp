@@ -3,10 +3,11 @@
 #include "Bitset.hpp"
 #include "Region.hpp"
 #include "heap/Heap.hpp"
+#include <mutex>
 
 class BitMap : Bitset {
-  uint64_t   from_;
-  uint64_t   to_;
+  ref        from_;
+  ref        to_;
   std::mutex mutex_;
 
   size_t map(size_t n) {
@@ -16,41 +17,42 @@ class BitMap : Bitset {
   }
 
 public:
-  BitMap(uint64_t from, uint64_t to)
-      : Bitset(from - to), from_(from), to_(to) {}
+  BitMap(ref from, ref to) : Bitset(from - to), from_(from), to_(to) {
+  }
 
-  void set(size_t n);
+  void set(ref n);
 
-  size_t get(size_t n);
+  bool operator[](ref n);
 
   void clear();
 
-  void clear(size_t from, size_t to);
+  void clear(ref from, ref to);
 };
 
 class Allocator : public Heap<Arena> {
-  const size_t start_;
 
-  std::vector<Region<Arena>> regions_{};
-  std::recursive_mutex       mutex_;
+  std::recursive_mutex mutex_;
 
 protected:
+  const ref    start_;
   const size_t size_;
   BitMap       emplaced_;
+  BitMap       marking_;
+
+  std::vector<Region<Arena>> regions_{};
 
 public:
-  Allocator(size_t start, size_t size);
+  Allocator(ref start, size_t size);
 
   ~Allocator() override = default;
 
-  virtual size_t alloc(size_t object_size);
+  virtual ref alloc(size_t object_size);
 
   void add_active(size_t index);
 
-  [[nodiscard]] Arena*
-  arena_by_ptr(size_t ptr) const;
+  [[nodiscard]] Arena* arena_by_ptr(ref ptr) const;
 
-  void free(size_t ptr);
+  void free(ref ptr);
 
   void free_arena(Arena* a);
 };

@@ -6,12 +6,12 @@ PointerAlignment: Left
 IndentPPDirectives: None
 AlignConsecutiveDeclarations: true
 AllowShortBlocksOnASingleLine: Empty
-AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 AlignConsecutiveAssignments: true
 AlignTrailingComments: true
-ColumnLimit: 50
+ColumnLimit: 100
 ContinuationIndentWidth: 4
 MaxEmptyLinesToKeep: 2
 IndentCaseLabels: true

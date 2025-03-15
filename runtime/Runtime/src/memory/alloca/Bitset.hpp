@@ -13,12 +13,12 @@ class Bitset {
   }
 
 public:
-  Bitset(size_t count_bit)
-      : bits(((count_bit - 1) / 64) + 1, 0) {}
+  Bitset(size_t count_bit) : bits((count_bit - 1) / 64 + 1, 0) {
+  }
 
   void set(size_t n);
 
-  uint64_t get(size_t n) const;
+  size_t get(size_t n) const;
 
   void clear();
 

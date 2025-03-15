@@ -1,6 +1,7 @@
 #include "Bitset.hpp"
 #include <algorithm>
 #include <cassert>
+#include <utils/defines.h>
 #include <vector>
 
 

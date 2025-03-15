@@ -3,48 +3,55 @@
 #include "threads/Threads.hpp"
 #include "utils/log.h"
 #include <cassert>
+#include <cstddef>
 
-GarbageCollector::GarbageCollector(
-    size_t start_heap, size_t size_heap)
-    : Allocator(start_heap, size_heap),
-      memory(size_heap) {
+GarbageCollector::GarbageCollector(size_t start_heap, size_t size_heap, TypeTable* tt)
+    : Allocator(start_heap, size_heap), checked_(start_heap, start_heap + size_heap),
+      memory_(size_heap), tt_(tt) {
 }
 
-size_t
-GarbageCollector::alloc(size_t size_object) {
-
-  log << memory << "\\" << size << "\n";
-  if (memory < 3 * (size >> 2))
+ref GarbageCollector::alloc(size_t size_object) {
+  log << memory_ << "\\" << size << "\n";
+  if (memory_ < 3 * (size >> 2))
     GC();
 
-  memory -= size_object;
+  memory_ -= size_object;
   return Allocator::alloc(size_object); //<------
 }
 
 void GarbageCollector::GC() {
   log << "calling GC\n";
   sp::off();
+
+  for (int i = 0; i < threads::Threads::instance().count(); ++i)
+    root_was_claim_.acquire();
+
+  cleaning();
 }
 
-void GarbageCollector::cleaning(
-    siginfo_t* info, ucontext_t* context) {
-  log << "calling cleaning\n";
-  size_t ssp =
-      context->uc_mcontext.gregs[REG_RSP];
+void GarbageCollector::make_root(siginfo_t* info, ucontext_t* context) {
+  log << "calling make_root\n";
+  ref ssp = context->uc_mcontext.gregs[REG_RSP];
 
-  auto hrtptr =
-      threads::Threads::instance().get(ssp);
+  auto hrtptr = threads::Threads::instance().get(ssp);
   log << hrtptr.start_sp << ":\n.\n.\n.\n"
       << ssp << "\n"
       << "summary diff: " /*<< std::hex*/
       << hrtptr.start_sp - ssp << "\n";
 
   assert(ssp < hrtptr.start_sp);
-  for (size_t sp = ssp; sp <= hrtptr.start_sp;
-       sp += 8) {
-    std::cout << *reinterpret_cast<size_t*>(sp)
-              << "\n";
+  for (ref sp = ssp; sp <= hrtptr.start_sp; sp += 8) {
+    auto ptr = *reinterpret_cast<ref*>(sp);
+    std::cout << ptr << "\n";
+    auto [index, clear_ptr] = split(ptr);
+    if (start_ <= clear_ptr && clear_ptr < start_ + size_) {
+      if (auto [size, have_ref] = how_many_ref(index); have_ref) {
+        log << "find " << clear_ptr << " in root, type: " << index << "\n";
+        root_.push({index, clear_ptr});
+      }
+    }
   }
-  throw std::runtime_error("bebebe");
-  // TODO implement this shit
+
+  threads::Threads::instance().waitEndRooting();
+  root_was_claim_.release();
 }

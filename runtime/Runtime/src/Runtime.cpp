@@ -23,18 +23,18 @@ namespace rt {
 
   namespace signals {
 
-    void handler(int sig, siginfo_t* info,
-                 void* context) {
+    void handler(int sig, siginfo_t* info, void* context) {
       // for (;;)
       // ;
-      log << info->si_addr << " " << sp::spd
-          << "\n";
-      if (info->si_addr != sp::spd &&
-          gc.has_value())
+      log << info->si_addr << " " << sp::spd << "\n";
+      if (info->si_addr != sp::spd && gc.has_value())
         _exit(228);
       log << "ok\n";
-      gc->cleaning(info, static_cast<ucontext_t*>(
-                             context));
+
+      threads::Threads::instance().waitEndSp();
+
+      gc->make_root(info, static_cast<ucontext_t*>(context));
+      threads::Threads::instance().marking_.acquire();
       // TODO implement this shit
     }
 
@@ -51,9 +51,16 @@ namespace rt {
     }
   } // namespace signals
 
+  [[noreturn]] void run() {
+    for (long i = 0;; ++i) {
+      // std::binary_semaphore sem(0);
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+      threads::Threads::instance().rooting_.acquire();
+      gc->GC();
+    }
+  }
 
-  inline void init(void (&__start)(),
-                   void** spdptr, void* sp) {
+  [[noreturn]] void init(void (&__start)(), void** spdptr, void* sp, TypeTable* tt) {
     log << "main stack: " << sp << "\n";
     signals::init();
     sp::init(spdptr);
@@ -62,37 +69,25 @@ namespace rt {
 
     void* heap_start = sys::salloc(heap_size);
 
-    gc.emplace(
-        reinterpret_cast<size_t>(heap_start),
-        heap_size);
+    gc.emplace(reinterpret_cast<size_t>(heap_start), heap_size, tt);
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
 
-    log << "start __start: "
-        << reinterpret_cast<size_t>(__start)
-        << "\n";
+    log << "start __start: " << reinterpret_cast<size_t>(__start) << "\n";
     threads::Threads::instance().append(__start);
 
-    log << "returning\n";
-    for (;;)
-      ;
+    run();
   }
-
 } // namespace rt
 
-extern "C" void __rt_init(void (&__start)(),
-                          void** spdptr,
-                          void*  sp) {
-  rt::init(__start, spdptr, sp);
+extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp, TypeTable* tt) {
+  rt::init(__start, spdptr, sp, tt);
 }
 
 extern "C" void* __halloc(size_t size) {
   std::cout << "alloca " << size << "\n";
   assert(size);
-  return rt::gc.has_value()
-             ? reinterpret_cast<void*>(
-                   rt::gc->alloc(size))
-             : nullptr;
+  return rt::gc.has_value() ? reinterpret_cast<void*>(rt::gc->alloc(size)) : nullptr;
 }
 
 extern "C" void __GC() {

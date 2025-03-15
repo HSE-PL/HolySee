@@ -10,6 +10,10 @@ add_library(src STATIC
         system/System.cpp
         threads/Threads.cpp
         threads/Horoutine.cpp
+        memory/ThreadSafeVector.cpp
+        memory/ThreadSafeVector.hpp
+        threads/ThreadSafeCounter.cpp
+        threads/ThreadSafeCounter.hpp
 )
 
 target_include_directories(src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
