@@ -32,6 +32,15 @@ push 0x12345678
   mov rdi, 3000
   push 0x228
   _call __halloc
+  push rax
+  mov rdi, 5000
+  _call __halloc
+  push 0x232
+  push rax
+  mov rdi, 2000
+  _call __halloc
+  mov rdi, 7000
+  _call __halloc
   push 0x337
 ;  jmp $
   _call __GC

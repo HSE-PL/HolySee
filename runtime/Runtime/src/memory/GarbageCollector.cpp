@@ -21,12 +21,15 @@ ref GarbageCollector::alloc(size_t size_object) {
 
 void GarbageCollector::GC() {
   log << "calling GC\n";
+  print();
   sp::off();
 
   for (int i = 0; i < threads::Threads::instance().count(); ++i)
     root_was_claim_.acquire();
 
   cleaning();
+  log << "STW end \n";
+  print();
 }
 
 void GarbageCollector::make_root(siginfo_t* info, ucontext_t* context) {

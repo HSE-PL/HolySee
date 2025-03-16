@@ -78,7 +78,7 @@ void Allocator::add_active(size_t index) {
   // regions[index].count_empty++;
 
   log << "call append new_active\n" << new_active << "\n";
-  new_active.append(new_active);
+  new_active->append(new_active);
   log << "return from add_active\n";
   mutex_.unlock();
 }

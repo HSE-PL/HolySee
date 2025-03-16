@@ -22,7 +22,7 @@ public:
 
   const size_t t_size;
 
-  bool have_empty;
+  mutable bool have_empty;
 
   Region(ref start_region, size_t count_items, size_t t_size, size_t region_tier)
       : start(start_region), count(count_items), size(count * t_size), t_size(t_size),

@@ -52,9 +52,8 @@ public:
 
 
   T* get_min_more_then(ref n) {
-    mutex_.lock();
+    guard(mutex_);
     auto el = keys.lower_bound(n);
-    mutex_.unlock();
     assert(el != keys.end());
     return *el;
   }
@@ -70,9 +69,8 @@ public:
   }
 
   void del(T* a) {
-    mutex_.lock();
+    guard(mutex_);
     keys.erase(a);
-    mutex_.unlock();
   }
 
   // 4 debug

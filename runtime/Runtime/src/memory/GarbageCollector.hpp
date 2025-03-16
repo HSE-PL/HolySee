@@ -5,7 +5,6 @@
 #include <Runtime.hpp>
 #include <csignal>
 #include <stddef.h>
-#include <stl_stack.h>
 #include <sys/ucontext.h>
 #include <threads/Threads.hpp>
 
@@ -25,7 +24,7 @@ class GarbageCollector final : public Allocator {
   std::counting_semaphore<> root_was_claim_{0};
 
   size_t clear(size_t ptr) const {
-    return ptr & ((1 << 48) - 1);
+    return ptr << 16 >> 16;
   }
 
   std::pair<size_t, bool> how_many_ref(size_t ptr) const {
@@ -43,26 +42,56 @@ class GarbageCollector final : public Allocator {
     return tt_->md[index - TT_RESERVED], true;
   }
 
-  std::pair<size_t, size_t> split(size_t ptr) const {
+  std::pair<uint64_t, uint64_t> split(size_t ptr) const {
     return std::pair(ptr >> 48, clear(ptr));
   }
 
   void cleaning() {
     log << "calling cleaning\n";
 
+    for (const auto ptr : root_) {
+      marking(ptr);
+    }
 
+    for (const auto& regs : regions_) {
+      regs.have_empty = false;
+    }
+
+    for (const auto arena : keys) {
+      if (arena->is_died()) {
+        if (regions_[arena->tier].have_empty) {
+          keys.erase(arena);
+        } else {
+          regions_[arena->tier].have_empty = true;
+        }
+      }
+    }
     // throw std::runtime_error("bebebe");
     // TODO implement this shit
   }
 
-  void marking(fatPtr fat_ptr) {
+  void marking(const fatPtr& fat_ptr) {
+    log << "try to marking " << fat_ptr.ptr << "type (" << fat_ptr.index << ")\n";
     auto arena = arena_by_ptr(fat_ptr.ptr);
+    regions_[arena->tier].mutex_.lock();
     if (marking_[fat_ptr.ptr]) {
+      log << "unluck\n";
+      regions_[arena->tier].mutex_.unlock();
       return;
     }
     marking_.set(fat_ptr.ptr);
+    arena->revive();
 
-    regions_[arena->tier].mutex_.lock();
+    for (long offset = 0; offset < tt_->md[fat_ptr.index]; offset += 8) {
+      auto ptr_on_field = fat_ptr.ptr + offset;
+      log << "find ptr on field: " << ptr_on_field << "\n";
+      auto field = *reinterpret_cast<size_t*>(ptr_on_field);
+      log << "value of field " << field << "\n";
+      auto [field_ptr, field_type] = split(field);
+      if (auto [size, have_ref] = how_many_ref(field_type); have_ref) {
+        marking({field_ptr, field_type});
+      }
+    }
   }
 
 

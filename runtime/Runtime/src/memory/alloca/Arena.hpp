@@ -18,8 +18,11 @@ public:
   }
 
   void revive() {
-    assert(died);
     died = false;
+  }
+
+  bool is_died() {
+    return died;
   }
 
   [[nodiscard]] size_t key_for_heap() const {
