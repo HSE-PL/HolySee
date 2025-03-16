@@ -10,6 +10,14 @@ class ThreadSafeVector {
 public:
   ThreadSafeVector() = default;
 
+  auto begin() {
+    return v_.begin();
+  }
+
+  auto end() {
+    return v_.end();
+  }
+
   void push(T item) {
     guard(mutex_);
     v_.push_back(item);

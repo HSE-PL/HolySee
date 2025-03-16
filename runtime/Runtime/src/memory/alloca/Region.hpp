@@ -49,4 +49,8 @@ public:
   T* operator[](size_t index) const {
     return items_[index];
   }
+
+  size_t size_pull() {
+    return pull_.size();
+  }
 };

@@ -17,7 +17,7 @@ class BitMap : Bitset {
   }
 
 public:
-  BitMap(ref from, ref to) : Bitset(from - to), from_(from), to_(to) {
+  BitMap(ref from, ref to) : Bitset((to - from) / 64), from_(from), to_(to) {
   }
 
   void set(ref n);
@@ -39,7 +39,7 @@ protected:
   BitMap       emplaced_;
   BitMap       marking_;
 
-  std::vector<Region<Arena>> regions_{};
+  std::vector<Region<Arena>*> regions_{};
 
 public:
   Allocator(ref start, size_t size);

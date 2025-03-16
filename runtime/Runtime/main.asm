@@ -29,24 +29,25 @@ push 0x12345678
   push 0x42
   push 0x42
   push 0x42
-  mov rdi, 3000
+  mov rdi, 0x2f00
   push 0x228
   _call __halloc
   push rax
-  mov rdi, 5000
+  mov rdi, 0x1e00
   _call __halloc
   push 0x232
   push rax
-  mov rdi, 2000
+  mov rdi, 0x3a00
   _call __halloc
-  mov rdi, 7000
+  mov rdi, 0x0c00
   _call __halloc
   push 0x337
 ;  jmp $
-  _call __GC
+;  _call __GC
   push 0x24126
   push 0x23126
   push 0x22126
+  push 0x7c00
   mov rax, [spd]
   test rax, [rax]
 

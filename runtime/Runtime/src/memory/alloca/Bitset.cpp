@@ -18,7 +18,7 @@ void Bitset::clear(size_t from, size_t to) {
   bits[from / 64] &= ~get_mask(from);
   bits[to / 64] &= get_mask(to);
   if (to / 64 - from / 64 > 1)
-    std::fill(from / 64, to / 64, 0);
+    std::fill(&bits[from / 64], &bits[to / 64], 0);
 }
 
 void Bitset::clear() {

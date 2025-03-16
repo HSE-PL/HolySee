@@ -53,7 +53,7 @@ namespace threads {
     std::binary_semaphore rooting_;
     std::binary_semaphore marking_;
 
-    Threads() : sp_(0), rooting_(0) {
+    Threads() : counter_(0), sp_(0), rooting_(0), marking_(0) {
     }
 
     void append(void (&func)());

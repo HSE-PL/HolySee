@@ -11,18 +11,18 @@ GarbageCollector::GarbageCollector(size_t start_heap, size_t size_heap, TypeTabl
 }
 
 ref GarbageCollector::alloc(size_t size_object) {
-  log << memory_ << "\\" << size << "\n";
-  if (memory_ < 3 * (size >> 2))
-    GC();
+  log << memory_ << "\\" << size_ << "\n";
+  if (memory_ < 3 * (size_ >> 2))
+    sp::off();
 
   memory_ -= size_object;
-  return Allocator::alloc(size_object); //<------
+  return Allocator::alloc(size_object);
 }
 
 void GarbageCollector::GC() {
   log << "calling GC\n";
   print();
-  sp::off();
+  // sp::off();
 
   for (int i = 0; i < threads::Threads::instance().count(); ++i)
     root_was_claim_.acquire();
@@ -45,7 +45,7 @@ void GarbageCollector::make_root(siginfo_t* info, ucontext_t* context) {
   assert(ssp < hrtptr.start_sp);
   for (ref sp = ssp; sp <= hrtptr.start_sp; sp += 8) {
     auto ptr = *reinterpret_cast<ref*>(sp);
-    std::cout << ptr << "\n";
+    log << ptr << "\n";
     auto [index, clear_ptr] = split(ptr);
     if (start_ <= clear_ptr && clear_ptr < start_ + size_) {
       if (auto [size, have_ref] = how_many_ref(index); have_ref) {

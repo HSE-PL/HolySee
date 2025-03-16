@@ -26,7 +26,7 @@ std::vector<size_t> partion_of_pages(size_t count_pages) {
 
 Allocator::Allocator(ref start, size_t size)
     : Heap(), start_(start), size_(size), emplaced_(start, start + size),
-      marking_(start, start + size), regions_(std::vector<Region<Arena>>()) {
+      marking_(start, start + size), regions_(std::vector<Region<Arena>*>()) {
   log << "heap on\n" << start << "\n" << start + size << "\n";
   /*
    * variant of regions "double-double"
@@ -40,22 +40,23 @@ Allocator::Allocator(ref start, size_t size)
   size_t a_size = 1 << 12;
   size_t i      = 0;
   for (const size_t c : counts) {
-    regions_.emplace_back(cur, c, a_size, i);
+    regions_.push_back(new Region<Arena>{cur, c, a_size, i});
 
     add_active(i++);
 
     cur += c * a_size;
     a_size <<= 1;
   }
+  print();
 }
 
 ref Allocator::alloc(size_t object_size) {
   mutex_.lock();
   auto arena = get_min_more_then(object_size);
-  log << "alloca " << object_size << " on arena " << arena << "\n";
+  log << "alloca " << object_size << " on arena " << arena->start << "\n";
   ref start_new_object = arena->cur;
   log << start_new_object << "\n";
-  if (start_new_object == arena->start)
+  if (start_new_object == arena->start && regions_[arena->tier]->size_pull())
     add_active(arena->tier);
 
   log << "try to del\n";
@@ -66,31 +67,32 @@ ref Allocator::alloc(size_t object_size) {
   log << "arena was replace\n";
   emplaced_.set(start_new_object);
   mutex_.unlock();
+  print();
   return start_new_object;
 }
 
 void Allocator::add_active(size_t index) {
   mutex_.lock();
   log << "call add active\n";
-  auto new_active = regions_[index].back();
-  regions_[index].pop();
+  auto new_active = regions_[index]->back();
+  regions_[index]->pop();
 
   // regions[index].count_empty++;
 
   log << "call append new_active\n" << new_active << "\n";
-  new_active->append(new_active);
+  append(new_active);
   log << "return from add_active\n";
   mutex_.unlock();
 }
 
 Arena* Allocator::arena_by_ptr(ref ptr) const {
   int index;
-  for (index = 0; index < regions_.size() && ptr >= regions_[index].start; ++index)
+  for (index = 0; index < regions_.size() && ptr >= regions_[index]->start; ++index)
     ;
   --index;
-  auto offset  = ptr - regions_[index].start;
-  auto a_index = offset / regions_[index].t_size;
-  return regions_[index][a_index];
+  auto offset  = ptr - regions_[index]->start;
+  auto a_index = offset / regions_[index]->t_size;
+  return regions_[index]->operator[](a_index);
 }
 
 void Allocator::free_arena(Arena* a) {
@@ -98,7 +100,7 @@ void Allocator::free_arena(Arena* a) {
   del(a);
   keys.erase(a);
   a->cur = a->start;
-  regions_[a->tier].push(a);
+  regions_[a->tier]->push(a);
   mutex_.unlock();
 }
 

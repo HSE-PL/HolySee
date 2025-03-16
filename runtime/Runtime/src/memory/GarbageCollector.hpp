@@ -27,7 +27,7 @@ class GarbageCollector final : public Allocator {
     return ptr << 16 >> 16;
   }
 
-  std::pair<size_t, bool> how_many_ref(size_t ptr) const {
+  std::pair<size_t, bool> how_many_ref(uint64_t ptr) const {
     auto index = ptr >> 48;
     if (!index)
       return std::pair(0x8, false);
@@ -39,7 +39,7 @@ class GarbageCollector final : public Allocator {
       return std::pair(1 << (index >> 1), false);
     }
     assert(index - TT_RESERVED >= tt_->size);
-    return tt_->md[index - TT_RESERVED], true;
+    return std::pair(tt_->md[index - TT_RESERVED], true);
   }
 
   std::pair<uint64_t, uint64_t> split(size_t ptr) const {
@@ -54,15 +54,15 @@ class GarbageCollector final : public Allocator {
     }
 
     for (const auto& regs : regions_) {
-      regs.have_empty = false;
+      regs->have_empty = false;
     }
 
     for (const auto arena : keys) {
       if (arena->is_died()) {
-        if (regions_[arena->tier].have_empty) {
+        if (regions_[arena->tier]->have_empty) {
           keys.erase(arena);
         } else {
-          regions_[arena->tier].have_empty = true;
+          regions_[arena->tier]->have_empty = true;
         }
       }
     }
@@ -73,10 +73,10 @@ class GarbageCollector final : public Allocator {
   void marking(const fatPtr& fat_ptr) {
     log << "try to marking " << fat_ptr.ptr << "type (" << fat_ptr.index << ")\n";
     auto arena = arena_by_ptr(fat_ptr.ptr);
-    regions_[arena->tier].mutex_.lock();
+    regions_[arena->tier]->mutex_.lock();
     if (marking_[fat_ptr.ptr]) {
       log << "unluck\n";
-      regions_[arena->tier].mutex_.unlock();
+      regions_[arena->tier]->mutex_.unlock();
       return;
     }
     marking_.set(fat_ptr.ptr);

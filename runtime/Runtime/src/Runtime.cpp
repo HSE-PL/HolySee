@@ -32,6 +32,7 @@ namespace rt {
       log << "ok\n";
 
       threads::Threads::instance().waitEndSp();
+      log << "handler: call make_root\n";
 
       gc->make_root(info, static_cast<ucontext_t*>(context));
       threads::Threads::instance().marking_.acquire();
@@ -84,10 +85,9 @@ extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp, TypeTable*
   rt::init(__start, spdptr, sp, tt);
 }
 
-extern "C" void* __halloc(size_t size) {
-  std::cout << "alloca " << size << "\n";
-  assert(size);
-  return rt::gc.has_value() ? reinterpret_cast<void*>(rt::gc->alloc(size)) : nullptr;
+extern "C" void* __halloc(size_t type) {
+  std::cout << "alloca " << type << "\n";
+  return rt::gc.has_value() ? reinterpret_cast<void*>(rt::gc->alloc(type)) : nullptr;
 }
 
 extern "C" void __GC() {

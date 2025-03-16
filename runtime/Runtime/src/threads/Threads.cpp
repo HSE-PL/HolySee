@@ -28,19 +28,16 @@ void threads::Threads::append(void (&func)()) {
   log << std::hex << hrptr.start_sp << "\n";
   pool_.insert(hrptr);
   log << "thrd append\n";
-  log << "qwe---:" << std::hex << pool_.begin()->start_sp << "\n";
 }
 
 Horoutine threads::Threads::get(size_t sp) {
   guard(mutex_);
-  log << "try to get mutex in get\n";
   auto el = pool_.lower_bound(sp);
   assert(el != pool_.end());
   return *el;
 }
 
 void threads::Threads::waitEndSp() {
-  guard(mutex_);
   if (releaseIfAll(sp_))
     return;
   sp_.acquire();

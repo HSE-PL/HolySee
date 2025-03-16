@@ -21,20 +21,16 @@ struct Comparator {
   using is_transparent = void;
 
   bool operator()(const T* a, const T* b) const {
-    log << "check " << a << " ? " << b << "\n";
     auto cond = a->key_for_heap() != b->key_for_heap() ? a->key_for_heap() < b->key_for_heap()
                                                        : a->uniq_for_heap() < b->uniq_for_heap();
-    log << "end of check\n";
     return cond;
   }
 
   bool operator()(const T* a, ref n) const {
-    log << a << "\n";
     return a->key_for_heap() < n;
   }
 
   bool operator()(ref n, const T* b) const {
-    log << b << "\n";
     return n < b->key_for_heap();
   }
 };
@@ -59,13 +55,10 @@ public:
   }
 
   void append(T* a) {
-    log << "try to get _mutex, ";
-    mutex_.lock();
+    guard(mutex_);
     log << "call insert int thread: " << std::this_thread::get_id() << "\n";
     keys.insert(a);
     log << "insert end, ";
-    mutex_.unlock();
-    log << "_mutex unlock\n";
   }
 
   void del(T* a) {
@@ -84,7 +77,7 @@ public:
 
     for (int i = 0; i < depth; ++i)
       log << "    ";
-    log << (*it)->uniq_for_heap() << ":" << (*it)->key_for_heap() << "\n";
+    log << std::hex << (*it)->uniq_for_heap() << ":" << (*it)->key_for_heap() << "\n";
 
     if (it != end)
       printSetTree(it, it, depth + 1);
