@@ -53,9 +53,10 @@ namespace rt {
   } // namespace signals
 
   [[noreturn]] void run() {
+    log << "runtime is runing\n";
     for (long i = 0;; ++i) {
       // std::binary_semaphore sem(0);
-      std::this_thread::sleep_for(std::chrono::seconds(3));
+      std::this_thread::sleep_for(std::chrono::seconds(1));
       threads::Threads::instance().rooting_.acquire();
       gc->GC();
     }
@@ -74,6 +75,7 @@ namespace rt {
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
 
+    log << "fuck\n";
     log << "start __start: " << reinterpret_cast<size_t>(__start) << "\n";
     threads::Threads::instance().append(__start);
 
@@ -86,7 +88,7 @@ extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp, TypeTable*
 }
 
 extern "C" void* __halloc(size_t type) {
-  std::cout << "alloca " << type << "\n";
+  log << "alloca " << type << "\n";
   return rt::gc.has_value() ? reinterpret_cast<void*>(rt::gc->alloc(type)) : nullptr;
 }
 

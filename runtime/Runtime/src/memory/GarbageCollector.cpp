@@ -10,13 +10,14 @@ GarbageCollector::GarbageCollector(size_t start_heap, size_t size_heap, TypeTabl
       memory_(size_heap), tt_(tt) {
 }
 
-ref GarbageCollector::alloc(size_t size_object) {
+ref GarbageCollector::alloc(size_t type) {
   log << memory_ << "\\" << size_ << "\n";
   if (memory_ < 3 * (size_ >> 2))
     sp::off();
 
+  auto size_object = how_many_ref(type).first;
   memory_ -= size_object;
-  return Allocator::alloc(size_object);
+  return Allocator::alloc(size_object) | (type << 48);
 }
 
 void GarbageCollector::GC() {
@@ -26,7 +27,7 @@ void GarbageCollector::GC() {
 
   for (int i = 0; i < threads::Threads::instance().count(); ++i)
     root_was_claim_.acquire();
-
+  log << "rooting end\n";
   cleaning();
   log << "STW end \n";
   print();
@@ -45,13 +46,11 @@ void GarbageCollector::make_root(siginfo_t* info, ucontext_t* context) {
   assert(ssp < hrtptr.start_sp);
   for (ref sp = ssp; sp <= hrtptr.start_sp; sp += 8) {
     auto ptr = *reinterpret_cast<ref*>(sp);
-    log << ptr << "\n";
-    auto [index, clear_ptr] = split(ptr);
-    if (start_ <= clear_ptr && clear_ptr < start_ + size_) {
-      if (auto [size, have_ref] = how_many_ref(index); have_ref) {
-        log << "find " << clear_ptr << " in root, type: " << index << "\n";
-        root_.push({index, clear_ptr});
-      }
+    log << "make_root: on stack: " << ptr << "\n";
+    if (ref_in_heap(ptr)) {
+      auto [index, clear_ptr] = split(ptr);
+      log << "find " << clear_ptr << " in root, type: " << index << "\n";
+      root_.push({index, clear_ptr});
     }
   }
 
