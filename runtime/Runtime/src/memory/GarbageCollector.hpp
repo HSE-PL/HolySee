@@ -21,8 +21,6 @@ class GarbageCollector final : public Allocator {
   };
   ThreadSafeVector<fatPtr> root_;
 
-  std::counting_semaphore<> root_was_claim_{0};
-
   size_t clear(size_t ptr) const {
     return ptr << 16 >> 16;
   }
@@ -51,24 +49,39 @@ class GarbageCollector final : public Allocator {
     for (const auto ptr : root_) {
       log << "marking ptr " << ptr.ptr << "\n";
       marking(ptr);
-      // for (;;)
-      // ;
     }
     log << "GC: marking end\n";
 
     for (const auto& regs : regions_) {
       regs->have_empty = false;
     }
+    auto trash = std::vector<Arena*>();
+    auto emty  = std::vector<Arena*>();
     log << "all regs without empty arena\n";
-    for (const auto arena : keys) {
+
+    for (const auto& arena : keys) {
+      log << "try check\n";
+      log << "check " << arena->uniq_for_heap() << "\n";
       if (arena->is_died()) {
+        log << "died\n";
         if (regions_[arena->tier]->have_empty) {
-          keys.erase(arena);
+          log << "died died\n";
+          trash.push_back(arena);
+          log << "free\n";
         } else {
+          log << "just chill, this arena is empty\n";
           regions_[arena->tier]->have_empty = true;
+          emty.push_back(arena);
         }
       }
     }
+    for (const auto& a : trash)
+      free_arena(a);
+
+    for (const auto& a : emty)
+      revive(a);
+
+    log << "end cleaning\n";
     // throw std::runtime_error("bebebe");
     // TODO implement this shit
   }

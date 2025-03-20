@@ -55,4 +55,6 @@ public:
   void free(ref ptr);
 
   void free_arena(Arena* a);
+
+  void revive(Arena* a);
 };

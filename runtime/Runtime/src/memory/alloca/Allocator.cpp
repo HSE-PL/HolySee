@@ -51,7 +51,7 @@ Allocator::Allocator(ref start, size_t size)
 }
 
 ref Allocator::alloc(size_t object_size) {
-  mutex_.lock();
+  guard(mutex_);
   auto arena = get_min_more_then(object_size);
   log << "alloca " << object_size << " on arena " << arena->start << "\n";
   ref start_new_object = arena->cur;
@@ -66,13 +66,12 @@ ref Allocator::alloc(size_t object_size) {
   append(arena);
   log << "arena was replace\n";
   emplaced_.set(start_new_object);
-  mutex_.unlock();
   print();
   return start_new_object;
 }
 
 void Allocator::add_active(size_t index) {
-  mutex_.lock();
+  guard(mutex_);
   log << "call add active\n";
   auto new_active = regions_[index]->back();
   regions_[index]->pop();
@@ -82,7 +81,6 @@ void Allocator::add_active(size_t index) {
   log << "call append new_active\n" << new_active << "\n";
   append(new_active);
   log << "return from add_active\n";
-  mutex_.unlock();
 }
 
 Arena* Allocator::arena_by_ptr(ref ptr) const {
@@ -96,14 +94,18 @@ Arena* Allocator::arena_by_ptr(ref ptr) const {
 }
 
 void Allocator::free_arena(Arena* a) {
-  mutex_.lock();
+  guard(mutex_);
   del(a);
-  keys.erase(a);
   a->cur = a->start;
   regions_[a->tier]->push(a);
-  mutex_.unlock();
 }
 
+void Allocator::revive(Arena* a) {
+  free_arena(a);
+  append(a);
+}
+
+// for debug and test only
 void Allocator::free(ref ptr) {
   guard(mutex_);
   log << "free     " << ptr << "\n";

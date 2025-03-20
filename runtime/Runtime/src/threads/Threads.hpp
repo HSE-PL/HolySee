@@ -29,16 +29,16 @@ namespace threads {
   class Threads {
     size_t counter_;
 
-    std::binary_semaphore sp_;
+    std::counting_semaphore<> sp_;
 
     std::set<Horoutine, ThreadComparator> pool_;
     std::mutex                            mutex_;
 
-    bool releaseIfAll(std::binary_semaphore& sem) {
+    bool releaseIfAll(std::counting_semaphore<>& sem) {
       guard(mutex_);
-      if (pool_.size() == ++counter_) {
+      if (count() == ++counter_) {
         counter_ = 0;
-        sem.release();
+        sem.release(count());
         return true;
       }
       return false;
@@ -50,10 +50,11 @@ namespace threads {
     void waitEndSp();
     void waitEndRooting();
 
-    std::binary_semaphore rooting_;
-    std::binary_semaphore marking_;
+    std::counting_semaphore<> root_was_collected_;
+    std::counting_semaphore<> rooting_;
+    std::counting_semaphore<> marking_;
 
-    Threads() : counter_(0), sp_(0), rooting_(0), marking_(0) {
+    Threads() : counter_(0), sp_(0), rooting_(0), marking_(0), root_was_collected_(0) {
     }
 
     void append(void (&func)());

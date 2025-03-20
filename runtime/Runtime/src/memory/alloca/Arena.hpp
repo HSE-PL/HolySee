@@ -32,4 +32,8 @@ public:
   [[nodiscard]] ref uniq_for_heap() const {
     return start;
   }
+
+  bool is_empty() const {
+    return start == cur;
+  }
 };

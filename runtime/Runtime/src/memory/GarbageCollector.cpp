@@ -12,7 +12,7 @@ GarbageCollector::GarbageCollector(size_t start_heap, size_t size_heap, TypeTabl
 
 ref GarbageCollector::alloc(size_t type) {
   log << memory_ << "\\" << size_ << "\n";
-  if (memory_ < 3 * (size_ >> 2))
+  if (memory_ < 7 * (size_ >> 3))
     sp::off();
 
   auto size_object = how_many_ref(type).first;
@@ -24,9 +24,8 @@ void GarbageCollector::GC() {
   log << "calling GC\n";
   print();
   // sp::off();
-
-  for (int i = 0; i < threads::Threads::instance().count(); ++i)
-    root_was_claim_.acquire();
+  for (int i = 0; i < threads::Threads::instance().count(); --i)
+    threads::Threads::instance().root_was_collected_.acquire();
   log << "rooting end\n";
   cleaning();
   log << "STW end \n";
@@ -54,6 +53,7 @@ void GarbageCollector::make_root(siginfo_t* info, ucontext_t* context) {
     }
   }
 
+  log << "thread completed root";
+  threads::Threads::instance().root_was_collected_.release();
   threads::Threads::instance().waitEndRooting();
-  root_was_claim_.release();
 }
