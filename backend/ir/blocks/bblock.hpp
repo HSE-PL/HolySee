@@ -14,6 +14,8 @@ class BBlock {
   void addInstr(std::shared_ptr<Instruction> instr) { instrs.push_back(instr); }
 
 public:
+  friend class MCtx;
+  mach emit(MCtx &ctx) { return ctx.visit(*this); }
   void accept(IOStreamer &io) { io.visit(*this); }
   BBlock(std::string name) : name(name) {}
   BBlock(std::string name, std::list<std::shared_ptr<Instruction>> instrs)

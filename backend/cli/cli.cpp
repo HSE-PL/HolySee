@@ -3,10 +3,11 @@
 #include "../ir/streamers/iostreamer.hpp"
 #include "argh.h"
 #include <iostream>
+#include <memory>
 
 void Runner::run(int argc, char *argv[]) {
   auto cmdl = argh::parser(argc, argv);
-  auto opts_enabled = cmdl[{"O1", "opt"}];
+  /*auto opts_enabled = cmdl[{"O1", "opt"}];*/
   std::string input;
   std::string line;
   while (std::getline(std::cin, line)) {
@@ -15,4 +16,7 @@ void Runner::run(int argc, char *argv[]) {
   auto ir = toIR(input);
   auto io = IOStreamer(std::cout);
   ir.accept(io);
+  auto factory = std::make_shared<MFactoryNaive>(MFactoryNaive());
+  auto ctx = MCtx(factory);
+  std::cout << ir.emit(ctx)->emit();
 }

@@ -6,6 +6,7 @@
 #include "../instructions/unary.hpp"
 #include "../instructions/vararg.hpp"
 #include "../program.hpp"
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <unordered_map>
@@ -50,6 +51,12 @@ void IOStreamer::visit(Const &c) {
   dest(c);
   stream << "const ";
   args(c);
+}
+
+void IOStreamer::visit(Id &id) {
+  dest(id);
+  stream << "id ";
+  args(id);
 }
 
 void IOStreamer::visit(Eq &eq) {

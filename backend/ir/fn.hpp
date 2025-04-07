@@ -20,6 +20,8 @@ class Fn {
   void addArg(vptr arg) { args.push_back(arg); }
 
 public:
+  friend class MCtx;
+  mach emit(MCtx &ctx) { return ctx.visit(*this); }
   void accept(IOStreamer &io) { io.visit(*this); }
   Fn(Type type_, std::string name) : type_(type_), name_(name) {}
   Fn(const Fn &other) = default;

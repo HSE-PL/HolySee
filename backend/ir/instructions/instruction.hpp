@@ -15,6 +15,8 @@ protected:
   friend class IOStreamer;
 
 public:
+  friend class MCtx;
+  virtual mach emit(MCtx &ctx) = 0;
   CAItt cbegin() const { return args.cbegin(); }
   CAItt cend() const { return args.cend(); }
   AItt begin() { return args.begin(); }

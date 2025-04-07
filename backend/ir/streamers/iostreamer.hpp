@@ -20,6 +20,7 @@ class Instruction;
 class Program;
 class Fn;
 class BBlock;
+class Id;
 
 class IOStreamer {
   std::ostream &stream;
@@ -37,6 +38,7 @@ public:
   void visit(Br &br);
   void visit(Eq &eq);
   void visit(Const &cnst);
+  void visit(Id &id);
   void visit(Jmp &jmp);
   void visit(Ret &ret);
   void visit(Call &call);

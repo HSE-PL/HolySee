@@ -10,6 +10,8 @@ class Program {
   friend class IOStreamer;
 
 public:
+  friend class MCtx;
+  virtual mach emit(MCtx &ctx) { return ctx.visit(*this); }
   std::unordered_map<std::string, std::shared_ptr<Fn>> funcs;
   void accept(IOStreamer &io) { io.visit(*this); }
   void addFunc(std::shared_ptr<Fn> fn) { funcs.insert({fn->name(), fn}); }

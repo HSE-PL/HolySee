@@ -8,6 +8,8 @@ class Const : public Instruction {
   friend class IOStreamer;
 
 public:
+  friend class MCtx;
+  virtual mach emit(MCtx &ctx) { return ctx.visit(*this); }
   Const(vptr dest, vptr val) {
     assert(dest->type() == ValType::Ref);
     assert(val->type() == ValType::Const);
@@ -19,10 +21,29 @@ public:
   virtual ~Const() = default;
 };
 
+class Id : public Instruction {
+  friend class IOStreamer;
+
+public:
+  friend class MCtx;
+  virtual mach emit(MCtx &ctx) { return ctx.visit(*this); }
+  Id(vptr dest, vptr val) {
+    assert(dest->type() == ValType::Ref);
+    assert(val->type() == ValType::Ref);
+    assert(std::dynamic_pointer_cast<Ref>(val));
+    dest_ = dest;
+    args.push_back(val);
+  }
+  virtual void accept(IOStreamer &io) { io.visit(*this); }
+  virtual ~Id() = default;
+};
+
 class Jmp : public Instruction {
   friend class IOStreamer;
 
 public:
+  friend class MCtx;
+  virtual mach emit(MCtx &ctx) { return ctx.visit(*this); }
   Jmp(vptr label) {
     assert(label->type() == ValType::Label);
     args.push_back(label);
@@ -38,6 +59,8 @@ class Ret : public Instruction {
   friend class IOStreamer;
 
 public:
+  friend class MCtx;
+  virtual mach emit(MCtx &ctx) { return ctx.visit(*this); }
   Ret(vptr val) {
     assert(val->type() == ValType::Ref);
     args.push_back(val);

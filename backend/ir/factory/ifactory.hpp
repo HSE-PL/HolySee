@@ -23,6 +23,9 @@ public:
   static iptr createConst(vptr dest, vptr val) {
     return std::make_shared<Const>(dest, val);
   }
+  static iptr createId(vptr dest, vptr val) {
+    return std::make_shared<Id>(dest, val);
+  }
   static iptr createJmp(vptr label) { return std::make_shared<Jmp>(label); }
   static iptr createRet(vptr val) { return std::make_shared<Ret>(val); }
   static iptr createCall(std::string name, vptr dest, std::list<vptr> arglist) {

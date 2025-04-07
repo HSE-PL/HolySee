@@ -34,7 +34,7 @@ class JTranslationCtx {
       auto name = fn.at("name");
       auto fntype = Type::Unit;
       if (fn.contains("type")) {
-        fntype = fn.at("type");
+        fntype = s2tt.at(fn.at("type"));
       }
       vector<Type> types;
       if (!fn.contains("args")) {
@@ -91,7 +91,7 @@ void j2call(BBuilder &b, json &instr, JTranslationCtx &ctx) {
   assert(instr.contains("args"));
   auto fncall = instr.at("funcs").at(0);
   auto dest = instr.at("dest");
-  auto type = instr.at("type");
+  auto type = s2tt.at(instr.at("type"));
   auto &&types = ctx.getArgTypes(fncall).cbegin();
   assert(ctx.getArgTypes(fncall).size() == instr.at("args").size());
   std::list<std::pair<Type, string>> arglist;
@@ -130,6 +130,10 @@ void j2jmp(BBuilder &b, json &instr, JTranslationCtx &ctx) {
   assert(false && "no jmps yet");
 }
 
+void j2id(BBuilder &b, json &instr, JTranslationCtx &ctx) {
+  b.createId(instr.at("dest"), instr.at("args").at(0));
+}
+
 void j2const(BBuilder &b, json &instr, JTranslationCtx &ctx) {
   assert(instr.contains("dest"));
   assert(instr.contains("value"));
@@ -145,7 +149,8 @@ unordered_map<string,
               function<void(BBuilder &, json &instr, JTranslationCtx &)>>
     s2ii = {{"add", j2add},     {"sub", j2sub}, {"call", j2call},
             {"eq", j2eq},       {"ret", j2ret}, {"br", j2br},
-            {"print", j2print}, {"jmp", j2jmp}, {"const", j2const}};
+            {"print", j2print}, {"jmp", j2jmp}, {"const", j2const},
+            {"id", j2id}};
 
 std::unordered_set<string> terminators = {"ret", "br", "jmp"};
 

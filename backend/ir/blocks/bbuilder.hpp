@@ -45,6 +45,12 @@ public:
     block->addInstr(IFactory::createConst(d1, operand));
     return *this;
   }
+  BBuilder &createId(std::string dest, std::string rhs) {
+    auto d1 = VFactory::createIntRef(dest);
+    auto operand = VFactory::createIntRef(rhs);
+    block->addInstr(IFactory::createId(d1, operand));
+    return *this;
+  }
   BBuilder &createRet(Type t, std::string ret) {
     auto operand = VFactory::createRef(t, ret);
     block->addInstr(IFactory::createRet(operand));

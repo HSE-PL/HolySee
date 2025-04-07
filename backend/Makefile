@@ -7,7 +7,7 @@ SRC := $(shell find . -name '*.cpp')
 EXE := ./build/exec
 
 run: cmp
-	@cat ./examples/tdce/double-pass.json | $(EXE)
+	@cat ./examples/fib.json | $(EXE)
 
 test: cmp
 	# @cat ./examples/tdce/double-pass.json | brili -p 2 2
