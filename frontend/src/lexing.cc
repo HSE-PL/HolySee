@@ -1,5 +1,7 @@
 #include "lexing.h"
 
+#include "lexing.h"
+
 using Kind = hsec::frontend::Token::Kind;
 
 namespace hsec::frontend::lexing {

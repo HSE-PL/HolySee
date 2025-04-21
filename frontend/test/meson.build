@@ -4,7 +4,7 @@ gtest_main_dep = gtest_proj.get_variable('gtest_main_dep')
 
 tests = executable(
   'tests',
-  sources: [],
+  sources: ['parsing.cc'],
   dependencies: [
     dep,
     gtest_dep,
