@@ -5,38 +5,58 @@
 #include <cassert>
 #include <cstddef>
 
-GarbageCollector::GarbageCollector(size_t start_heap, size_t size_heap, TypeTable* tt)
-    : Allocator(start_heap, size_heap), checked_(start_heap, start_heap + size_heap),
-      memory_(size_heap), tt_(tt) {
+GarbageCollector::GarbageCollector(ref start_heap, size_t size_heap)
+    : checked_(start_heap, start_heap + size_heap), memory_(size_heap),
+      allocator_(start_heap, size_heap) {
 }
 
-ref GarbageCollector::alloc(size_t type) {
-  log << memory_ << "\\" << size_ << "\n";
-  if (memory_ < 7 * (size_ >> 3))
+fn GarbageCollector::alloc(instance* inst)->ref {
+  log << memory_ << "\\" << allocator_.size_ << "\n";
+  if (memory_ < 7 * (allocator_.size_ >> 3))
     sp::off();
 
-  auto size_object = how_many_ref(type).first;
-  memory_ -= size_object;
-  return Allocator::alloc(size_object) | (type << 48);
+  memory_ -= inst->size;
+  return allocator_.alloc(inst->size + 8);
 }
 
-void GarbageCollector::GC() {
+fn GarbageCollector::GC()->void {
   log << "calling GC\n";
-  print();
-  // sp::off();
+  allocator_.heap_.print();
   for (int i = 0; i < threads::Threads::instance().count(); --i)
-    threads::Threads::instance().root_was_collected_.acquire();
+    threads::Threads::instance().tracing_was_complete_.acquire();
   log << "rooting end\n";
+
   cleaning();
   log << "STW end \n";
-  print();
+  allocator_.heap_.print();
 }
 
-void GarbageCollector::make_root(siginfo_t* info, ucontext_t* context) {
-  log << "calling make_root\n";
-  ref ssp = context->uc_mcontext.gregs[REG_RSP];
+fn GarbageCollector::tracing()->void {
+  while (true) {
+    for (int i = 0; i < stack_for_marked_.size(); ++i)
+      log << "tracing: stack_for_marked[" << i << "] = " << stack_for_marked_[i]
+          << "\n"; // log debug info
 
-  auto hrtptr = threads::Threads::instance().get(ssp);
+    if (let ptr = stack_for_marked_.pop(); ptr.has_value())
+      marking(ptr.value());
+    else {
+      if (!threads::Threads::instance().count_of_working_threads_)
+        throw std::runtime_error("fantom working thread");
+      if (!--threads::Threads::instance().count_of_working_threads_)
+        break;
+      while (!stack_for_marked_.size())
+        if (!threads::Threads::instance().count_of_working_threads_)
+          return;
+      ++threads::Threads::instance().count_of_working_threads_;
+    }
+  }
+}
+
+fn GarbageCollector::make_root_and_tracing(siginfo_t* info, ucontext_t* context)->void {
+  log << "calling make_root_and_tracing\n";
+  const ref ssp = context->uc_mcontext.gregs[REG_RSP];
+
+  let hrtptr = threads::Threads::instance().get(ssp);
   log << hrtptr.start_sp << ":\n.\n.\n.\n"
       << ssp << "\n"
       << "summary diff: " /*<< std::hex*/
@@ -45,15 +65,16 @@ void GarbageCollector::make_root(siginfo_t* info, ucontext_t* context) {
   assert(ssp < hrtptr.start_sp);
   for (ref sp = ssp; sp <= hrtptr.start_sp; sp += 8) {
     auto ptr = *reinterpret_cast<ref*>(sp);
-    log << "make_root: on stack: " << ptr << "\n";
+    log << "make_root_and_tracing: on stack: " << ptr << "\n";
     if (ref_in_heap(ptr)) {
-      auto [index, clear_ptr] = split(ptr);
-      log << "find " << clear_ptr << " in root, type: " << index << "\n";
-      root_.push({index, clear_ptr});
+      log << "find " << ptr << " in root\n";
+      stack_for_marked_.push(ptr);
     }
   }
+  log << "thread completed root\n";
 
-  log << "thread completed root";
-  threads::Threads::instance().root_was_collected_.release();
-  threads::Threads::instance().waitEndRooting();
+  tracing();
+
+  threads::Threads::instance().tracing_was_complete_.release();
+  threads::Threads::instance().wait_end_tracing();
 }

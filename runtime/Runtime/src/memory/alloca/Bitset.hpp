@@ -1,12 +1,12 @@
 #pragma once
+#include "utils/defines.h"
 #include <assert.h>
 #include <cstdint>
 #include <vector>
-
 class Bitset {
   std::vector<uint64_t> bits;
 
-  uint64_t get_mask(size_t n) {
+  fn get_mask(size_t n)->uint64_t {
     assert(n < 64);
 
     return ((1ULL << (64 - (n % 64))) - 1ULL);
@@ -16,11 +16,11 @@ public:
   Bitset(size_t count_bit) : bits((count_bit - 1) / 64 + 1, 0) {
   }
 
-  void set(size_t n);
+  fn set(size_t n)->void;
 
-  size_t get(size_t n) const;
+  fn get(size_t n) const->size_t;
 
-  void clear();
+  fn clear()->void;
 
-  void clear(size_t from, size_t to);
+  fn clear(size_t from, size_t to)->void;
 };

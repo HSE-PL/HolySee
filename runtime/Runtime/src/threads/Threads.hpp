@@ -1,6 +1,5 @@
 #pragma once
 #include "Horoutine.hpp"
-#include "ThreadSafeCounter.hpp"
 
 #include <assert.h>
 #include <iostream>
@@ -9,6 +8,7 @@
 #include <set>
 #include <thread>
 #include <utils/log.h>
+
 namespace threads {
   struct ThreadComparator {
     using is_transparent = void;
@@ -32,9 +32,10 @@ namespace threads {
     std::counting_semaphore<> sp_;
 
     std::set<Horoutine, ThreadComparator> pool_;
-    std::mutex                            mutex_;
 
-    bool releaseIfAll(std::counting_semaphore<>& sem) {
+    std::mutex mutex_;
+
+    fn releaseIfAll(std::counting_semaphore<>& sem)->bool {
       guard(mutex_);
       if (count() == ++counter_) {
         counter_ = 0;
@@ -47,22 +48,23 @@ namespace threads {
   public:
     static Threads& instance();
 
-    void waitEndSp();
-    void waitEndRooting();
+    fn wait_end_sp()->void;
+    fn wait_end_tracing()->void;
 
-    std::counting_semaphore<> root_was_collected_;
+    std::counting_semaphore<> tracing_was_complete_;
     std::counting_semaphore<> rooting_;
     std::counting_semaphore<> marking_;
 
-    Threads() : counter_(0), sp_(0), rooting_(0), marking_(0), root_was_collected_(0) {
+    std::atomic_uint_fast64_t count_of_working_threads_;
+    Threads() : counter_(0), sp_(0), rooting_(0), marking_(0), tracing_was_complete_(0) {
     }
 
-    void append(void (&func)());
+    fn append(void (&func)())->void;
 
-    size_t count() {
+    fn count()->size_t {
       return pool_.size();
     }
 
-    Horoutine get(size_t sp);
+    fn get(size_t sp)->Horoutine;
   }; // namespace threads
 } // namespace threads

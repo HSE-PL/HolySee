@@ -1,10 +1,12 @@
 #pragma once
 #include <cassert>
 #include <cstddef>
+#include <mutex>
 #include <utils/defines.h>
-
 class Arena {
   bool died;
+
+  std::mutex mutex_;
 
 public:
   const size_t size;
@@ -13,27 +15,14 @@ public:
 
   size_t cur;
 
-  Arena(size_t arena_size, ref arena_start, size_t arena_tier)
-      : size(arena_size), start(arena_start), tier(arena_tier), cur(arena_start), died(true) {
-  }
+  Arena(size_t arena_size, ref arena_start, size_t arena_tier);
 
-  void revive() {
-    died = false;
-  }
+  fn revive()->void;
 
-  bool is_died() {
-    return died;
-  }
+  fn is_died() const->bool;
 
-  [[nodiscard]] size_t key_for_heap() const {
-    return start + size - cur;
-  }
+  [[nodiscard]] fn key_for_heap() const->size_t;
+  [[nodiscard]] fn uniq_for_heap() const->ref;
 
-  [[nodiscard]] ref uniq_for_heap() const {
-    return start;
-  }
-
-  bool is_empty() const {
-    return start == cur;
-  }
+  fn is_empty() const->bool;
 };

@@ -1,45 +1,46 @@
 #pragma once
 #include "utils/defines.h"
 #include <mutex>
+#include <optional>
 #include <vector>
 template <typename T>
 class ThreadSafeVector {
-  std::mutex     mutex_;
-  std::vector<T> v_;
+  std::mutex mutex_;
 
 public:
+  std::vector<T> v_;
+
   ThreadSafeVector() = default;
 
-  auto begin() {
+  fn begin() {
     return v_.begin();
   }
 
-  auto end() {
+  fn end() {
     return v_.end();
   }
 
-  void push(T item) {
+  fn push(auto item) {
     guard(mutex_);
     v_.push_back(item);
   }
 
-  T operator[](int index) {
+  fn operator[](int index)->T {
     guard(mutex_);
     return v_[index];
   }
 
-  size_t size() {
+  fn size()->size_t {
     guard(mutex_);
     return v_.size();
   }
 
-  void pop() {
+  fn pop()->std::optional<T> {
     guard(mutex_);
+    if (v_.empty())
+      return std::nullopt;
+    let b = v_.back();
     v_.pop_back();
-  }
-
-  T back() {
-    guard(mutex_);
-    return v_.back();
+    return b;
   }
 };

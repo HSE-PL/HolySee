@@ -5,15 +5,15 @@
 #include <vector>
 
 
-void Bitset::set(size_t n) {
+fn Bitset::set(size_t n)->void {
   bits[n / 64] |= n % 64;
 }
 
-uint64_t Bitset::get(size_t n) const {
+fn Bitset::get(size_t n) const->uint64_t {
   return bits[n / 64] & (1ULL << (n % 64));
 }
 
-void Bitset::clear(size_t from, size_t to) {
+fn Bitset::clear(size_t from, size_t to)->void {
   assert(from < to);
   bits[from / 64] &= ~get_mask(from);
   bits[to / 64] &= get_mask(to);
@@ -21,6 +21,6 @@ void Bitset::clear(size_t from, size_t to) {
     std::fill(&bits[from / 64], &bits[to / 64], 0);
 }
 
-void Bitset::clear() {
+fn Bitset::clear()->void {
   std::fill(bits.begin(), bits.end(), 0);
 }

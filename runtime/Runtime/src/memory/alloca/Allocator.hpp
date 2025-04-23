@@ -6,9 +6,10 @@
 #include <mutex>
 
 class BitMap : Bitset {
-  ref        from_;
-  ref        to_;
-  std::mutex mutex_;
+  ref from_;
+  ref to_;
+
+  std::recursive_mutex mutex_;
 
   size_t map(size_t n) {
     assert(from_ <= n);
@@ -20,20 +21,21 @@ public:
   BitMap(ref from, ref to) : Bitset((to - from) / 64), from_(from), to_(to) {
   }
 
-  void set(ref n);
+  fn set(ref n)->void;
 
-  bool operator[](ref n);
+  fn check_and_set(ref n)->bool;
 
-  void clear();
+  fn clear()->void;
 
-  void clear(ref from, ref to);
+  fn clear(ref from, ref to)->void;
 };
 
-class Allocator : public Heap<Arena> {
+class Allocator {
 
   std::recursive_mutex mutex_;
 
-protected:
+public:
+  Heap<Arena>  heap_;
   const ref    start_;
   const size_t size_;
   BitMap       emplaced_;
@@ -41,20 +43,19 @@ protected:
 
   std::vector<Region<Arena>*> regions_{};
 
-public:
   Allocator(ref start, size_t size);
 
-  ~Allocator() override = default;
+  virtual ~Allocator() = default;
 
-  virtual ref alloc(size_t object_size);
+  virtual fn alloc(size_t object_size)->ref;
 
-  void add_active(size_t index);
+  fn add_active(size_t index)->void;
 
   [[nodiscard]] Arena* arena_by_ptr(ref ptr) const;
 
-  void free(ref ptr);
+  fn free(ref ptr)->void;
 
-  void free_arena(Arena* a);
+  fn free_arena(Arena* a)->void;
 
-  void revive(Arena* a);
+  fn revive(Arena* a)->void;
 };

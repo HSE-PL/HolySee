@@ -21,9 +21,8 @@ struct Comparator {
   using is_transparent = void;
 
   bool operator()(const T* a, const T* b) const {
-    auto cond = a->key_for_heap() != b->key_for_heap() ? a->key_for_heap() < b->key_for_heap()
-                                                       : a->uniq_for_heap() < b->uniq_for_heap();
-    return cond;
+    return a->key_for_heap() != b->key_for_heap() ? a->key_for_heap() < b->key_for_heap()
+                                                  : a->uniq_for_heap() < b->uniq_for_heap();
   }
 
   bool operator()(const T* a, ref n) const {
@@ -39,17 +38,15 @@ template <ItemForHeap T>
 class Heap {
   std::mutex mutex_;
 
-protected:
-  std::set<T*, Comparator<T>> keys;
-
 public:
   virtual ~Heap() = default;
   Heap()          = default;
 
+  std::set<T*, Comparator<T>> keys;
 
   T* get_min_more_then(ref n) {
     guard(mutex_);
-    auto el = keys.lower_bound(n);
+    let el = keys.lower_bound(n);
     assert(el != keys.end());
     return *el;
   }
@@ -67,8 +64,8 @@ public:
   }
 
   // 4 debug
-  void printSetTree(typename std::set<T*>::iterator it, typename std::set<T*>::iterator end,
-                    int depth = 0) {
+  fn printSetTree(typename std::set<T*>::iterator it, typename std::set<T*>::iterator end,
+                    int depth = 0) -> void {
     if (it == end)
       return;
 
@@ -83,7 +80,7 @@ public:
       printSetTree(it, it, depth + 1);
   }
 
-  void print() {
+  fn print() {
     log << "=====>\n";
     printSetTree(keys.begin(), keys.end());
     log << "<=====\n";

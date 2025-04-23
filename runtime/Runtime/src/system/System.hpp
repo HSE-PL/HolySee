@@ -1,6 +1,7 @@
 #pragma once
+#include "utils/defines.h"
 #include <stddef.h>
 
 namespace sys {
-  void* salloc(size_t size);
-}
+  fn salloc(size_t size)->void*;
+} // namespace sys

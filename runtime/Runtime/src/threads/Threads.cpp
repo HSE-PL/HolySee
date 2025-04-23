@@ -7,17 +7,19 @@ namespace threads {
   }
 } // namespace threads
 
-void threads::Threads::append(void (&func)()) {
+fn threads::Threads::append(void (&func)())->void {
   guard(mutex_);
   log << "try to append thrd\n";
+  ++count_of_working_threads_;
 
   auto* thread = new std::thread(func);
 
   auto pthread = thread->native_handle();
 
   pthread_attr_t attr;
-  void*          stack_addr;
-  size_t         stack_size;
+
+  void*  stack_addr;
+  size_t stack_size;
   pthread_getattr_np(pthread, &attr);
   pthread_attr_getstack(&attr, &stack_addr, &stack_size);
 
@@ -37,13 +39,13 @@ Horoutine threads::Threads::get(size_t sp) {
   return *el;
 }
 
-void threads::Threads::waitEndSp() {
+fn threads::Threads::wait_end_sp()->void {
   if (releaseIfAll(sp_))
     return;
   sp_.acquire();
 }
 
-void threads::Threads::waitEndRooting() {
+fn threads::Threads::wait_end_tracing()->void {
   if (releaseIfAll(rooting_))
     return;
   rooting_.acquire();

@@ -1,14 +1,11 @@
 #pragma once
+#include <safepoints/Safepoint.hpp>
 #include <stddef.h>
+#include <utils/defines.h>
 static void* __dso_handle = nullptr;
 
-typedef size_t MetaData;
+const size_t min_heap = sp::pagesize * (1 << 5);
 
-typedef struct {
-  size_t   size;
-  MetaData md[];
-} TypeTable;
+extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp);
 
-extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp, TypeTable* tt);
-
-extern "C" void* __halloc(size_t type);
+extern "C" void* __halloc(instance*);

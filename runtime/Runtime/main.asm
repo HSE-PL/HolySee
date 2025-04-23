@@ -12,74 +12,94 @@ global main
 %endmacro
 
 section .text
+
 start:
-  lea rdi, [main]
-  lea rsi, [spd]
-  mov rdx, rsp
-  lea rcx, [table]
-  _call __rt_init
-  mov rax, 60
-  mov rdi, 7
-  syscall
+    lea rdi, [main]
+    lea rsi, [spd]
+    mov rdx, rsp
+    _call __rt_init
+
+    mov rax, 60
+    mov rdi, 0
+    syscall
+
 
 main:
-push 0x12345678
-  push 0x42
-  push 0x42
-  push 0x42
-  push 0x42
-  push 0x42
-  push 0x228
+    push 0x23126
+    push 0x42
+    push 0x42
+    push 0xBEEF
 
-  mov rdi, 130
-  _call __halloc
-  push rax
-  push 0x0
-  mov rdi, 131
-  _call __halloc
-  push rax
+    mov rdi, StaticArray600
+    _call __halloc
+    mov r12, rax
 
-  push 0x232
-  mov rdi, 132
-  _call __halloc
-  mov rdi, 133
-  _call __halloc
-  mov r12, rax
-  mov rdi, 128
-  _call __halloc
-  mov rdi, 42
-  mov rsi, rax
-  shl rsi, 16
-  shr rsi, 16
-  mov qword [rsi], rdi
-;  jmp $
-  mov qword [rsi + 8], r12
-  push rax
-  push 0x337
-;  jmp $
-;  _call __GC
-  push 0x24126
-  push 0x23126
-  push 0x22126
-  push 0x7c00
-;  jmp $
-  mov rax, [spd]
-  test rax, [rax]
+    mov rdi, LinkedList
+    _call __halloc
+    mov [rax], r12
+    mov r12, rax
 
-  mov rax, 60
-  mov rdi, 42
-  syscall
-  jmp $
+    mov rdi, Heap
+    _call __halloc
+    mov [rax], r12
+    push rax
+
+    mov rdi, DynamicPrimitiveArray4
+    _call __halloc
+
+    mov rdi, DynamicArray1024
+    _call __halloc
+
+    mov rdi, DynamicArray1024
+    _call __halloc
+    push rax
+
+    push 0x7c00
+    push 0x55AA
+    push 0xDEAD
+
+    .L1:
+    mov rax, [spd]
+    test rax, [rax]
+    jmp .L1
+    ret
 
 section .data
-spd:
-  dq 0
+spd: dq 0
+
 section .rodata
-table:
-dq 6 ; size
-dq 0x10 ; sizeof linkedlist (128)
-dq 0x18 ; sizeof heap (129)
-dq 0x2f00 ; 130 (82)
-dq 0x1e00 ; 131 (83)
-dq 0x1d00 ; 132 (84)
-dq 0x0c00 ; 133 (85)
+LinkedList:
+dq 16
+dq linked_list
+dd 1
+dd 0
+
+Heap:
+dq 24
+dq heap
+dd 1
+dd 0
+
+StaticArray600:
+dq 600 * 8
+dq static_array_600
+dd 1
+dd 0
+
+DynamicPrimitiveArray4:
+dq 32
+dq dynamic_primitive_array_4
+dd 0
+dd 0
+
+DynamicArray1024:
+dq 8192
+dq dynamic_array_1024
+dd 1
+dd 0
+
+dynamic_array_1024: db "dynamic array 1024", 0
+dynamic_primitive_array_4: db "dynamic primitive array 2", 0
+static_array_600: db "static array 600", 0
+heap: db "Heap", 0
+linked_list: db "LinkedList", 0

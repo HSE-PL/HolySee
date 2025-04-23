@@ -1,5 +1,7 @@
 #pragma once
 #include "utils/defines.h"
+
+#include <assert.h>
 #include <vector>
 
 #include <memory/ThreadSafeVector.hpp>
@@ -38,12 +40,9 @@ public:
     pull_.push(t);
   }
 
-  void pop() {
-    pull_.pop();
-  }
-
-  T* back() {
-    return pull_.back();
+  T* pop() {
+    assert(pull_.size());
+    return pull_.pop().value();
   }
 
   T* operator[](size_t index) const {
