@@ -10,7 +10,6 @@ namespace threads {
 fn threads::Threads::append(void (&func)())->void {
   guard(mutex_);
   log << "try to append thrd\n";
-  ++count_of_working_threads_;
 
   auto* thread = new std::thread(func);
 
@@ -25,8 +24,7 @@ fn threads::Threads::append(void (&func)())->void {
 
   std::cout << "Thread "
             << " stack starts at: " << stack_addr << ", size: " << stack_size << " bytes\n";
-  auto hrptr =
-      Horoutine{thread, reinterpret_cast<size_t>(stack_addr) + stack_size - 4592}; // hehehe
+  let hrptr = Horoutine{thread, reinterpret_cast<size_t>(stack_addr) + stack_size - 4592}; // hehehe
   log << std::hex << hrptr.start_sp << "\n";
   pool_.insert(hrptr);
   log << "thrd append\n";
@@ -43,10 +41,4 @@ fn threads::Threads::wait_end_sp()->void {
   if (releaseIfAll(sp_))
     return;
   sp_.acquire();
-}
-
-fn threads::Threads::wait_end_tracing()->void {
-  if (releaseIfAll(rooting_))
-    return;
-  rooting_.acquire();
 }

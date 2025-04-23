@@ -27,7 +27,7 @@ namespace threads {
   };
 
   class Threads {
-    size_t counter_;
+    std::atomic_uint_fast64_t counter_;
 
     std::counting_semaphore<> sp_;
 
@@ -38,7 +38,7 @@ namespace threads {
     fn releaseIfAll(std::counting_semaphore<>& sem)->bool {
       guard(mutex_);
       if (count() == ++counter_) {
-        counter_ = 0;
+        counter_.store(0);
         sem.release(count());
         return true;
       }
@@ -51,12 +51,11 @@ namespace threads {
     fn wait_end_sp()->void;
     fn wait_end_tracing()->void;
 
-    std::counting_semaphore<> tracing_was_complete_;
-    std::counting_semaphore<> rooting_;
-    std::counting_semaphore<> marking_;
+    std::counting_semaphore<> tracing_;
+    std::counting_semaphore<> cleaning_;
 
     std::atomic_uint_fast64_t count_of_working_threads_;
-    Threads() : counter_(0), sp_(0), rooting_(0), marking_(0), tracing_was_complete_(0) {
+    Threads() : counter_(0), sp_(0), cleaning_(0), tracing_(0) {
     }
 
     fn append(void (&func)())->void;

@@ -55,7 +55,7 @@ Allocator::Allocator(ref start, size_t size)
 
 fn Allocator::alloc(size_t object_size)->ref {
   guard(mutex_);
-  auto arena = heap_.get_min_more_then(object_size);
+  let arena = heap_.get_min_more_then(object_size);
   log << "alloca " << object_size << " on arena " << arena->start << "\n";
   ref start_new_object = arena->cur;
   log << start_new_object << "\n";
@@ -107,6 +107,7 @@ fn Allocator::free_arena(Arena* a)->void {
 fn Allocator::revive(Arena* a)->void {
   free_arena(a);
   heap_.append(a);
+  log << "revive: end\n";
 }
 
 // for debug and test only

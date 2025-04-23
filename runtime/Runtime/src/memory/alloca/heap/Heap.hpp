@@ -53,7 +53,7 @@ public:
 
   void append(T* a) {
     guard(mutex_);
-    log << "call insert int thread: " << std::this_thread::get_id() << "\n";
+    log << "call insert in thread: " << std::this_thread::get_id() << "\n";
     keys.insert(a);
     log << "insert end, ";
   }
@@ -65,7 +65,8 @@ public:
 
   // 4 debug
   fn printSetTree(typename std::set<T*>::iterator it, typename std::set<T*>::iterator end,
-                    int depth = 0) -> void {
+                  int depth = 0)
+      ->void {
     if (it == end)
       return;
 

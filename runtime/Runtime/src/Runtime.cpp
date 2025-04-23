@@ -34,8 +34,9 @@ namespace rt {
 
       ++threads::Threads::instance().count_of_working_threads_;
       gc->make_root_and_tracing(info, static_cast<ucontext_t*>(context));
-      threads::Threads::instance().marking_.acquire();
-      // TODO implement this shit
+
+      log << "handler: waiting ping from cleaning\n";
+      threads::Threads::instance().cleaning_.acquire(); // waiting for the end of cleaning
     }
 
     fn init()->void {
@@ -82,9 +83,8 @@ namespace rt {
     std::thread auto_gc(run);
 
     while (true) {
-      log << "              wait start gc and end rooting...\n";
-      threads::Threads::instance().rooting_.acquire();
-      gc->GC();
+      if (sp::sp)
+        gc->GC();
     }
   }
 } // namespace rt

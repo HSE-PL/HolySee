@@ -4,6 +4,7 @@
 #include "utils/log.h"
 #include <cassert>
 #include <cstddef>
+#include <iomanip>
 
 GarbageCollector::GarbageCollector(ref start_heap, size_t size_heap)
     : checked_(start_heap, start_heap + size_heap), memory_(size_heap),
@@ -20,14 +21,22 @@ fn GarbageCollector::alloc(instance* inst)->ref {
 }
 
 fn GarbageCollector::GC()->void {
+  let s = clock();
   log << "calling GC\n";
   allocator_.heap_.print();
-  for (int i = 0; i < threads::Threads::instance().count(); --i)
-    threads::Threads::instance().tracing_was_complete_.acquire();
-  log << "rooting end\n";
+  for (let i = 0; i < threads::Threads::instance().count(); --i)
+    threads::Threads::instance().tracing_.acquire();
+  log << "tracing end\n";
 
   cleaning();
-  log << "STW end \n";
+
+  log << "end cleaning\n";
+  sp::on();
+  threads::Threads::instance().cleaning_.release(
+      static_cast<std::ptrdiff_t>(threads::Threads::instance().count()));
+
+  log << "STW end, time: " << std::fixed << std::setprecision(3)
+      << 1000 * static_cast<double>(clock() - s) / CLOCKS_PER_SEC << "ms \n";
   allocator_.heap_.print();
 }
 
@@ -40,8 +49,11 @@ fn GarbageCollector::tracing()->void {
     if (let ptr = stack_for_marked_.pop(); ptr.has_value())
       marking(ptr.value());
     else {
+      log << "tracing: ohh, stack is empty(((\n";
       if (!threads::Threads::instance().count_of_working_threads_)
         throw std::runtime_error("fantom working thread");
+      log << "with me, count_of_working_threads = "
+          << threads::Threads::instance().count_of_working_threads_ << "\n";
       if (!--threads::Threads::instance().count_of_working_threads_)
         break;
       while (!stack_for_marked_.size())
@@ -75,6 +87,9 @@ fn GarbageCollector::make_root_and_tracing(siginfo_t* info, ucontext_t* context)
 
   tracing();
 
-  threads::Threads::instance().tracing_was_complete_.release();
-  threads::Threads::instance().wait_end_tracing();
+  log << "thread completed tracing\n";
+
+  threads::Threads::instance().tracing_.release(); // tell gc we`re done! (for start cleaning)
+
+  log << "thread end\n";
 }

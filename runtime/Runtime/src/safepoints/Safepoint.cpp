@@ -10,18 +10,19 @@ void sp::change(int prot) {
 }
 
 void sp::off() {
+  sp = true;
   change(PROT_NONE);
 }
 
 void sp::on() {
+  sp = false;
   change(PROT_READ);
 }
 
 void sp::init(void** spdptr) {
   spd = sys::salloc(pagesize);
   if (!spd)
-    throw std::runtime_error(
-        "salloc return shit in sp::init\n");
+    throw std::runtime_error("salloc return shit in sp::init\n");
   log << "spd on: " << spd << "\n";
   *spdptr = spd;
 }

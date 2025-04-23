@@ -17,7 +17,6 @@ class Region {
   ThreadSafeVector<T*> pull_;
 
 public:
-  std::mutex   mutex_;
   const ref    start;
   const size_t count;
   const size_t size;
