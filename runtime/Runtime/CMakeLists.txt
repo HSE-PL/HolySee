@@ -19,7 +19,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 add_executable(Runtime)
 target_sources(Runtime PRIVATE main.asm)
 target_link_libraries(Runtime PRIVATE src)
-target_compile_options(Runtime PRIVATE "-g -O0")
+target_compile_options(Runtime PRIVATE "-g -O0 -fsanitize=address")
 set(CMAKE_ASM_NASM_FLAGS "-f elf64 -F dwarf")
 set_source_files_properties(
         main.asm

@@ -13,13 +13,13 @@ concept have_size = requires(T item) {
 template <have_size T>
 class Region {
 
-  std::vector<T*>      items_;
-  ThreadSafeVector<T*> pull_;
+  std::vector<T*> items_;
 
 public:
-  const ref    start;
-  const size_t count;
-  const size_t size;
+  ThreadSafeVector<T*> pull_;
+  const ref            start;
+  const size_t         count;
+  const size_t         size;
 
   const size_t t_size;
 
@@ -28,7 +28,7 @@ public:
   Region(ref start_region, size_t count_items, size_t t_size, size_t region_tier)
       : start(start_region), count(count_items), size(count * t_size), t_size(t_size),
         have_empty(false), items_() {
-    for (int i = 0; i < count_items; i++) {
+    for (let i = 0; i < count_items; i++) {
       T* a = new T(t_size, start_region + t_size * i, region_tier);
       pull_.push(a);
       items_.push_back(a);

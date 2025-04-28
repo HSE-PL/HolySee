@@ -14,6 +14,7 @@ template <typename T>
 concept ItemForHeap = requires(T item) {
   { item.key_for_heap() } -> std::convertible_to<size_t>;
   { item.uniq_for_heap() } -> std::convertible_to<size_t>;
+  { item.kill() };
 };
 
 template <typename T>
@@ -21,8 +22,9 @@ struct Comparator {
   using is_transparent = void;
 
   bool operator()(const T* a, const T* b) const {
-    return a->key_for_heap() != b->key_for_heap() ? a->key_for_heap() < b->key_for_heap()
-                                                  : a->uniq_for_heap() < b->uniq_for_heap();
+    return a->key_for_heap() != b->key_for_heap()
+               ? a->key_for_heap() < b->key_for_heap()
+               : a->uniq_for_heap() < b->uniq_for_heap();
   }
 
   bool operator()(const T* a, ref n) const {
@@ -46,9 +48,8 @@ public:
 
   T* get_min_more_then(ref n) {
     guard(mutex_);
-    let el = keys.lower_bound(n);
-    assert(el != keys.end());
-    return *el;
+    // print();
+    return keys.lower_bound(n) != keys.end() ? *keys.lower_bound(n) : nullptr;
   }
 
   void append(T* a) {
@@ -60,6 +61,7 @@ public:
 
   void del(T* a) {
     guard(mutex_);
+    log << a << "\n";
     keys.erase(a);
   }
 

@@ -6,7 +6,7 @@
 class Bitset {
   std::vector<uint64_t> bits;
 
-  fn get_mask(size_t n)->uint64_t {
+  static fn get_mask(size_t n)->uint64_t {
     assert(n < 64);
 
     return ((1ULL << (64 - (n % 64))) - 1ULL);

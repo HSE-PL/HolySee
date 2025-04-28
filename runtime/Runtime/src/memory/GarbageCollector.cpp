@@ -1,4 +1,5 @@
 #include "GarbageCollector.hpp"
+#include "Runtime.hpp"
 #include "safepoints/Safepoint.hpp"
 #include "threads/Threads.hpp"
 #include "utils/log.h"
@@ -6,24 +7,27 @@
 #include <cstddef>
 #include <iomanip>
 
-GarbageCollector::GarbageCollector(ref start_heap, size_t size_heap)
-    : checked_(start_heap, start_heap + size_heap), memory_(size_heap),
-      allocator_(start_heap, size_heap) {
+GarbageCollector::GarbageCollector(ref start_heap, size_t size_heap, instance* first,
+                                   instance* last)
+    : checked_(start_heap, start_heap + size_heap), allocator_(start_heap, size_heap),
+      inteval_(first, last) {
 }
 
 fn GarbageCollector::alloc(instance* inst)->ref {
-  log << memory_ << "\\" << allocator_.size_ << "\n";
-  if (memory_ < 7 * (allocator_.size_ >> 3))
+  let ptr = allocator_.alloc(inst->size + 8);
+  while (!ptr) {
+    log << "AOM!!!!!!!!!!!!!!\n";
     sp::off();
-
-  memory_ -= inst->size;
-  return allocator_.alloc(inst->size + 8);
+    gogc(reinterpret_cast<ref>(&ptr));
+    ptr = allocator_.alloc(inst->size + 8);
+  }
+  log << "gc alloc: end\n";
+  return ptr;
 }
 
 fn GarbageCollector::GC()->void {
   let s = clock();
   log << "calling GC\n";
-  allocator_.heap_.print();
   for (let i = 0; i < threads::Threads::instance().count(); --i)
     threads::Threads::instance().tracing_.acquire();
   log << "tracing end\n";
@@ -37,7 +41,7 @@ fn GarbageCollector::GC()->void {
 
   log << "STW end, time: " << std::fixed << std::setprecision(3)
       << 1000 * static_cast<double>(clock() - s) / CLOCKS_PER_SEC << "ms \n";
-  allocator_.heap_.print();
+  allocator_.dump();
 }
 
 fn GarbageCollector::tracing()->void {
@@ -46,7 +50,7 @@ fn GarbageCollector::tracing()->void {
       log << "tracing: stack_for_marked[" << i << "] = " << stack_for_marked_[i]
           << "\n"; // log debug info
 
-    if (let ptr = stack_for_marked_.pop(); ptr.has_value())
+    if (let ptr = stack_for_marked_.pop(); ptr.has_value() && how_many_ref(ptr.value()))
       marking(ptr.value());
     else {
       log << "tracing: ohh, stack is empty(((\n";
@@ -64,9 +68,8 @@ fn GarbageCollector::tracing()->void {
   }
 }
 
-fn GarbageCollector::make_root_and_tracing(siginfo_t* info, ucontext_t* context)->void {
+fn GarbageCollector::make_root_and_tracing(ref ssp)->void {
   log << "calling make_root_and_tracing\n";
-  const ref ssp = context->uc_mcontext.gregs[REG_RSP];
 
   let hrtptr = threads::Threads::instance().get(ssp);
   log << hrtptr.start_sp << ":\n.\n.\n.\n"
@@ -80,6 +83,7 @@ fn GarbageCollector::make_root_and_tracing(siginfo_t* info, ucontext_t* context)
     log << "make_root_and_tracing: on stack: " << ptr << "\n";
     if (ref_in_heap(ptr)) {
       log << "find " << ptr << " in root\n";
+      // memory_.fetch_sub(how_many_ref(ptr));
       stack_for_marked_.push(ptr);
     }
   }
@@ -89,7 +93,8 @@ fn GarbageCollector::make_root_and_tracing(siginfo_t* info, ucontext_t* context)
 
   log << "thread completed tracing\n";
 
-  threads::Threads::instance().tracing_.release(); // tell gc we`re done! (for start cleaning)
+  threads::Threads::instance()
+      .tracing_.release(); // tell gc we`re done! (for start cleaning)
 
   log << "thread end\n";
 }

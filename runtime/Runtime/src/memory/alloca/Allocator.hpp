@@ -38,8 +38,8 @@ public:
   Heap<Arena>  heap_;
   const ref    start_;
   const size_t size_;
-  BitMap       emplaced_;
-  BitMap       marking_;
+  // BitMap       emplaced_; // 4 accurate gc
+  BitMap marking_;
 
   std::vector<Region<Arena>*> regions_{};
 
@@ -58,4 +58,7 @@ public:
   fn free_arena(Arena* a)->void;
 
   fn revive(Arena* a)->void;
+
+  // 4 debug
+  fn dump() const->void;
 };

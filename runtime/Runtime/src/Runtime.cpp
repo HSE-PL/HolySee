@@ -21,23 +21,21 @@ namespace rt {
 
   std::optional<GarbageCollector> gc;
 
+
   namespace signals {
 
-    void handler(int sig, siginfo_t* info, void* context) {
-      log << info->si_addr << " " << sp::spd << "\n";
+    fn handler(int sig, siginfo_t* info, void* context) {
+      log << info->si_addr << " (sp: " << sp::spd << ")\n";
       if (info->si_addr != sp::spd)
         _exit(228);
+      // for (;;) {
+      // log << "@";
+      // }
       log << "ok\n";
 
-      threads::Threads::instance().wait_end_sp();
-      log << "handler: call make_root_and_tracing\n";
-
-      ++threads::Threads::instance().count_of_working_threads_;
-      gc->make_root_and_tracing(info, static_cast<ucontext_t*>(context));
-
-      log << "handler: waiting ping from cleaning\n";
-      threads::Threads::instance().cleaning_.acquire(); // waiting for the end of cleaning
+      gogc(static_cast<ucontext_t*>(context)->uc_mcontext.gregs[REG_RSP]);
     }
+
 
     fn init()->void {
       struct sigaction sa {};
@@ -54,14 +52,18 @@ namespace rt {
 
   [[noreturn]] fn run()->void {
     log << "runtime is runing\n";
-    for (uint64_t i = 0;; ++i) {
+    for (let i = 0;; ++i) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
       log << "sp off\n";
       sp::off();
+      // for (;;)
+      // ;
     }
   }
 
-  [[noreturn]] fn init(void (&__start)(), void** spdptr, void* sp)->void {
+  [[noreturn]] fn init(void (&__start)(), void** spdptr, void* sp, instance* meta,
+                       instance* end)
+      ->void {
     log << "main stack: " << sp << "\n";
     signals::init();
     sp::init(spdptr);
@@ -70,7 +72,7 @@ namespace rt {
     let heap_start = sys::salloc(heap_size);
     log << "heap_size: " << heap_size << "\n";
 
-    gc.emplace(reinterpret_cast<size_t>(heap_start), heap_size);
+    gc.emplace(reinterpret_cast<size_t>(heap_start), heap_size, meta, end);
 
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
@@ -80,7 +82,7 @@ namespace rt {
     threads::Threads::instance().count_of_working_threads_.store(0);
     threads::Threads::instance().append(__start);
 
-    std::thread auto_gc(run);
+    // std::thread auto_gc(run);
 
     while (true) {
       if (sp::sp)
@@ -89,8 +91,21 @@ namespace rt {
   }
 } // namespace rt
 
-extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp) {
-  rt::init(__start, spdptr, sp);
+fn gogc(ref ssp)->void {
+  threads::Threads::instance().wait_end_sp();
+  log << "handler: call make_root_and_tracing\n";
+
+  ++threads::Threads::instance().count_of_working_threads_;
+  rt::gc->make_root_and_tracing(ssp);
+
+  log << "handler: waiting ping from cleaning\n";
+  threads::Threads::instance().cleaning_.acquire(); // waiting for the end of cleaning
+}
+
+
+extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp, instance* meta,
+                          instance* end) {
+  rt::init(__start, spdptr, sp, meta, end);
 }
 
 // literally malloc, but holy alloc
@@ -98,8 +113,21 @@ extern "C" void* __halloc(instance* inst) {
   log << "__halloc: alloca " << inst->name << ", size:" << inst->size << "\n";
   if (rt::gc.has_value()) {
     let ptr_on_object = reinterpret_cast<instance**>(rt::gc->alloc(inst));
-    *ptr_on_object    = inst;
+    log << ptr_on_object << "\n";
+    *ptr_on_object = inst;
     return reinterpret_cast<void*>(reinterpret_cast<size_t>(ptr_on_object) + 8);
   }
   return nullptr;
+}
+
+extern "C" void __go(void (&func)()) {
+  threads::Threads::instance().append(func);
+}
+
+extern "C" void __sleep(size_t n) {
+  int a;
+  log << "thread "
+      << threads::Threads::instance().get(reinterpret_cast<size_t>(&a)).start_sp
+      << " sleep " << n << "\n";
+  std::this_thread::sleep_for(std::chrono::seconds(n));
 }

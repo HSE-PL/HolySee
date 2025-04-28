@@ -1,17 +1,20 @@
 #pragma once
 #include <cassert>
 #include <cstddef>
+#include <memory/ThreadSafeVector.hpp>
 #include <mutex>
 #include <utils/defines.h>
+#include <vector>
 class Arena {
   bool died;
 
-  std::mutex mutex_;
 
 public:
-  const size_t size;
-  const ref    start;
-  const size_t tier;
+  std::mutex               mutex_;
+  ThreadSafeVector<size_t> objects;
+  const size_t             size;
+  const ref                start;
+  const size_t             tier;
 
   size_t cur;
 
@@ -25,4 +28,9 @@ public:
   [[nodiscard]] fn uniq_for_heap() const->ref;
 
   fn is_empty() const->bool;
+
+  // 4 debug
+  fn kill() {
+    objects.clear();
+  }
 };

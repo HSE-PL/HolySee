@@ -9,11 +9,13 @@ namespace threads {
 
 fn threads::Threads::append(void (&func)())->void {
   guard(mutex_);
-  log << "try to append thrd\n";
+  log << "try to append thrd "
+      << "\n";
 
-  auto* thread = new std::thread(func);
+  const let thread = new std::thread(func);
 
-  auto pthread = thread->native_handle();
+  log << "std::thread was create\n";
+  const let pthread = thread->native_handle();
 
   pthread_attr_t attr;
 

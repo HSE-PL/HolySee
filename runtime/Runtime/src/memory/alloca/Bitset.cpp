@@ -6,7 +6,7 @@
 
 
 fn Bitset::set(size_t n)->void {
-  bits[n / 64] |= n % 64;
+  bits[n / 64] |= (1ULL << (n % 64));
 }
 
 fn Bitset::get(size_t n) const->uint64_t {
