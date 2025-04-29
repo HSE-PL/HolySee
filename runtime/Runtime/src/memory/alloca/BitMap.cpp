@@ -1,13 +1,13 @@
 #include "BitMap.hpp"
 
-fn BitMap::set(ref n)->void {
+auto BitMap::set(ref n) -> void {
   guard(mutex_);
-  Bitset::set(map(n));
+  bitset_.set(map(n));
 }
 
-fn BitMap::unset(ref n)->void {
+auto BitMap::unset(ref n) -> void {
   guard(mutex_);
-  Bitset::unset(map(n));
+  bitset_.reset(map(n));
 }
 
 
@@ -16,19 +16,19 @@ fn BitMap::unset(ref n)->void {
 //   Bitset::clear();
 // }
 
-fn BitMap::clear(ref from, ref to)->void {
+auto BitMap::clear() -> void {
   guard(mutex_);
-  Bitset::clear(map(from), map(to));
+  bitset_.clear();
 }
 
-fn BitMap::check_and_set(ref n)->bool {
+auto BitMap::check_and_set(ref n) -> bool {
   guard(mutex_);
-  let mask = get(map(n));
+  auto mask = bitset_[map(n)];
   set(n);
   return mask;
 }
 
-fn BitMap::operator[](ref n) const->bool {
+auto BitMap::operator[](ref n) const -> bool {
   guard(mutex_);
-  return get(map(n));
+  return bitset_[map(n)];
 }

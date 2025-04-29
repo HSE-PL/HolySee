@@ -26,6 +26,7 @@ start:
     mov rdx, rsp
     lea rcx, [LinkedList]
     lea r8, [Heap]
+    mov r9, 0x20000
     _call __rt_init
 
     mov rax, 60

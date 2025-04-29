@@ -22,35 +22,34 @@
 namespace rt {
 
   std::optional<GarbageCollector> gc;
-  size_t static max_heap_size = 1_page << 5;
 
-  fn gogc(ref ssp)->void {
+  auto gogc(ref ssp) -> void {
     threads::Threads::instance().wait_end_sp();
-    log << "handler: call make_root_and_tracing\n";
+    logezhe << "handler: call make_root_and_tracing\n";
 
     ++threads::Threads::instance().count_of_working_threads_;
     gc->make_root_and_tracing(ssp);
 
-    log << "handler: waiting ping from cleaning\n";
+    logezhe << "handler: waiting ping from cleaning\n";
     threads::Threads::instance().cleaning_.acquire(); // waiting for the end of cleaning
   }
 
   namespace signals {
 
-    fn handler(int sig, siginfo_t* info, void* context) {
-      log << info->si_addr << " (sp: " << sp::spd << ")\n";
+    auto handler(int sig, siginfo_t* info, void* context) {
+      logezhe << info->si_addr << " (sp: " << sp::spd << ")\n";
       if (info->si_addr != sp::spd)
         _exit(228);
       // for (;;) {
-      // log << "@";
+      // logezhe << "@";
       // }
-      log << "ok\n";
+      logezhe << "ok\n";
 
       gogc(static_cast<ucontext_t*>(context)->uc_mcontext.gregs[REG_RSP]);
     }
 
 
-    fn init()->void {
+    auto init() -> void {
       struct sigaction sa {};
       sa.sa_sigaction = handler;
       sigemptyset(&sa.sa_mask);
@@ -63,23 +62,22 @@ namespace rt {
     }
   } // namespace signals
 
-  [[noreturn]] fn run()->void {
-    log << "runtime is runing\n";
-    for (let i = 0;; ++i) {
+  [[noreturn]] auto run() -> void {
+    logezhe << "runtime is runing\n";
+    for (auto i = 0;; ++i) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
-      log << "sp off\n";
+      logezhe << "sp off\n";
       sp::off();
       // for (;;)
       // ;
     }
   }
 
-  [[noreturn]] fn init(void (&__start)(), void** spdptr, void* sp, instance* meta,
-                       instance* end, size_t max_heap_size)
-      ->void {
+  [[noreturn]] auto init(void (&__start)(), void** spdptr, void* sp, instance* meta,
+                         instance* end, size_t max_heap_size) -> void {
     rt::max_heap_size = max_heap_size ? max_heap_size : rt::max_heap_size;
 
-    log << "main stack: " << sp << "\n";
+    logezhe << "main stack: " << sp << "\n";
     signals::init();
     sp::init(spdptr);
 
@@ -89,7 +87,7 @@ namespace rt {
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
 
-    log << "start __start: " << reinterpret_cast<size_t>(__start) << "\n";
+    logezhe << "start __start: " << reinterpret_cast<size_t>(__start) << "\n";
 
     threads::Threads::instance().count_of_working_threads_.store(0);
     threads::Threads::instance().append(__start);
@@ -110,9 +108,9 @@ extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp, instance* 
   rt::init(__start, spdptr, sp, meta, end, max_size_heap);
 }
 
-// literally malloc, but holy alloc
+// literally malloc, but sfree alloc
 extern "C" void* __halloc(instance* inst) {
-  log << "__halloc: alloca " << inst->name << ", size:" << inst->size << "\n";
+  logezhe << "__halloc: alloca " << inst->name << ", size:" << inst->size << "\n";
   if (rt::max_heap_size) {
     if (MemoryManager::memory + inst->size > rt::max_heap_size) {
       void* a;
@@ -120,12 +118,12 @@ extern "C" void* __halloc(instance* inst) {
       rt::gogc(reinterpret_cast<ref>(&a));
     }
   }
-  let ptr = Allocator::instance().alloc(inst->size + 8);
+  auto ptr = Allocator::instance().alloc(inst->size + 8);
   if (!ptr)
     throw std::runtime_error("AOM!");
 
-  let ptr_on_object = reinterpret_cast<instance**>(ptr);
-  log << ptr_on_object << "\n";
+  auto ptr_on_object = reinterpret_cast<instance**>(ptr);
+  logezhe << ptr_on_object << "\n";
   *ptr_on_object = inst;
   return reinterpret_cast<void*>(reinterpret_cast<size_t>(ptr_on_object) + 8);
 }
@@ -136,8 +134,8 @@ extern "C" void __go(void (&func)()) {
 
 extern "C" void __sleep(size_t n) {
   int a;
-  log << "thread "
-      << threads::Threads::instance().get(reinterpret_cast<size_t>(&a)).start_sp
-      << " sleep " << n << "\n";
+  logezhe << "thread "
+          << threads::Threads::instance().get(reinterpret_cast<size_t>(&a)).start_sp
+          << " sleep " << n << "\n";
   std::this_thread::sleep_for(std::chrono::seconds(n));
 }

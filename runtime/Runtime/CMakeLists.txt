@@ -19,7 +19,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 add_executable(Runtime)
 target_sources(Runtime PRIVATE main.asm)
 target_link_libraries(Runtime PRIVATE src)
-target_compile_options(Runtime PRIVATE "-g -O0 -fsanitize=address")
+
+find_package(TBB REQUIRED COMPONENTS tbb)
+
+target_link_libraries(Runtime PRIVATE TBB::tbb)
+
+target_compile_options(Runtime PRIVATE "-g -O0 -fsanitize=address -ltbb")
 set(CMAKE_ASM_NASM_FLAGS "-f elf64 -F dwarf")
 set_source_files_properties(
         main.asm
@@ -34,6 +39,7 @@ target_link_options(Runtime PRIVATE
         "-lstdc++"
         "-lc"
         "-Wl,--gc-sections"
+        "-g"
 )
 
 

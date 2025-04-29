@@ -3,6 +3,7 @@
 #include "utils/defines.h"
 #include <stddef.h>
 namespace sys {
-  fn salloc(size_t size)->void*;
-  fn holy(Arena*)->void;
+  auto salloc(size_t size, size_t tier) -> void*;
+  auto sfree(Arena*) -> void;
+  auto sreserve(size_t size) -> void;
 } // namespace sys

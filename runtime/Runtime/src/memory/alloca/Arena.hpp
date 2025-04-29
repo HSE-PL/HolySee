@@ -1,9 +1,11 @@
 #pragma once
 #include "BitMap.hpp"
+
+#include <atomic>
 #include <cassert>
 #include <cstddef>
-#include <memory/ThreadSafeVector.hpp>
 #include <mutex>
+#include <tbb/concurrent_vector.h>
 #include <utils/defines.h>
 
 class Arena {
@@ -13,7 +15,7 @@ public:
   BitMap     marked_;
   std::mutex mutex_;
 
-  ThreadSafeVector<size_t> objects;
+  tbb::concurrent_vector<size_t> objects;
 
   const size_t size;
   const ref    start;
@@ -23,17 +25,17 @@ public:
 
   Arena(size_t arena_size, ref arena_start, size_t arena_tier);
 
-  fn revive()->void;
+  auto revive()->void;
 
-  fn is_died() const->bool;
+  auto is_died() const->bool;
 
-  [[nodiscard]] fn key_for_heap() const->size_t;
-  [[nodiscard]] fn uniq_for_heap() const->ref;
+  [[nodiscard]] auto key_for_heap() const->size_t;
+  [[nodiscard]] auto uniq_for_heap() const->ref;
 
-  fn is_empty() const->bool;
+  auto is_empty() const->bool;
 
   // 4 debug
-  fn kill() {
+  auto kill() {
     objects.clear();
   }
 };

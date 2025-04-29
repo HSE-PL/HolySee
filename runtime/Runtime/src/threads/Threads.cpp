@@ -7,15 +7,15 @@ namespace threads {
   }
 } // namespace threads
 
-fn threads::Threads::append(void (&func)())->void {
+auto threads::Threads::append(void (&func)()) -> void {
   guard(mutex_);
-  log << "try to append thrd "
-      << "\n";
+  logezhe << "try to append thrd "
+          << "\n";
 
-  const let thread = new std::thread(func);
+  const auto thread = new std::thread(func);
 
-  log << "std::thread was create\n";
-  const let pthread = thread->native_handle();
+  logezhe << "std::thread was create\n";
+  const auto pthread = thread->native_handle();
 
   pthread_attr_t attr;
 
@@ -25,11 +25,13 @@ fn threads::Threads::append(void (&func)())->void {
   pthread_attr_getstack(&attr, &stack_addr, &stack_size);
 
   std::cout << "Thread "
-            << " stack starts at: " << stack_addr << ", size: " << stack_size << " bytes\n";
-  let hrptr = Horoutine{thread, reinterpret_cast<size_t>(stack_addr) + stack_size - 4592}; // hehehe
-  log << std::hex << hrptr.start_sp << "\n";
+            << " stack starts at: " << stack_addr << ", size: " << stack_size
+            << " bytes\n";
+  auto hrptr = Horoutine{thread, reinterpret_cast<size_t>(stack_addr) + stack_size -
+                                     4592}; // hehehe
+  logezhe << std::hex << hrptr.start_sp << "\n";
   pool_.insert(hrptr);
-  log << "thrd append\n";
+  logezhe << "thrd append\n";
 }
 
 Horoutine threads::Threads::get(size_t sp) {
@@ -39,7 +41,7 @@ Horoutine threads::Threads::get(size_t sp) {
   return *el;
 }
 
-fn threads::Threads::wait_end_sp()->void {
+auto threads::Threads::wait_end_sp() -> void {
   if (releaseIfAll(sp_))
     return;
   sp_.acquire();

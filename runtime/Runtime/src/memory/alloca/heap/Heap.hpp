@@ -66,9 +66,8 @@ public:
   }
 
   // 4 debug
-  fn printSetTree(typename std::set<T*>::iterator it, typename std::set<T*>::iterator end,
-                  int depth = 0)
-      ->void {
+  auto printSetTree(typename std::set<T*>::iterator it,
+                    typename std::set<T*>::iterator end, int depth = 0) -> void {
     if (it == end)
       return;
 
@@ -76,16 +75,16 @@ public:
     printSetTree(right, end, depth + 1);
 
     for (int i = 0; i < depth; ++i)
-      log << "    ";
-    log << std::hex << (*it)->uniq_for_heap() << ":" << (*it)->key_for_heap() << "\n";
+      logezhe << "    ";
+    logezhe << std::hex << (*it)->uniq_for_heap() << ":" << (*it)->key_for_heap() << "\n";
 
     if (it != end)
       printSetTree(it, it, depth + 1);
   }
 
-  fn print() {
-    log << "=====>\n";
+  auto print() {
+    logezhe << "=====>\n";
     printSetTree(keys.begin(), keys.end());
-    log << "<=====\n";
+    logezhe << "<=====\n";
   }
 };

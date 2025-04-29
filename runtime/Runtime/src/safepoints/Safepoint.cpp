@@ -20,9 +20,9 @@ void sp::on() {
 }
 
 void sp::init(void** spdptr) {
-  spd = sys::salloc(1_page);
-  if (!spd)
+  spd = mmap(nullptr, 1_page, PROT_READ, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+  if (spd == MAP_FAILED)
     throw std::runtime_error("salloc return shit in sp::init\n");
-  log << "spd on: " << spd << "\n";
+  logezhe << "spd on: " << spd << "\n";
   *spdptr = spd;
 }

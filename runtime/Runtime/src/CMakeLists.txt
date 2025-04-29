@@ -3,15 +3,13 @@ add_library(src STATIC
         Runtime.cpp
         memory/GarbageCollector.cpp
         memory/Allocator.cpp
-        memory/alloca/Bitset.cpp
-        memory/alloca/heap/Heap.cpp
         safepoints/Safepoint.cpp
         system/System.cpp
         threads/Threads.cpp
         threads/Horoutine.cpp
-        memory/ThreadSafeVector.cpp
-        memory/alloca/Arena.cpp
         memory/MemoryManager.cpp
+        memory/alloca/heap/Heap.cpp
+        memory/alloca/Arena.cpp
         memory/alloca/BitMap.cpp
 )
 

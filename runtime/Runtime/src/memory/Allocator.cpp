@@ -17,9 +17,9 @@ Allocator& Allocator::instance() {
   return hallocator;
 }
 
-fn Allocator::alloc(size_t object_size)->ref {
+auto Allocator::alloc(size_t object_size) -> ref {
   guard(mutex_);
-  let arena = heap.get_min_more_then(object_size);
+  auto arena = heap.get_min_more_then(object_size);
   if (!arena ||
       arena->start + arena->size - arena->cur > ((object_size >> 12) << 12) + 1_page)
     return add_active(object_size)->start;
@@ -30,76 +30,81 @@ fn Allocator::alloc(size_t object_size)->ref {
   heap.append(arena);
 
 
-  log << "huh\n";
+  // log << "huh\n";
   // arena->objects.push(object_size);
-  log << "huh\n";
+  // log << "huh\n";
   // dump();
 
   // dump();
-  log << "alloc: end\n";
+  // log << "alloc: end\n";
   return arena->cur - object_size;
 }
 
-fn Allocator::add_active(size_t object_size)->Arena* {
+auto Allocator::add_active(size_t object_size) -> Arena* {
   guard(mutex_);
-  log << "call add active\n";
-  let tier = 0;
-  for (; ((1 << tier) + 1) * 1_page < object_size; ++tier)
+  logezhe << "call add active\n";
+  auto tier0 = 0;
+  for (; ((1 << tier0) + 1) * 1_page < object_size; ++tier0)
     ;
-  let new_active_size = ((1 << tier) + 1) * 1_page;
-  let start           = sys::salloc(new_active_size);
+  for (auto tier = tier0; tier < MemoryManager::COUNT_OF_TIERS; ++tier) {
+    auto new_active_size = ((1 << tier0) + 1) * 1_page;
+    auto start           = sys::salloc(new_active_size, tier0);
+    if (start) {
+      auto new_active = new Arena(new_active_size, reinterpret_cast<ref>(start), tier0);
+      heap.append(new_active);
+      logezhe << "return from add_active\n";
+      return new_active;
+    }
+  }
 
-  let new_active = new Arena(new_active_size, reinterpret_cast<ref>(start), tier);
-  heap.append(new_active);
-  log << "return from add_active\n";
-  return new_active;
+  return nullptr;
 }
 
-fn Allocator::free_arena(Arena* a)->void {
+auto Allocator::free_arena(Arena* a) -> void {
   guard(mutex_);
   a->kill(); // debug
-  // log << "?\n";
+  // logezhe << "?\n";
   heap.del(a);
   MemoryManager::free_arena(a);
 }
 
-// fn Allocator::revive(Arena* a)->void {
+// auto Allocator::revive(Arena* a)->void {
 //   free_arena(a);
 //   add_active(a->tier);
 //   // heap.append(a);
-//   log << "revive: end\n";
+//   logezhe << "revive: end\n";
 // }
 
 // 4 debug and test only
-fn Allocator::free(ref ptr)->void {
+auto Allocator::free(ref ptr) -> void {
   guard(mutex_);
-  log << "free     " << ptr << "\n";
-  log << "on arena " << MemoryManager::arena_by_ptr(ptr)->start << "\n";
-  let abp = MemoryManager::arena_by_ptr(ptr);
+  logezhe << "free     " << ptr << "\n";
+  logezhe << "on arena " << MemoryManager::arena_by_ptr(ptr)->start << "\n";
+  auto abp = MemoryManager::arena_by_ptr(ptr);
   // emplaced_.clear(abp->start, abp->start + abp->size);
   free_arena(abp);
 }
 
-fn Allocator::dump() const->void {
+auto Allocator::dump() const -> void {
   return;
-  // std::ostringstream log;
-  // log << std::hex;
+  // std::ostringstream logezhe;
+  // logezhe << std::hex;
   //
   // for (const auto& r : regions_) {
-  //   log << r->t_size << " region : {";
+  //   logezhe << r->t_size << " region : {";
   //   for (const auto& arena : heap.keys) {
   //     if (arena->size == r->t_size) {
-  //       log << "arena " << arena->start << " (";
+  //       logezhe << "arena " << arena->start << " (";
   //       // guard(arena->mutex_);
   //       for (const auto& obj_size : arena->objects) {
-  //         log << "[" << obj_size << "],";
+  //         logezhe << "[" << obj_size << "],";
   //       }
-  //       log << "... " << arena->key_for_heap() << "), <"
+  //       logezhe << "... " << arena->key_for_heap() << "), <"
   //           << regions_[arena->tier]->size_pull() << "> ";
   //     }
   //   }
-  //   log << "}\n";
+  //   logezhe << "}\n";
   // }
 
-  // log << oss.str();
+  // logezhe << oss.str();
 }

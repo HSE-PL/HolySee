@@ -1,8 +1,6 @@
 #pragma once
 #include <cstddef>
 #define guard(mutex) std::lock_guard _(mutex)
-#define fn auto
-#define let auto
 typedef unsigned long long ref;
 
 static void* __dso_handle = nullptr;
@@ -22,18 +20,18 @@ struct inteval {
       : first(reinterpret_cast<ref>(i1)), last(reinterpret_cast<ref>(i2)) {
   }
 
-  fn correct(T* i)->bool {
-    let p = reinterpret_cast<ref>(i);
+  auto correct(T* i) -> bool {
+    auto p = reinterpret_cast<ref>(i);
     if (p < first)
       return false;
     if (p > last)
       return false;
-    let offset = p - first;
+    auto offset = p - first;
     return !(offset % sizeof(T));
   }
 };
 
-let constexpr operator"" _page(unsigned long long n)->size_t {
+auto constexpr operator"" _page(unsigned long long n) -> size_t {
   // if (n > 1 << 36)
   //   throw std::runtime_error("too much pages");
   return n << 12;

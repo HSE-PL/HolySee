@@ -1,52 +1,65 @@
 #pragma once
 #include "Allocator.hpp"
 #include "alloca/Arena.hpp"
-#include "bitset"
 #include "utils/defines.h"
 #include <array>
-#include <safepoints/Safepoint.hpp>
+#include <oneapi/tbb/concurrent_queue.h>
 #include <unordered_map>
 struct Region {
-  size_t count;
-  size_t t_size;
+  std::atomic<size_t>          count;
+  size_t                       t_size;
+  tbb::concurrent_queue<void*> slots_;
+
+  Region(size_t c, size_t s) : count(c), t_size(s) {
+  }
+  Region& operator=(const Region& other) {
+    count.store(other.count);
+    t_size = other.t_size;
+    slots_ = other.slots_;
+    return *this;
+  }
+
+private:
+  std::mutex mutex_;
 };
 
 class MemoryManager {
-  let static constexpr COUNT_OF_TIERS = 48;
   std::unordered_map<ref, Arena*> static inline ref_to_arena_{};
 
-public:
-  std::mutex static inline mutex_;
-  std::atomic_size_t static inline memory = 0;
-  let static inline regions_              = [] {
-    std::array<Region, COUNT_OF_TIERS> regs{};
-    for (let i = 0; i < COUNT_OF_TIERS; ++i) {
-      regs[i].count  = 0;
-      regs[i].t_size = ((1 << i) + 1) * 1_page;
-    }
-    return regs;
-  }();
-
-  let static active_pages_()
-      ->std::atomic<std::bitset<1ULL << (sizeof(size_t) * 8 - 16 - 12)>>& {
-    static std::atomic<std::bitset<1ULL << (sizeof(size_t) * 8 - 16 - 12)>> bm;
+  auto static active_pages_() -> BitMap& {
+    auto static bm = BitMap(0, 1ULL << 47, 1_page);
     return bm;
   }
 
-  let static ref_in_reg(ref ptr)->bool {
-    log << "ref_in_reg: from " << active_pages_().from_ << " - " << active_pages_().to_
-        << "\n";
-    return active_pages_()[ptr >> 12];
+public:
+  auto static constexpr COUNT_OF_TIERS = 48;
+  static inline void* cur              = nullptr;
+
+  std::mutex static inline mutex_;
+  std::atomic_size_t static inline memory = 0;
+
+  auto static inline regions_ = [] {
+    std::array<Region, COUNT_OF_TIERS> regs{};
+    for (auto i = 0; i < COUNT_OF_TIERS; ++i) {
+      regs[i] = Region(0, ((1 << i) + 1) * 1_page);
+    }
+    return &regs;
+  }();
+
+  auto static ref_in_reg(ref ptr) -> bool {
+    if (ptr < 1ULL << 47)
+      return active_pages_()[ptr];
+    return false;
   }
 
-  let static arena_by_ptr(ref ptr)->Arena* {
+  auto static arena_by_ptr(ref ptr) -> Arena* {
     return ref_to_arena_[ptr];
   }
 
-  let static free_arena(Arena* a)->void {
+  auto static free_arena(Arena* a) -> void {
     guard(mutex_);
     ref_to_arena_.erase(a->start);
-    active_pages_().unset(a->start >> 12);
+    active_pages_().set(a->start);
     regions_[a->tier].count--;
   }
 };

@@ -2,7 +2,7 @@
 #include <iostream>
 
 #ifdef DEBUG
-#define log std::cout
+#define logezhe std::cout
 #else
 class NullStream {
 public:
@@ -11,5 +11,5 @@ public:
     return *this;
   }
 };
-static NullStream log;
+static NullStream logezhe;
 #endif

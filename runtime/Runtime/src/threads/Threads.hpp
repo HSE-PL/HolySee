@@ -35,7 +35,7 @@ namespace threads {
 
     std::mutex mutex_;
 
-    fn releaseIfAll(std::counting_semaphore<>& sem)->bool {
+    auto releaseIfAll(std::counting_semaphore<>& sem) -> bool {
       guard(mutex_);
       if (count() == ++counter_) {
         counter_.store(0);
@@ -48,8 +48,8 @@ namespace threads {
   public:
     static Threads& instance();
 
-    fn wait_end_sp()->void;
-    fn wait_end_tracing()->void;
+    auto wait_end_sp() -> void;
+    auto wait_end_tracing() -> void;
 
     std::counting_semaphore<> tracing_;
     std::counting_semaphore<> cleaning_;
@@ -58,12 +58,12 @@ namespace threads {
     Threads() : counter_(0), sp_(0), cleaning_(0), tracing_(0) {
     }
 
-    fn append(void (&func)())->void;
+    auto append(void (&func)()) -> void;
 
-    fn count()->size_t {
+    auto count() -> size_t {
       return pool_.size();
     }
 
-    fn get(size_t sp)->Horoutine;
+    auto get(size_t sp) -> Horoutine;
   }; // namespace threads
 } // namespace threads
