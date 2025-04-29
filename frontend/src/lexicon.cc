@@ -40,7 +40,7 @@ static const std::array<const Keyword, 11> values{
     kw_struct,
     kw_type,
     kw_union,
-    kw_var,
+    kw_var
 };
 
 }  // namespace hsec::frontend

@@ -1,45 +1,80 @@
 #ifndef HSEC_FRONTEND_PARSING_H
 #define HSEC_FRONTEND_PARSING_H
 
+#include <optional>
+#include <utility>
+
+#include "ast.h"
 #include "lexicon.h"
 
 namespace hsec::frontend::parsing {
 
-template <typename T>
-concept ParseStream = requires(T& buf, Token token) { token = buf.next(); };
+namespace internal {
+template <typename T, typename U>
+concept decays_to = std::same_as<std::decay_t<T>, U>;
+}
 
 template <typename T>
-concept ParseBuffer = ParseStream<T>
-                      && requires(T& buf, Token token) { token = buf.peek(); };
-
-template <ParseStream T>
-class SingleTokenBuffer {
- public:
-  typedef std::optional<Token> Buffer;
-
- private:
-  T& stream;
-  Buffer& buf;
-
- public:
-  SingleTokenBuffer(T& stream, Buffer&& buf = Buffer{})
-      : stream(stream), buf(buf) {}
+concept Context = requires(T ctx, Span span) {
+  { ctx.next() } -> internal::decays_to<Token>;
+  { ctx.peek() } -> internal::decays_to<Token>;
+  { ctx.view(span) } -> internal::decays_to<std::string_view>;
 };
 
-// template <ParseStream T>
-// class ParseBuffer {
-//   T& stream;
-//   std::deque<Token> buf;
+Token expect(Token::Kind kind, Context auto&& ctx) {
+  auto token = ctx.next();
+  if (token.kind != kind)
+    throw "FORCED";
+  return token;
+}
 
-//   explicit ParseBuffer(T& stream) : stream(stream) {}
+template <typename Context, typename Parser>
+auto parseSeparated(
+    Context&& ctx, Parser&& parser, Token::Kind sep, Token::Kind end
+) {
+  std::vector<decltype(parser(ctx))> items;
+  if (ctx.peek().kind == end)
+    return items;
+  for (;;) {
+    items.push_back(parser(ctx));
+    if (ctx.peek().kind == sep)
+      ctx.next();
+    if (ctx.peek().kind == end)
+      break;
+  }
+  return items;
+}
 
-//   Token next() {}
+std::shared_ptr<ast::Type> parseType(Context auto&& ctx);
 
-//   const Token& peek(size_t n = 0) {
-//     while (buf.size() <= n)
-//       buf.push_back(next());
-//   }
-// };
+ast::Field parseField(Context auto&& ctx) {
+  auto name = ctx.view(expect(Token::Kind::word, ctx));
+  auto type = parseType(ctx);
+  return ast::Field(std::string(name), type);
+}
+
+std::shared_ptr<ast::Type> parseType(Context auto&& ctx) {
+  auto name = ctx.view(expect(Token::Kind::word, ctx));
+  if (name == "struct") {
+    expect(Token::Kind::begin, ctx);
+    return std::make_shared<ast::StructType>(parseSeparated(
+        ctx,
+        [](Context auto&& ctx) { return parseField(ctx); },
+        Token::Kind::next,
+        Token::Kind::end
+    ));
+    expect(Token::Kind::end, ctx);
+  } else
+    return std::make_shared<ast::NamedType>(std::string(name));
+}
+
+ast::TypeDecl parseTypeDecl(Context auto&& ctx) {
+  if (ctx.view(expect(Token::Kind::word, ctx)) != "type")
+    throw "FORCED";
+  auto name = ctx.view(expect(Token::Kind::word, ctx));
+  auto type = parseType(ctx);
+  return ast::TypeDecl(std::string(name), type);
+}
 
 }  // namespace hsec::frontend::parsing
 

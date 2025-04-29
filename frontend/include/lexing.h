@@ -41,16 +41,17 @@ struct Indent {
   }
 };
 
-class Context {
+class Lexer {
   size_t pos = 0;
 
   Indent indent;
   size_t num_ends = 0;
-  bool newline = true;
 
  public:
-  Token next(std::string_view&);
-  std::optional<Token> nextOnline(std::string_view&);
+  Token next(std::string_view);
+  std::optional<Token> nextOnline(std::string_view);
+
+  size_t getPos() const { return pos; }
 
   explicit operator bool() { return !indent; };
 };

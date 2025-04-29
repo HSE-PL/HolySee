@@ -1,6 +1,6 @@
 #include "lexing.h"
 
-#include "lexing.h"
+#include <algorithm>
 
 using Kind = hsec::frontend::Token::Kind;
 
@@ -25,12 +25,18 @@ void advance(size_t& pos, std::string_view& view, size_t count) {
 
 }  // namespace
 
-Token Context::next(std::string_view& view) {
-  return nextOnline(view).value_or(Token(Kind::eof, pos));
+Token Lexer::next(std::string_view view) {
+  if (auto token = nextOnline(view); token)
+    return token.value();
+  if (indent) {
+    --indent;
+    return Token(Kind::end, pos);
+  }
+  return Token(Kind::eof, pos);
 }
 
-std::optional<Token> Context::nextOnline(std::string_view& view) {
-  Context& ctx = *this;
+std::optional<Token> Lexer::nextOnline(std::string_view view) {
+  Lexer& ctx = *this;
   char c;
 
   if (num_ends) {
@@ -39,16 +45,17 @@ std::optional<Token> Context::nextOnline(std::string_view& view) {
     return Token(Kind::end, pos);
   }
 
+  auto newline = false;
   size_t num_spaces;
   while (view.length()) {
     num_spaces = 0;
     while (num_spaces < view.length() && isSpace(c = view[num_spaces]))
       num_spaces++;
     if (num_spaces < view.length()) {
-      if (view[num_spaces] != '\n') {
+      if (view[num_spaces] == '\n')
         newline = true;
+      else
         break;
-      }
       num_spaces++;
     }
     advance(pos, view, num_spaces);
@@ -58,7 +65,6 @@ std::optional<Token> Context::nextOnline(std::string_view& view) {
     return std::nullopt;
 
   if (newline) {
-    newline = false;
     Indent indent;
     if (num_spaces) {
       if (ctx.indent)
@@ -71,33 +77,39 @@ std::optional<Token> Context::nextOnline(std::string_view& view) {
       while (num_matching < num_spaces && view[num_matching] == (char)indent)
         num_matching++;
       num_matching -= num_matching % indent.width;
-      indent.level = std::max(
+      indent.level = std::min(
           num_matching / indent.width,
           ctx.indent.level + (num_matching == num_spaces)
       );
       advance(pos, view, num_spaces);
       if (num_spaces -= indent.length())
         return Token(Kind::bad, pos - num_spaces, num_spaces);
-      if (indent.level > ctx.indent.level)
+      if (indent.level > ctx.indent.level) {
+        ctx.indent = indent;
         return Token(Kind::begin, pos - indent.width, indent.width);
+      }
     }
     if ((num_ends = ctx.indent - indent))
       return nextOnline(view);
     return Token(Kind::next, pos);
-  }
+  } else
+    advance(pos, view, num_spaces);
 
   Token token(Kind::bad, pos);
   if (isDigit(c)) {
     token.kind = Kind::integer;
     do {
-      token.len++;
-    } while (token.len < view.length() && isSpace(c = view[token.len]));
+      token.span.len++;
+    } while (token.span.len < view.length() && isDigit(c = view[token.span.len])
+    );
   } else if (isWordChar(c)) {
+    token.kind = Kind::word;
     do {
-      token.len++;
-    } while (token.len < view.length() && isSpace(c = view[token.len]));
+      token.span.len++;
+    } while (token.span.len < view.length()
+             && isWordChar(c = view[token.span.len]));
   }
-  advance(pos, view, token.len);
+  advance(pos, view, token.span.len);
   return token;
 }
 
