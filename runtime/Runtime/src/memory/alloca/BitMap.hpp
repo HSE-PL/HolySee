@@ -37,4 +37,6 @@ public:
   auto check_and_set(ref n) -> bool;
 
   auto clear() -> void;
+
+  auto clear(uint64_t start, size_t count) -> void;
 };

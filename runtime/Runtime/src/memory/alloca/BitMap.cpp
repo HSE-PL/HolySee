@@ -10,11 +10,10 @@ auto BitMap::unset(ref n) -> void {
   bitset_.reset(map(n));
 }
 
+auto BitMap::clear(uint64_t start, size_t count) -> void {
+  bitset_.reset(map(start), count);
+}
 
-// void BitMap::clear() {
-//   guard(mutex_);
-//   Bitset::clear();
-// }
 
 auto BitMap::clear() -> void {
   guard(mutex_);

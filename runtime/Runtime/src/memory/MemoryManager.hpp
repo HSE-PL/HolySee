@@ -10,6 +10,8 @@ struct Region {
   size_t                       t_size;
   tbb::concurrent_queue<void*> slots_;
 
+  Region() = default;
+
   Region(size_t c, size_t s) : count(c), t_size(s) {
   }
   Region& operator=(const Region& other) {
@@ -33,17 +35,18 @@ class MemoryManager {
 
 public:
   auto static constexpr COUNT_OF_TIERS = 48;
-  static inline void* cur              = nullptr;
+
+  static inline void* cur = nullptr;
 
   std::mutex static inline mutex_;
   std::atomic_size_t static inline memory = 0;
 
-  auto static inline regions_ = [] {
-    std::array<Region, COUNT_OF_TIERS> regs{};
+  static inline auto regions_ = [] {
+    static std::array<Region, COUNT_OF_TIERS> regs{};
     for (auto i = 0; i < COUNT_OF_TIERS; ++i) {
       regs[i] = Region(0, ((1 << i) + 1) * 1_page);
     }
-    return &regs;
+    return regs.data();
   }();
 
   auto static ref_in_reg(ref ptr) -> bool {
@@ -59,7 +62,8 @@ public:
   auto static free_arena(Arena* a) -> void {
     guard(mutex_);
     ref_to_arena_.erase(a->start);
-    active_pages_().set(a->start);
-    regions_[a->tier].count--;
+    active_pages_().clear(a->start, (1 << a->tier) + 1);
+    --regions_[a->tier].count;
+    delete a;
   }
 };

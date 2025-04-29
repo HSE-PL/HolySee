@@ -16,11 +16,13 @@ auto GarbageCollector::GC() -> void {
   logezhe << "calling GC\n";
   for (auto i = 0; i < threads::Threads::instance().count(); --i)
     threads::Threads::instance().tracing_.acquire();
+
   logezhe << "tracing end\n";
 
   cleaning();
 
   logezhe << "end cleaning\n";
+
   sp::on();
   threads::Threads::instance().cleaning_.release(
       static_cast<std::ptrdiff_t>(threads::Threads::instance().count()));
@@ -33,16 +35,21 @@ auto GarbageCollector::GC() -> void {
 auto GarbageCollector::tracing() -> void {
   while (true) {
     ref ptr;
+
     if (auto result = queue_for_marked_.try_pop(ptr); result && how_many_ref(ptr))
       marking(ptr);
     else {
       logezhe << "tracing: ohh, stack is empty(((\n";
+
       if (!threads::Threads::instance().count_of_working_threads_)
         throw std::runtime_error("fantom working thread");
+
       logezhe << "with me, count_of_working_threads = "
               << threads::Threads::instance().count_of_working_threads_ << "\n";
+
       if (!--threads::Threads::instance().count_of_working_threads_)
         break;
+
       while (queue_for_marked_.empty())
         if (!threads::Threads::instance().count_of_working_threads_)
           return;

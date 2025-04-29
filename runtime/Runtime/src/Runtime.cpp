@@ -34,6 +34,12 @@ namespace rt {
     threads::Threads::instance().cleaning_.acquire(); // waiting for the end of cleaning
   }
 
+  auto aom() -> void {
+    void* a;
+    sp::off();
+    gogc(reinterpret_cast<ref>(&a));
+  }
+
   namespace signals {
 
     auto handler(int sig, siginfo_t* info, void* context) {
@@ -108,19 +114,22 @@ extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp, instance* 
   rt::init(__start, spdptr, sp, meta, end, max_size_heap);
 }
 
+
 // literally malloc, but sfree alloc
 extern "C" void* __halloc(instance* inst) {
   logezhe << "__halloc: alloca " << inst->name << ", size:" << inst->size << "\n";
-  if (rt::max_heap_size) {
-    if (MemoryManager::memory + inst->size > rt::max_heap_size) {
-      void* a;
-      sp::off();
-      rt::gogc(reinterpret_cast<ref>(&a));
+  if (rt::max_heap_size && (MemoryManager::memory + inst->size > rt::max_heap_size >> 1))
+    rt::aom();
+
+  ref ptr = 0;
+  while (!ptr) {
+    try {
+      ptr = Allocator::instance().alloc(inst->size + 8);
+    } catch (bool e) {
+      if (!e)
+        rt::aom();
     }
   }
-  auto ptr = Allocator::instance().alloc(inst->size + 8);
-  if (!ptr)
-    throw std::runtime_error("AOM!");
 
   auto ptr_on_object = reinterpret_cast<instance**>(ptr);
   logezhe << ptr_on_object << "\n";

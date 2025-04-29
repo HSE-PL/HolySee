@@ -24,7 +24,6 @@ auto Allocator::alloc(size_t object_size) -> ref {
       arena->start + arena->size - arena->cur > ((object_size >> 12) << 12) + 1_page)
     return add_active(object_size)->start;
 
-
   heap.del(arena);
   arena->cur += object_size;
   heap.append(arena);
@@ -48,16 +47,18 @@ auto Allocator::add_active(size_t object_size) -> Arena* {
     ;
   for (auto tier = tier0; tier < MemoryManager::COUNT_OF_TIERS; ++tier) {
     auto new_active_size = ((1 << tier0) + 1) * 1_page;
-    auto start           = sys::salloc(new_active_size, tier0);
+
+    auto start = sys::salloc(new_active_size, tier0);
+
     if (start) {
       auto new_active = new Arena(new_active_size, reinterpret_cast<ref>(start), tier0);
       heap.append(new_active);
       logezhe << "return from add_active\n";
+
       return new_active;
     }
   }
-
-  return nullptr;
+  throw false;
 }
 
 auto Allocator::free_arena(Arena* a) -> void {
