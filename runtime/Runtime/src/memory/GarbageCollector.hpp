@@ -1,8 +1,8 @@
 #pragma once
+#include "Allocator.hpp"
+#include "MemoryManager.hpp"
 #include "ThreadSafeVector.hpp"
-#include "alloca/Allocator.hpp"
 #include "threads/Threads.hpp"
-
 #include <Runtime.hpp>
 #include <csignal>
 #include <stddef.h>
@@ -10,10 +10,6 @@
 #include <threads/Threads.hpp>
 
 class GarbageCollector {
-
-  BitMap checked_;
-
-  Allocator allocator_;
 
   ThreadSafeVector<ref> stack_for_marked_;
 
@@ -34,58 +30,26 @@ class GarbageCollector {
 
   fn cleaning() {
     log << "start cleaning\n";
-    for (const auto& regs : allocator_.regions_) {
-      regs->have_empty = false;
-    }
-    let trash = std::vector<Arena*>();
-    let emty  = std::vector<Arena*>();
-    // log << "all regs without empty arena\n";
-
-    for (const auto& arena : allocator_.heap_.keys) {
+    for (const auto& arena : Allocator::instance().heap.keys) {
       // log << "try check\n";
       // log << "check " << arena->uniq_for_heap() << "\n";
       if (arena->is_died()) {
-        // log << "died\n";
-        if (allocator_.regions_[arena->tier]->have_empty) {
-          // log << "died died\n";
-          trash.push_back(arena);
-          // log << "free\n";
-        } else {
-          // log << "just chill, this arena is empty\n";
-          allocator_.regions_[arena->tier]->have_empty = true;
-          emty.push_back(arena);
-        }
+        Allocator::instance().free_arena(arena);
       }
     }
-    log << "cleaning: trash " << trash.size() << " and empty " << emty.size()
-        << " collect\n";
-
-    for (auto& a : trash) {
-      log << "!\n";
-
-      allocator_.free_arena(a);
-    }
-    log << "pupu\n";
-
-    for (auto& a : emty)
-      allocator_.revive(a);
-    // for (;;)
-    //   ;
-
     // log << "after cleaning: len0 = " << allocator_.regions_[0]->size_pull() << "\n";
     // log << "after cleaning: len1 = " << allocator_.regions_[1]->size_pull() << "\n";
     // log << "after cleaning: len2 = " << allocator_.regions_[2]->size_pull() << "\n";
     // throw std::runtime_error("bebebe");
-    // TODO implement this shit
   }
 
-  void marking(ref ptr) {
+  fn marking(ref ptr) {
     // log << "marking: try to marking " << ptr << " type ("
     //     << (*reinterpret_cast<instance**>(ptr - 8))->name << ")\n";
-    let arena = allocator_.arena_by_ptr(ptr);
+    let arena = MemoryManager::arena_by_ptr(ptr);
     // guard(allocator_.regions_[arena->tier]->mutex_);
     // log << "marking: mutex yep\n";
-    if (allocator_.marking_.check_and_set(ptr)) {
+    if (arena->marked_.check_and_set(ptr)) {
       log << "unluck\n";
       return;
     }
@@ -106,16 +70,14 @@ class GarbageCollector {
     }
   }
 
-  bool ref_in_heap(ref ptr) const {
-    // log << "ref_in_heap: " << ptr << "\n";
-    return (allocator_.start_ <= ptr) && (ptr < allocator_.start_ + allocator_.size_);
+  let ref_in_heap(ref ptr) const->bool {
+    log << "ref_in_heap: " << ptr << "\n";
+    return MemoryManager::ref_in_reg(ptr);
   }
 
 public:
-  GarbageCollector(ref start_heap, size_t size_heap, instance*, instance*);
+  GarbageCollector(instance*, instance*);
 
   void GC();
   void make_root_and_tracing(ref ssp);
-
-  ref alloc(instance*);
 };

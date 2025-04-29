@@ -7,22 +7,8 @@
 #include <cstddef>
 #include <iomanip>
 
-GarbageCollector::GarbageCollector(ref start_heap, size_t size_heap, instance* first,
-                                   instance* last)
-    : checked_(start_heap, start_heap + size_heap), allocator_(start_heap, size_heap),
-      inteval_(first, last) {
-}
-
-fn GarbageCollector::alloc(instance* inst)->ref {
-  let ptr = allocator_.alloc(inst->size + 8);
-  while (!ptr) {
-    log << "AOM!!!!!!!!!!!!!!\n";
-    sp::off();
-    gogc(reinterpret_cast<ref>(&ptr));
-    ptr = allocator_.alloc(inst->size + 8);
-  }
-  log << "gc alloc: end\n";
-  return ptr;
+GarbageCollector::GarbageCollector(instance* first, instance* last)
+    : inteval_(first, last) {
 }
 
 fn GarbageCollector::GC()->void {
@@ -41,7 +27,7 @@ fn GarbageCollector::GC()->void {
 
   log << "STW end, time: " << std::fixed << std::setprecision(3)
       << 1000 * static_cast<double>(clock() - s) / CLOCKS_PER_SEC << "ms \n";
-  allocator_.dump();
+  // allocator_.dump();
 }
 
 fn GarbageCollector::tracing()->void {

@@ -10,6 +10,8 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <memory/Allocator.hpp>
+#include <memory/MemoryManager.hpp>
 #include <optional>
 #include <pthread.h>
 #include <sys/mman.h>
@@ -20,7 +22,18 @@
 namespace rt {
 
   std::optional<GarbageCollector> gc;
+  size_t static max_heap_size = 1_page << 5;
 
+  fn gogc(ref ssp)->void {
+    threads::Threads::instance().wait_end_sp();
+    log << "handler: call make_root_and_tracing\n";
+
+    ++threads::Threads::instance().count_of_working_threads_;
+    gc->make_root_and_tracing(ssp);
+
+    log << "handler: waiting ping from cleaning\n";
+    threads::Threads::instance().cleaning_.acquire(); // waiting for the end of cleaning
+  }
 
   namespace signals {
 
@@ -62,17 +75,16 @@ namespace rt {
   }
 
   [[noreturn]] fn init(void (&__start)(), void** spdptr, void* sp, instance* meta,
-                       instance* end)
+                       instance* end, size_t max_heap_size)
       ->void {
+    rt::max_heap_size = max_heap_size ? max_heap_size : rt::max_heap_size;
+
     log << "main stack: " << sp << "\n";
     signals::init();
     sp::init(spdptr);
 
-    let heap_size  = min_heap;
-    let heap_start = sys::salloc(heap_size);
-    log << "heap_size: " << heap_size << "\n";
 
-    gc.emplace(reinterpret_cast<size_t>(heap_start), heap_size, meta, end);
+    gc.emplace(meta, end);
 
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
@@ -89,35 +101,33 @@ namespace rt {
         gc->GC();
     }
   }
+
 } // namespace rt
-
-fn gogc(ref ssp)->void {
-  threads::Threads::instance().wait_end_sp();
-  log << "handler: call make_root_and_tracing\n";
-
-  ++threads::Threads::instance().count_of_working_threads_;
-  rt::gc->make_root_and_tracing(ssp);
-
-  log << "handler: waiting ping from cleaning\n";
-  threads::Threads::instance().cleaning_.acquire(); // waiting for the end of cleaning
-}
 
 
 extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp, instance* meta,
-                          instance* end) {
-  rt::init(__start, spdptr, sp, meta, end);
+                          instance* end, size_t max_size_heap) {
+  rt::init(__start, spdptr, sp, meta, end, max_size_heap);
 }
 
 // literally malloc, but holy alloc
 extern "C" void* __halloc(instance* inst) {
   log << "__halloc: alloca " << inst->name << ", size:" << inst->size << "\n";
-  if (rt::gc.has_value()) {
-    let ptr_on_object = reinterpret_cast<instance**>(rt::gc->alloc(inst));
-    log << ptr_on_object << "\n";
-    *ptr_on_object = inst;
-    return reinterpret_cast<void*>(reinterpret_cast<size_t>(ptr_on_object) + 8);
+  if (rt::max_heap_size) {
+    if (MemoryManager::memory + inst->size > rt::max_heap_size) {
+      void* a;
+      sp::off();
+      rt::gogc(reinterpret_cast<ref>(&a));
+    }
   }
-  return nullptr;
+  let ptr = Allocator::instance().alloc(inst->size + 8);
+  if (!ptr)
+    throw std::runtime_error("AOM!");
+
+  let ptr_on_object = reinterpret_cast<instance**>(ptr);
+  log << ptr_on_object << "\n";
+  *ptr_on_object = inst;
+  return reinterpret_cast<void*>(reinterpret_cast<size_t>(ptr_on_object) + 8);
 }
 
 extern "C" void __go(void (&func)()) {

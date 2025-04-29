@@ -54,14 +54,14 @@ public:
 
   void append(T* a) {
     guard(mutex_);
-    log << "call insert in thread: " << std::this_thread::get_id() << "\n";
+    // log << "call insert in thread: " << std::this_thread::get_id() << "\n";
     keys.insert(a);
-    log << "insert end, ";
+    // log << "insert end, ";
   }
 
   void del(T* a) {
     guard(mutex_);
-    log << a << "\n";
+    // log << a << "\n";
     keys.erase(a);
   }
 

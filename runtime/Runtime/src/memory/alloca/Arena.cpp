@@ -1,7 +1,8 @@
 #include "Arena.hpp"
 
 Arena::Arena(size_t arena_size, ref arena_start, size_t arena_tier)
-    : size(arena_size), start(arena_start), tier(arena_tier), cur(arena_start), died(true) {
+    : size(arena_size), start(arena_start), tier(arena_tier), cur(arena_start),
+      died(true), marked_(arena_start, arena_start + arena_size) {
 }
 
 fn Arena::revive()->void {

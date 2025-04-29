@@ -1,22 +1,25 @@
 #pragma once
+#include "BitMap.hpp"
 #include <cassert>
 #include <cstddef>
 #include <memory/ThreadSafeVector.hpp>
 #include <mutex>
 #include <utils/defines.h>
-#include <vector>
+
 class Arena {
   bool died;
 
-
 public:
-  std::mutex               mutex_;
-  ThreadSafeVector<size_t> objects;
-  const size_t             size;
-  const ref                start;
-  const size_t             tier;
+  BitMap     marked_;
+  std::mutex mutex_;
 
-  size_t cur;
+  ThreadSafeVector<size_t> objects;
+
+  const size_t size;
+  const ref    start;
+  const size_t tier;
+
+  ref cur;
 
   Arena(size_t arena_size, ref arena_start, size_t arena_tier);
 

@@ -5,6 +5,8 @@
 #define let auto
 typedef unsigned long long ref;
 
+static void* __dso_handle = nullptr;
+
 struct instance {
   size_t      size;
   const char* name;
@@ -16,7 +18,8 @@ struct inteval {
   ref first;
   ref last;
 
-  inteval(T* i1, T* i2) : first(reinterpret_cast<ref>(i1)), last(reinterpret_cast<ref>(i2)) {
+  inteval(T* i1, T* i2)
+      : first(reinterpret_cast<ref>(i1)), last(reinterpret_cast<ref>(i2)) {
   }
 
   fn correct(T* i)->bool {
@@ -29,3 +32,9 @@ struct inteval {
     return !(offset % sizeof(T));
   }
 };
+
+let constexpr operator"" _page(unsigned long long n)->size_t {
+  // if (n > 1 << 36)
+  //   throw std::runtime_error("too much pages");
+  return n << 12;
+}

@@ -18,6 +18,8 @@ public:
 
   fn set(size_t n)->void;
 
+  fn unset(size_t n)->void;
+
   fn get(size_t n) const->size_t;
 
   fn clear()->void;

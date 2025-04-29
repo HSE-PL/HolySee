@@ -2,8 +2,7 @@
 #include <stddef.h>
 
 namespace sp {
-  inline static const size_t pagesize = 1 << 12;
-  inline void*               spd;
+  inline void* spd;
 
   inline bool sp = false;
 

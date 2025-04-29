@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cassert>
 #include <utils/defines.h>
+#include <utils/log.h>
 #include <vector>
 
 
@@ -9,7 +10,12 @@ fn Bitset::set(size_t n)->void {
   bits[n / 64] |= (1ULL << (n % 64));
 }
 
+fn Bitset::unset(size_t n)->void {
+  bits[n / 64] &= ~(1ULL << (n % 64));
+}
+
 fn Bitset::get(size_t n) const->uint64_t {
+  log << "Bitset::get: " << bits.size() << "\n";
   return bits[n / 64] & (1ULL << (n % 64));
 }
 
