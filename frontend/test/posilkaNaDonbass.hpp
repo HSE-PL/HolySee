@@ -1,9 +1,11 @@
 #pragma once
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <vector>
 
@@ -53,6 +55,34 @@ template <Pushable Ret>
 class FrontendTestingHelper {
   std::shared_ptr<FileReader> freader;
   std::shared_ptr<AbstractParserTester<Ret>> tester;
+  const std::string inputPrefix = "input";
+  const std::string expectedPrefix = "expected-";
+
+  std::string expectedPath(size_t testNum) {}
+
+  std::optional<std::string> testName(std::string input) {
+    if (input.length() <= inputPrefix.length())
+      return std::nullopt;
+
+    auto res = std::mismatch(
+        inputPrefix.begin(), inputPrefix.end(), input.begin()
+    );
+
+    if (res.first == inputPrefix.end() && *res.second == '-') {
+      auto testStr = ++res.second;
+      std::string ret{};
+
+      if (testStr == input.end()) {
+        return std::nullopt;
+      }
+
+      while (testStr != input.end()) {
+        ret.push_back(*testStr++);
+      }
+      return ret;
+    }
+    return std::nullopt;
+  }
 
  public:
   FrontendTestingHelper(
@@ -61,18 +91,32 @@ class FrontendTestingHelper {
   )
       : freader(fr), tester(tester) {}
 
-  Ret testFile(std::string path, Parser parser) {
-    auto str = freader->read(path);
-    auto result = tester->testParser(parser, std::string_view(str), str);
+  Ret testFile(std::string expectedPath, std::string filePath, Parser parser) {
+    auto str = freader->read(filePath);
+    auto expected = freader->read(expectedPath);
+    auto result = tester->testParser(parser, std::string_view(str), expected);
     return result;
   }
 
   std::vector<Ret> testDir(std::string dirPath, Parser parser) {
     std::vector<Ret> ret{};
+    auto dir = fs::path(dirPath);
 
     for (const auto& file : fs::directory_iterator(dirPath)) {
-      auto testResult = testFile(file.path(), parser);
-      ret.push_back(testResult);
+      auto fname = fs::path(file.path()).filename();
+
+      if (auto postfix = testName(fname)) {
+        auto expectedFile = dir / (expectedPrefix + *postfix);
+        auto expected = freader->read(expectedFile);
+
+        auto input = freader->read(file.path());
+
+        auto testResult = tester->testParser(
+            parser, std::string_view(input), expected
+        );
+
+        ret.push_back(testResult);
+      }
     }
 
     return ret;
