@@ -11,6 +11,7 @@ add_library(src STATIC
         memory/alloca/heap/Heap.cpp
         memory/alloca/Arena.cpp
         memory/alloca/BitMap.cpp
+        memory/alloca/Region.cpp
 )
 
 target_include_directories(src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

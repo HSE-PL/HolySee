@@ -24,9 +24,9 @@ auto threads::Threads::append(void (&func)()) -> void {
   pthread_getattr_np(pthread, &attr);
   pthread_attr_getstack(&attr, &stack_addr, &stack_size);
 
-  std::cout << "Thread "
-            << " stack starts at: " << stack_addr << ", size: " << stack_size
-            << " bytes\n";
+  // std::cout << "Thread "
+  // << " stack starts at: " << stack_addr << ", size: " << stack_size
+  // << " bytes\n";
   auto hrptr = Horoutine{thread, reinterpret_cast<size_t>(stack_addr) + stack_size -
                                      4592}; // hehehe
   logezhe << std::hex << hrptr.start_sp << "\n";

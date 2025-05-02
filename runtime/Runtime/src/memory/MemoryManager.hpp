@@ -1,69 +1,34 @@
 #pragma once
 #include "Allocator.hpp"
 #include "alloca/Arena.hpp"
+#include "alloca/Region.hpp"
 #include "utils/defines.h"
+
+#include <Runtime.hpp>
 #include <array>
 #include <oneapi/tbb/concurrent_queue.h>
+#include <system/System.hpp>
 #include <unordered_map>
-struct Region {
-  std::atomic<size_t>          count;
-  size_t                       t_size;
-  tbb::concurrent_queue<void*> slots_;
 
-  Region() = default;
 
-  Region(size_t c, size_t s) : count(c), t_size(s) {
-  }
-  Region& operator=(const Region& other) {
-    count.store(other.count);
-    t_size = other.t_size;
-    slots_ = other.slots_;
-    return *this;
-  }
+namespace MemoryManager {
+  extern std::recursive_mutex mutex_;
 
-private:
-  std::mutex mutex_;
-};
+  auto partion_of_pages() -> std::vector<size_t>;
 
-class MemoryManager {
-  std::unordered_map<ref, Arena*> static inline ref_to_arena_{};
+  extern size_t COUNT_OF_TIERS;
 
-  auto static active_pages_() -> BitMap& {
-    auto static bm = BitMap(0, 1ULL << 47, 1_page);
-    return bm;
-  }
+  extern size_t max_heap_size;
+  extern ref    heap_start;
 
-public:
-  auto static constexpr COUNT_OF_TIERS = 48;
+  extern std::atomic_size_t memory;
 
-  static inline void* cur = nullptr;
 
-  std::mutex static inline mutex_;
-  std::atomic_size_t static inline memory = 0;
+  auto regions() -> std::vector<Region<Arena>*>&;
 
-  static inline auto regions_ = [] {
-    static std::array<Region, COUNT_OF_TIERS> regs{};
-    for (auto i = 0; i < COUNT_OF_TIERS; ++i) {
-      regs[i] = Region(0, ((1 << i) + 1) * 1_page);
-    }
-    return regs.data();
-  }();
+  auto ref_in_heap(ref ptr) -> bool;
 
-  auto static ref_in_reg(ref ptr) -> bool {
-    if (ptr < 1ULL << 47)
-      return active_pages_()[ptr];
-    return false;
-  }
+  auto arena_by_ptr(ref ptr) -> Arena*;
 
-  auto static arena_by_ptr(ref ptr) -> Arena* {
-    return ref_to_arena_[ptr];
-  }
-
-  auto static free_arena(Arena* a) -> void {
-    guard(mutex_);
-    ref_to_arena_.erase(a->start);
-    active_pages_().clear(a->start, (1 << a->tier) + 1);
-    --regions_[a->tier].count;
-    delete a;
-  }
-};
+  auto free_arena(Arena* a) -> void;
+}; // namespace MemoryManager

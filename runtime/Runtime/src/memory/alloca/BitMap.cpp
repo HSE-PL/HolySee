@@ -17,14 +17,14 @@ auto BitMap::clear(uint64_t start, size_t count) -> void {
 
 auto BitMap::clear() -> void {
   guard(mutex_);
-  bitset_.clear();
+  bitset_.reset();
 }
 
 auto BitMap::check_and_set(ref n) -> bool {
   guard(mutex_);
-  auto mask = bitset_[map(n)];
+  auto check = bitset_.test(map(n));
   set(n);
-  return mask;
+  return check;
 }
 
 auto BitMap::operator[](ref n) const -> bool {

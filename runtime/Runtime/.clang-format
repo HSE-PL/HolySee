@@ -11,7 +11,7 @@ AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 AlignConsecutiveAssignments: true
 AlignTrailingComments: true
-ColumnLimit: 90
+ColumnLimit: 80
 ContinuationIndentWidth: 4
 MaxEmptyLinesToKeep: 2
 IndentCaseLabels: true

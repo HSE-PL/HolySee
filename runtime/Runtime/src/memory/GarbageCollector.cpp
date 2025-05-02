@@ -27,18 +27,21 @@ auto GarbageCollector::GC() -> void {
   threads::Threads::instance().cleaning_.release(
       static_cast<std::ptrdiff_t>(threads::Threads::instance().count()));
 
-  logezhe << "STW end, time: " << std::fixed << std::setprecision(3)
-          << 1000 * static_cast<double>(clock() - s) / CLOCKS_PER_SEC << "ms \n";
+  std::cout << "STW end, time: " << std::fixed << std::setprecision(3)
+            << 1000 * static_cast<double>(clock() - s) / CLOCKS_PER_SEC
+            << "ms \n";
   // allocator_.dump();
 }
 
 auto GarbageCollector::tracing() -> void {
+  logezhe << "tracing start\n";
   while (true) {
     ref ptr;
 
-    if (auto result = queue_for_marked_.try_pop(ptr); result && how_many_ref(ptr))
-      marking(ptr);
-    else {
+    if (auto result = queue_for_marked_.try_pop(ptr); result) {
+      if (how_many_ref(ptr))
+        marking(ptr);
+    } else {
       logezhe << "tracing: ohh, stack is empty(((\n";
 
       if (!threads::Threads::instance().count_of_working_threads_)
@@ -56,6 +59,7 @@ auto GarbageCollector::tracing() -> void {
       ++threads::Threads::instance().count_of_working_threads_;
     }
   }
+  logezhe << "tracing end\n";
 }
 
 auto GarbageCollector::make_root_and_tracing(ref ssp) -> void {
@@ -68,7 +72,7 @@ auto GarbageCollector::make_root_and_tracing(ref ssp) -> void {
           << hrtptr.start_sp - ssp << "\n";
 
   assert(ssp < hrtptr.start_sp);
-  for (ref sp = ssp; sp <= hrtptr.start_sp; sp += 8) {
+  for (ref sp = ssp; sp <= hrtptr.start_sp; sp += 1_ref) {
     auto ptr = *reinterpret_cast<ref*>(sp);
     logezhe << "make_root_and_tracing: on stack: " << ptr << "\n";
     if (ref_in_heap(ptr)) {
@@ -78,6 +82,12 @@ auto GarbageCollector::make_root_and_tracing(ref ssp) -> void {
     }
   }
   logezhe << "thread completed root\n";
+  // logezhe << "rt number " << q << "\n";
+  // auto end = queue_for_marked_.unsafe_end();
+  // for (auto start = queue_for_marked_.unsafe_begin(); start != end; ++start)
+  // { std::cout << ") " << *start << ":"
+  // << MemoryManager::arena_by_ptr(*start)->tier << "\n";
+  // }
 
   tracing();
 

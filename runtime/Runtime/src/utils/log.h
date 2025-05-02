@@ -10,6 +10,9 @@ public:
   NullStream& operator<<(const T&) {
     return *this;
   }
+  NullStream& operator<<(std::ostream& (*)(std::ostream&)) {
+    return *this;
+  }
 };
 static NullStream logezhe;
 #endif

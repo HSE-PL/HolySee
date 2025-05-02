@@ -32,7 +32,9 @@ struct inteval {
 };
 
 auto constexpr operator"" _page(unsigned long long n) -> size_t {
-  // if (n > 1 << 36)
-  //   throw std::runtime_error("too much pages");
   return n << 12;
+}
+
+auto constexpr operator"" _ref(unsigned long long n) -> size_t {
+  return n << 3;
 }

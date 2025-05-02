@@ -30,22 +30,32 @@ class GarbageCollector {
 
   auto cleaning() {
     logezhe << "start cleaning\n";
+    auto trash = std::vector<Arena*>();
     for (const auto& arena : Allocator::instance().heap.keys) {
-      // log << "try check\n";
-      // log << "check " << arena->uniq_for_heap() << "\n";
+      logezhe << "try check\n";
+      logezhe << "check " << arena->uniq_for_heap() << "\n";
       if (arena->is_died()) {
-        Allocator::instance().free_arena(arena);
+        logezhe << "arena is died\n";
+        trash.push_back(arena);
       }
     }
-    // logezhe << "after cleaning: len0 = " << allocator_.regions_[0]->size_pull() <<
-    // "\n"; logezhe << "after cleaning: len1 = " << allocator_.regions_[1]->size_pull()
+    for (const auto& trash_arena : trash)
+      Allocator::instance().free_arena(trash_arena);
+    for (const auto& a : Allocator::instance().heap.keys)
+      a->temp_kill();
+    // logezhe << "jkdsfhukhdfs\n";
+    // logezhe << "after cleaning: len0 = " <<
+    // allocator_.regions_[0]->size_pull() <<
+    // "\n"; logezhe << "after cleaning: len1 = " <<
+    // allocator_.regions_[1]->size_pull()
     // << "\n"; logezhe << "after cleaning: len2 = " <<
-    // allocator_.regions_[2]->size_pull() << "\n"; throw std::runtime_error("bebebe");
+    // allocator_.regions_[2]->size_pull() << "\n"; throw
+    // std::runtime_error("bebebe");
   }
 
   auto marking(ref ptr) {
-    // logezhe << "marking: try to marking " << ptr << " type ("
-    //     << (*reinterpret_cast<instance**>(ptr - 8))->name << ")\n";
+    logezhe << "marking: try to marking " << ptr << " type ("
+            << (*reinterpret_cast<instance**>(ptr - 8))->name << ")\n";
     auto arena = MemoryManager::arena_by_ptr(ptr);
     // guard(allocator_.regions_[arena->tier]->mutex_);
     // logezhe << "marking: mutex yep\n";
@@ -53,14 +63,14 @@ class GarbageCollector {
       logezhe << "unluck\n";
       return;
     }
-    // logezhe << "marking: " << arena->uniq_for_heap() << " revive\n";
+    logezhe << "marking: " << arena->uniq_for_heap() << " revive\n";
     arena->revive();
-    // logezhe << "marking object: start\n";
+    logezhe << "marking object: start\n";
 
     auto size = how_many_ref(ptr);
-    for (auto offset = 0; offset < size; offset += 8)
+    for (auto offset = 0; offset < size; offset += 1_ref)
       marking_push(ptr + offset);
-    // logezhe << "marking object: end\n";
+    logezhe << "marking object: end\n";
   }
 
   void marking_push(ref ptr) {
@@ -70,9 +80,9 @@ class GarbageCollector {
     }
   }
 
-  auto ref_in_heap(ref ptr) const -> bool {
-    logezhe << "ref_in_heap: " << ptr << "\n";
-    return MemoryManager::ref_in_reg(ptr);
+  static auto ref_in_heap(ref ptr) -> bool {
+    // logezhe << "ref_in_heap: " << ptr << "\n";
+    return MemoryManager::ref_in_heap(ptr);
   }
 
 public:

@@ -9,7 +9,7 @@
 #include <utils/defines.h>
 
 class Arena {
-  bool died;
+  std::atomic_bool died;
 
 public:
   BitMap     marked_;
@@ -25,17 +25,13 @@ public:
 
   Arena(size_t arena_size, ref arena_start, size_t arena_tier);
 
-  auto revive()->void;
+  auto revive() -> void;
+  auto kill() -> void;
+  auto temp_kill() -> void;
+  auto is_died() const -> bool;
 
-  auto is_died() const->bool;
+  [[nodiscard]] auto key_for_heap() const -> size_t;
+  [[nodiscard]] auto uniq_for_heap() const -> ref;
 
-  [[nodiscard]] auto key_for_heap() const->size_t;
-  [[nodiscard]] auto uniq_for_heap() const->ref;
-
-  auto is_empty() const->bool;
-
-  // 4 debug
-  auto kill() {
-    objects.clear();
-  }
+  auto is_empty() const -> bool;
 };

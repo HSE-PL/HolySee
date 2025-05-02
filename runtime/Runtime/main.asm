@@ -26,7 +26,7 @@ start:
     mov rdx, rsp
     lea rcx, [LinkedList]
     lea r8, [Heap]
-    mov r9, 0x20000
+    mov r9, 0x200000
     _call __rt_init
 
     mov rax, 60
@@ -39,9 +39,12 @@ main:
     push 0x42
     push 0xBEEF
 
-    mov rdi, StaticArray600
+    mov rdi, StaticArray500
     _call __halloc
     mov r12, rax
+
+    mov rdi, StaticArray600
+    _call __halloc
 
     mov rdi, LinkedList
     _call __halloc
@@ -107,16 +110,50 @@ ebashim_musor:
     push 0x3451
     push 0x8989
 .L1:
+
     mov rdi, LinkedList
     _call __halloc
+    push rax
     mov rdi, Heap
     _call __halloc
+    push rax
+
+    mov r13, 100
+.L2:
+    _sp
+    mov rdi, DynamicArray1024
+    _call __halloc
     mov rdi, LinkedList
+    _call __halloc
+    mov rdi, StaticArray500
+    _call __halloc
+    mov rdi, LinkedList
+    _call __halloc
+    mov rdi, DynamicArray4096
     _call __halloc
     mov rdi, Heap
     _call __halloc
     mov rdi, StaticArray500
     _call __halloc
+    mov rdi, Heap
+    _call __halloc
+    mov rdi, StaticArray500
+    _call __halloc
+    mov rdi, DynamicArray1024
+    _call __halloc
+    dec r13
+    jnz .L2
+
+    pop rax
+    pop rax
+    mov r13, 30
+.L3:
+    _sp
+    mov rdi, DynamicArray4096
+    _call __halloc
+    dec r13
+    jnz .L3
+
     _sp
     jmp .L1
 
@@ -125,7 +162,7 @@ spd: dq 0
 
 section .rodata
 LinkedList:
-dq 16
+dq 1600
 dq linked_list
 dd 1
 dd 0
@@ -144,7 +181,7 @@ dd 1
 dd 0
 
 DynamicPrimitiveArray4:
-dq 32
+dq 3200
 dq dynamic_primitive_array_4
 dd 0
 dd 0
@@ -155,13 +192,20 @@ dq dynamic_array_1024
 dd 1
 dd 0
 
+DynamicArray4096:
+dq 32768
+dq dynamic_array_1024
+dd 1
+dd 0
+
 Heap:
-dq 24
+dq 2400
 dq heap
 dd 1
 dd 0
 
 dynamic_array_1024: db "dynamic array 1024", 0
+dynamic_array_4096: db "dynamic array 4096", 0
 dynamic_primitive_array_4: db "dynamic primitive array 2", 0
 static_array_600: db "static array 600", 0
 static_array_500: db "static array 500", 0

@@ -9,8 +9,7 @@ class Allocator {
   std::recursive_mutex mutex_;
 
 public:
-  inline static void* heap_start = nullptr;
-  Heap<Arena>         heap;
+  Heap<Arena> heap;
   // BitMap       emplaced_; // 4 accurate gc
 
   static Allocator& instance();

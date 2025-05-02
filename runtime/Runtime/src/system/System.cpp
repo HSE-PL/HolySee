@@ -9,48 +9,53 @@
 #include <stdexcept>
 #include <sys/mman.h>
 
-auto sys::salloc(size_t size, size_t tier) -> void* {
+auto sys::alloc(size_t size, size_t tier) -> Arena* {
   guard(MemoryManager::mutex_);
-  MemoryManager::memory += size;
+  auto&& regs = MemoryManager::regions();
 
   logezhe << "salloc: " << size << "\n";
 
-  void* start_new_object = nullptr;
+  Arena* arena = nullptr;
 
-  if (MemoryManager::regions_[tier].slots_.empty()) {
-    if (MemoryManager::cur + size > Allocator::instance().heap_start + rt::max_heap_size)
-      return nullptr;
-
-    start_new_object = MemoryManager::cur;
-    MemoryManager::cur += MemoryManager::regions_[tier].t_size;
-  } else {
-    if (!MemoryManager::regions_[tier].slots_.try_pop(start_new_object))
-      return nullptr;
+  for (auto i = tier; i < regs.size(); ++i) {
+    if (!regs[i]->empty()) {
+      arena = regs[i]->pop();
+      break;
+    }
   }
+  if (!arena)
+    throw std::runtime_error("all regs are full");
+  MemoryManager::memory += arena->size;
 
-  auto p = mmap(start_new_object, size, PROT_READ | PROT_WRITE,
-                MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+  // std::cout << "start:" << arena->start << std::endl;
+
+  auto p = mmap(reinterpret_cast<void*>(arena->start), arena->size,
+                PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED,
+                -1, 0);
 
   if (p == MAP_FAILED)
-    throw std::runtime_error("bad_alloc: size of");
+    throw std::runtime_error("bad_alloc: size of heap is too much");
 
-  MemoryManager::cur += size;
-  return p;
+  if (p != reinterpret_cast<void*>(arena->start))
+    throw std::runtime_error("somethink went wrong");
+
+  return arena;
 }
 
-auto sys::sfree(Arena* a) -> void {
-  MemoryManager::regions_[a->tier].slots_.push(reinterpret_cast<void*>(a->start));
+auto sys::free(Arena* a) -> void {
+  MemoryManager::regions()[a->tier]->push(a);
 
-  guard(MemoryManager::mutex_);
+  // guard(MemoryManager::mutex_);
   MemoryManager::memory -= a->size;
 
   if (munmap(reinterpret_cast<void*>(a->start), a->size))
     throw std::runtime_error("2 free\n");
 }
 
-auto sys::sreserve(size_t size) -> void {
+auto sys::reserve(size_t size) -> void {
   auto p = mmap(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (p == MAP_FAILED)
     throw std::runtime_error("heap is too much");
-  MemoryManager::cur = p;
+  MemoryManager::heap_start = reinterpret_cast<ref>(p);
+  // std::cout << MemoryManager::heap_start << ":" << size << std::endl;
 }
