@@ -2,8 +2,9 @@
 #define HSEC_FRONTEND_LEXING_H
 
 #include <optional>
+#include <string_view>
 
-#include "lexicon.h"
+#include "token.h"
 
 namespace hsec::frontend::lexing {
 
@@ -31,12 +32,12 @@ struct Indent {
   }
 
   Indent& operator++() {
-    level++;
+    ++level;
     return *this;
   }
 
   Indent& operator--() {
-    level++;
+    --level;
     return *this;
   }
 };
@@ -53,7 +54,13 @@ class Lexer {
 
   size_t getPos() const { return pos; }
 
-  explicit operator bool() { return !indent; };
+  explicit operator bool() const { return !indent; };
+
+ private:
+  size_t advance(size_t count) {
+    pos += count;
+    return count;
+  };
 };
 
 }  // namespace hsec::frontend::lexing

@@ -1,11 +1,10 @@
 #ifndef HSEC_FRONTEND_PARSING_H
 #define HSEC_FRONTEND_PARSING_H
 
-#include <optional>
-#include <utility>
+#include <vector>
 
 #include "ast.h"
-#include "lexicon.h"
+#include "token.h"
 
 namespace hsec::frontend::parsing {
 
@@ -21,16 +20,21 @@ concept Context = requires(T ctx, Span span) {
   { ctx.view(span) } -> internal::decays_to<std::string_view>;
 };
 
-Token expect(Token::Kind kind, Context auto&& ctx) {
+template <typename T, typename U>
+concept Parser = Context<U> && requires(T&& parser, U&& ctx) { parser(ctx); };
+
+Token expect(Context auto&& ctx, Token::Kind kind) {
   auto token = ctx.next();
   if (token.kind != kind)
-    throw "FORCED";
+    throw "TODO";
   return token;
 }
 
-template <typename Context, typename Parser>
 auto parseSeparated(
-    Context&& ctx, Parser&& parser, Token::Kind sep, Token::Kind end
+    Context auto&& ctx,
+    Parser<decltype(ctx)> auto&& parser,
+    Token::Kind sep,
+    Token::Kind end
 ) {
   std::vector<decltype(parser(ctx))> items;
   if (ctx.peek().kind == end)
@@ -45,35 +49,62 @@ auto parseSeparated(
   return items;
 }
 
-std::shared_ptr<ast::Type> parseType(Context auto&& ctx);
+ast::Ident parseIdent(Context auto&& ctx) {
+  return ast::Ident(ctx.view(expect(ctx, Token::ident)));
+}
 
+ast::Type parseType(Context auto&& ctx);
 ast::Field parseField(Context auto&& ctx) {
-  auto name = ctx.view(expect(Token::Kind::word, ctx));
+  auto name = ctx.view(expect(ctx, Token::Kind::ident));
   auto type = parseType(ctx);
   return ast::Field(std::string(name), type);
 }
 
-std::shared_ptr<ast::Type> parseType(Context auto&& ctx) {
-  auto name = ctx.view(expect(Token::Kind::word, ctx));
-  if (name == "struct") {
-    expect(Token::Kind::begin, ctx);
-    return std::make_shared<ast::StructType>(parseSeparated(
-        ctx,
-        [](Context auto&& ctx) { return parseField(ctx); },
-        Token::Kind::next,
-        Token::Kind::end
-    ));
-    expect(Token::Kind::end, ctx);
-  } else
-    return std::make_shared<ast::NamedType>(std::string(name));
+ast::Type parseType(Context auto&& ctx) {
+  using enum Token::Kind;
+
+  switch (auto token = ctx.next(); token.kind) {
+    case ident:
+      return std::make_shared<ast::NamedType>(std::string(ctx.view(token)));
+    case kw_struct: {
+      expect(ctx, Token::Kind::begin);
+      auto struct_type = std::make_shared<ast::StructType>(parseSeparated(
+          ctx, parseField<decltype(ctx)>, Token::Kind::next, Token::Kind::end
+      ));
+      expect(ctx, Token::Kind::end);
+      return struct_type;
+    }
+    case kw_union: {
+      expect(ctx, Token::Kind::begin);
+      auto struct_type = std::make_shared<ast::UnionType>(parseSeparated(
+          ctx, parseField<decltype(ctx)>, Token::Kind::next, Token::Kind::end
+      ));
+      expect(ctx, Token::Kind::end);
+      return struct_type;
+    }
+    default:
+      throw "TODO";
+  }
 }
 
-ast::TypeDecl parseTypeDecl(Context auto&& ctx) {
-  if (ctx.view(expect(Token::Kind::word, ctx)) != "type")
-    throw "FORCED";
-  auto name = ctx.view(expect(Token::Kind::word, ctx));
-  auto type = parseType(ctx);
-  return ast::TypeDecl(std::string(name), type);
+ast::Decl parseDecl(Context auto&& ctx) {
+  using enum Token::Kind;
+  switch (auto token = ctx.next(); token.kind) {
+    case kw_type: {
+      auto name = parseIdent(ctx);
+      auto type = parseType(ctx);
+      return std::make_shared<ast::TypeDecl>(name, type);
+    }
+    default:
+      throw "TODO";
+  }
+}
+
+std::vector<ast::Decl> parse(Context auto&& ctx) {
+  std::vector<ast::Decl> decls;
+  while (ctx.peek().kind != Token::eof)
+    decls.push_back(parseDecl(ctx));
+  return decls;
 }
 
 }  // namespace hsec::frontend::parsing

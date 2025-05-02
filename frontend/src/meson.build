@@ -1,4 +1,4 @@
 dep = declare_dependency(
   include_directories: inc,
-  sources: ['ast.cc', 'lexicon.cc', 'lexing.cc'],
+  sources: ['ast.cc', 'ast/print.cc', 'lexing.cc'],
 )

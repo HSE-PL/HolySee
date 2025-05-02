@@ -3,9 +3,12 @@
 #include <iostream>
 #include <string_view>
 
+#include "ast.h"
+#include "ast/print.h"
 #include "lexing.h"
 
 using namespace hsec::frontend;
+using lexing::Indent;
 
 struct TestFile {
   lexing::Lexer ctx;
@@ -35,7 +38,16 @@ int main() {
   auto file =
       "type Smth struct\n"
       "\tx unit\n"
+      "\ty unit\n"
+      "type Smth2 union\n"
+      "\tx unit\n"
       "\ty unit\n"_file;
-  std::cout << parsing::parseTypeDecl(file);
-  std::cout << std::endl;
+  ast::print::OStreamPrinter printer(
+      std::cout, Indent{.style = Indent::Style::spaces, .width = 4}
+  );
+  auto parsed = parsing::parse(file);
+  for (const auto& decl : parsed)
+    printer << *decl;
+  for (const auto& decl : parsed)
+    printer << *decl;
 }

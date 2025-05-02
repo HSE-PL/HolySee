@@ -1,7 +1,5 @@
 #include "lexing.h"
 
-#include <algorithm>
-
 using Kind = hsec::frontend::Token::Kind;
 
 namespace hsec::frontend::lexing {
@@ -18,9 +16,30 @@ bool isSpace(char c) { return c == ' ' || c == '\t'; }
 
 bool isWordChar(char c) { return isLetter(c) || isDigit(c); }
 
-void advance(size_t& pos, std::string_view& view, size_t count) {
-  pos += count;
-  view = view.substr(count);
+std::optional<Token::Kind> matchKeyword(std::string_view word) {
+  if (word == "const")
+    return Kind::kw_const;
+  if (word == "else")
+    return Kind::kw_else;
+  if (word == "fun")
+    return Kind::kw_fun;
+  if (word == "if")
+    return Kind::kw_if;
+  if (word == "inside")
+    return Kind::kw_inside;
+  if (word == "loop")
+    return Kind::kw_loop;
+  if (word == "return")
+    return Kind::kw_return;
+  if (word == "struct")
+    return Kind::kw_struct;
+  if (word == "type")
+    return Kind::kw_type;
+  if (word == "union")
+    return Kind::kw_union;
+  if (word == "var")
+    return Kind::kw_var;
+  return std::nullopt;
 }
 
 }  // namespace
@@ -58,7 +77,7 @@ std::optional<Token> Lexer::nextOnline(std::string_view view) {
         break;
       num_spaces++;
     }
-    advance(pos, view, num_spaces);
+    view.remove_prefix(advance(num_spaces));
   }
 
   if (view.empty())
@@ -81,7 +100,7 @@ std::optional<Token> Lexer::nextOnline(std::string_view view) {
           num_matching / indent.width,
           ctx.indent.level + (num_matching == num_spaces)
       );
-      advance(pos, view, num_spaces);
+      view.remove_prefix(advance(num_spaces));
       if (num_spaces -= indent.length())
         return Token(Kind::bad, pos - num_spaces, num_spaces);
       if (indent.level > ctx.indent.level) {
@@ -93,7 +112,7 @@ std::optional<Token> Lexer::nextOnline(std::string_view view) {
       return nextOnline(view);
     return Token(Kind::next, pos);
   } else
-    advance(pos, view, num_spaces);
+    view.remove_prefix(advance(num_spaces));
 
   Token token(Kind::bad, pos);
   if (isDigit(c)) {
@@ -103,13 +122,14 @@ std::optional<Token> Lexer::nextOnline(std::string_view view) {
     } while (token.span.len < view.length() && isDigit(c = view[token.span.len])
     );
   } else if (isWordChar(c)) {
-    token.kind = Kind::word;
     do {
       token.span.len++;
     } while (token.span.len < view.length()
              && isWordChar(c = view[token.span.len]));
+    token.kind = matchKeyword(view.substr(0, token.span.len))
+                     .value_or(Kind::ident);
   }
-  advance(pos, view, token.span.len);
+  advance(token.span.len);
   return token;
 }
 
