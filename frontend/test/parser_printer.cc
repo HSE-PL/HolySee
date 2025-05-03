@@ -1,11 +1,12 @@
-#include "parsing.h"
-
 #include <iostream>
+#include <sstream>
 #include <string_view>
 
 #include "ast.h"
 #include "ast/print.h"
+#include "gtest/gtest.h"
 #include "lexing.h"
+#include "parsing.h"
 
 using namespace hsec::frontend;
 using lexing::Indent;
@@ -32,22 +33,19 @@ struct TestFile {
   }
 };
 
-TestFile operator""_file(const char* file, size_t) { return TestFile(file); }
+std::string parse(std::string_view file) {
+  TestFile stream(file);
+  std::stringstream out;
+  ast::print::OStreamPrinter printer(
+      out, Indent{.style = Indent::Style::spaces, .width = 4}
+  );
+  for (const auto& decl : parsing::parse(stream))
+    printer << *decl;
+  return std::move(out).str();
+}
 
 int main() {
-  auto file =
-      "type Smth struct\n"
-      "\tx unit\n"
-      "\ty unit\n"
-      "type Smth2 union\n"
-      "\tx unit\n"
-      "\ty unit\n"_file;
-  ast::print::OStreamPrinter printer(
-      std::cout, Indent{.style = Indent::Style::spaces, .width = 4}
-  );
-  auto parsed = parsing::parse(file);
-  for (const auto& decl : parsed)
-    printer << *decl;
-  for (const auto& decl : parsed)
-    printer << *decl;
+  std::ostringstream input;
+  input << std::cin.rdbuf();
+  std::cout << parse(input.view()) << std::flush;
 }

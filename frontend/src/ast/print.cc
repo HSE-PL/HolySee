@@ -94,8 +94,13 @@ void NamedType::print(Printer& printer) const { printer << name; }
 
 void StructType::print(Printer& printer) const {
   printer << kw_struct << begin;
-  for (const auto& field : fields)
-    printer << field << next;
+  bool first = true;
+  for (const auto& field : fields) {
+    if (!first)
+      printer << next;
+    first = false;
+    printer << field;
+  }
   printer << end;
 }
 
