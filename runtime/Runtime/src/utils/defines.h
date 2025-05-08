@@ -8,7 +8,7 @@ static void* __dso_handle = nullptr;
 struct instance {
   size_t      size;
   const char* name;
-  int         have_ref;
+  long        have_ref;
 };
 
 template <typename T>

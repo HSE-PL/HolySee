@@ -1,10 +1,11 @@
 #pragma once
+#include <atomic>
 #include <stddef.h>
 
 namespace sp {
   inline void* spd;
 
-  inline bool sp = false;
+  inline std::atomic_bool sp = false;
 
   void change(int prot);
 

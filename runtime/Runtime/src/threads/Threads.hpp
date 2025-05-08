@@ -35,14 +35,12 @@ namespace threads {
 
     std::mutex mutex_;
 
-    auto releaseIfAll(std::counting_semaphore<>& sem) -> bool {
+    auto releaseIfAll(std::counting_semaphore<>& sem) -> void {
       guard(mutex_);
       if (count() == ++counter_) {
         counter_.store(0);
         sem.release(count());
-        return true;
       }
-      return false;
     }
 
   public:

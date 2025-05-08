@@ -23,18 +23,27 @@
 #include <unistd.h>
 namespace rt {
 
+  static bool need_draw = false;
+
   std::optional<GarbageCollector> gc;
 
+
   auto gogc(ref ssp) -> void {
-    threads::Threads::instance().wait_end_sp();
-    logezhe << "handler: call make_root_and_tracing\n";
-
+    auto n = gc->num_of_cleaning.load();
+    std::atomic_thread_fence(std::memory_order_release);
     ++threads::Threads::instance().count_of_working_threads_;
-    gc->make_root_and_tracing(ssp);
+    threads::Threads::instance().wait_end_sp();
 
-    logezhe << "handler: waiting ping from cleaning\n";
-    threads::Threads::instance()
-        .cleaning_.acquire(); // waiting for the end of cleaning
+    gc->make_root_and_tracing(ssp);
+    for (;;) {
+      if (auto new_n = gc->num_of_cleaning.load(); n + 1 == new_n) {
+        threads::Threads::instance()
+            .cleaning_.acquire(); // waiting for the end of cleaning
+        break;
+      }
+    }
+    std::atomic_thread_fence(std::memory_order_acquire);
+    draw();
   }
 
   auto aom() -> void {
@@ -46,14 +55,9 @@ namespace rt {
   namespace signals {
 
     auto handler(int sig, siginfo_t* info, void* context) {
-      logezhe << info->si_addr << " (sp: " << sp::spd << ")\n";
-      if (info->si_addr != sp::spd)
+      if (info->si_addr != sp::spd) {
         _exit(228);
-      // for (;;) {
-      // logezhe << "@";
-      // }
-      logezhe << "ok\n";
-
+      }
       gogc(static_cast<ucontext_t*>(context)->uc_mcontext.gregs[REG_RSP]);
     }
 
@@ -72,11 +76,9 @@ namespace rt {
   } // namespace signals
 
   [[noreturn]] auto run() -> void {
-    logezhe << "runtime is runing\n";
     for (auto i = 0;; ++i) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
-      logezhe << "sp off\n";
-      sp::off();
+      // sp::off();
       // for (;;)
       // ;
     }
@@ -86,9 +88,9 @@ namespace rt {
                       uint8_t r, uint8_t g, uint8_t b, int border) {
     assert(w > 2 * border);
     assert(h > 2 * border);
-    for (int i = y; i < y + h; ++i) {
-      for (int j = x; j < x + w; ++j) {
-        int idx = (i * img_width + j) * 3;
+    for (long long i = y; i < y + h; ++i) {
+      for (long long j = x; j < x + w; ++j) {
+        long long idx = (i * img_width + j) * 3;
         if ((i < border + y) || (j < border + x) || (i > y + h - border) ||
             (j > x + w - border)) {
           img[idx + 0] = 0;
@@ -104,23 +106,25 @@ namespace rt {
   }
 
   void draw() {
-    static int c = 0;
-    c++;
-    const int w = 2100;
-    const int h = 100;
+    return;
+    static int      c = 1;
+    const long long w = 2100;
+    const long long h = 1000;
 
     std::vector<uint8_t> img(w * h * 3);
     std::memset(img.data(), 255, img.size());
-    const int offset = 5;
-    const int pfb    = 1;
+    const int offset = 50;
+    const int pfb    = 2;
 
     auto regw = w - 2 * offset;
 
     size_t regsize = 0;
+
+    std::atomic_thread_fence(std::memory_order_acquire);
     for (const auto& reg : MemoryManager::regions())
       regsize = std::max(regsize, reg->size);
 
-    auto sizepp = regsize / regw;
+    auto sizepp = regsize / regw + 1;
 
     auto regh = (h - offset) / MemoryManager::regions().size();
     regh -= offset;
@@ -132,7 +136,7 @@ namespace rt {
       auto regfloor = offset + regnum * (regh + offset);
 
       for (auto arenanum = 0; arenanum < curreg->items_.size(); arenanum++) {
-        auto curarena = (*curreg)[arenanum];
+        auto curarena = (*curreg)[curreg->items_.size() - arenanum - 1];
 
         auto arenaw = curarena->size / sizepp;
 
@@ -161,6 +165,7 @@ namespace rt {
     std::cout << name << std::endl;
     stbi_write_png((name + std::string(".png")).c_str(), w, h, 3, img.data(),
                    w * 3);
+    c++;
   }
 
 
@@ -171,7 +176,6 @@ namespace rt {
         max_heap_size ? max_heap_size : MemoryManager::max_heap_size;
     sys::reserve(MemoryManager::max_heap_size);
 
-    logezhe << "main stack: " << sp << "\n";
     signals::init();
     sp::init(spdptr);
 
@@ -181,8 +185,6 @@ namespace rt {
 
     if (!gc.has_value())
       throw std::runtime_error("gc bobo");
-
-    logezhe << "start __start: " << reinterpret_cast<size_t>(__start) << "\n";
 
     threads::Threads::instance().count_of_working_threads_.store(0);
     threads::Threads::instance().append(__start);
@@ -203,33 +205,39 @@ extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp,
 }
 
 
-// literally malloc, but sfree alloc
+// literally malloc, but sfree aalloc
 extern "C" void* __halloc(instance* inst) {
-  logezhe << "__halloc: alloca " << inst->name << ", size:" << inst->size
-          << "\n";
-  static auto c = 0;
+  static auto memory_limit = MemoryManager::max_heap_size >> 1;
+  static auto c            = 0;
+  // if (!(c & 0xfff))
+  // std::cout << c << ") " << std::hex << MemoryManager::memory << std::endl;
   c++;
-  if (c == 174)
-    std::cout << "";
-  if (MemoryManager::max_heap_size && (MemoryManager::memory + inst->size >
-                                       MemoryManager::max_heap_size >> 1)) {
+  if (MemoryManager::max_heap_size &&
+      (MemoryManager::memory + inst->size > memory_limit)) {
+    rt::draw();
     std::cout << c << ") AOM!\n";
     rt::aom();
   }
 
   ref ptr = 0;
-  while (!ptr) {
+  for (auto i = 0; !ptr; ++i) {
     try {
       ptr = Allocator::instance().alloc(inst->size + 8);
     } catch (std::exception& e) {
-      std::cout << "extra aom!\n";
+      std::cout << e.what() << i << " extra aom!\n";
+      if (i == 1)
+        return nullptr;
+      // memory_limit >>= 1;
+      // memory_limit *= 3;
+      rt::need_draw = true;
+      rt::draw();
       rt::aom();
+      rt::need_draw = false;
     }
   }
   rt::draw();
   auto ptr_on_object = reinterpret_cast<instance**>(ptr);
-  logezhe << ptr_on_object << "\n";
-  *ptr_on_object = inst;
+  *ptr_on_object     = inst;
   return reinterpret_cast<void*>(reinterpret_cast<size_t>(ptr_on_object) + 8);
 }
 
@@ -238,10 +246,5 @@ extern "C" void __go(void (&func)()) {
 }
 
 extern "C" void __sleep(size_t n) {
-  int a;
-  logezhe
-      << "thread "
-      << threads::Threads::instance().get(reinterpret_cast<size_t>(&a)).start_sp
-      << " sleep " << n << "\n";
   std::this_thread::sleep_for(std::chrono::seconds(n));
 }

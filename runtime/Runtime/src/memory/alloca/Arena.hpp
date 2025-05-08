@@ -2,10 +2,8 @@
 #include "BitMap.hpp"
 
 #include <atomic>
-#include <cassert>
 #include <cstddef>
 #include <mutex>
-#include <tbb/concurrent_vector.h>
 #include <utils/defines.h>
 
 class Arena {
@@ -15,7 +13,7 @@ public:
   BitMap     marked_;
   std::mutex mutex_;
 
-  tbb::concurrent_vector<size_t> objects;
+  std::vector<size_t> objects;
 
   const size_t size;
   const ref    start;

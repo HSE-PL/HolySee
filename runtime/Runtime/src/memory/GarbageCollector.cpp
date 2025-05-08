@@ -13,16 +13,15 @@ GarbageCollector::GarbageCollector(instance* first, instance* last)
 
 auto GarbageCollector::GC() -> void {
   auto s = clock();
-  logezhe << "calling GC\n";
-  for (auto i = 0; i < threads::Threads::instance().count(); --i)
+  for (auto i = 0; i < threads::Threads::instance().count(); ++i)
     threads::Threads::instance().tracing_.acquire();
 
-  logezhe << "tracing end\n";
-
+  std::atomic_thread_fence(std::memory_order_acquire);
   cleaning();
 
-  logezhe << "end cleaning\n";
+  std::atomic_thread_fence(std::memory_order_release);
 
+  ++num_of_cleaning;
   sp::on();
   threads::Threads::instance().cleaning_.release(
       static_cast<std::ptrdiff_t>(threads::Threads::instance().count()));
@@ -30,41 +29,30 @@ auto GarbageCollector::GC() -> void {
   std::cout << "STW end, time: " << std::fixed << std::setprecision(3)
             << 1000 * static_cast<double>(clock() - s) / CLOCKS_PER_SEC
             << "ms \n";
-  // allocator_.dump();
 }
 
 auto GarbageCollector::tracing() -> void {
-  logezhe << "tracing start\n";
   while (true) {
-    ref ptr;
-
-    if (auto result = queue_for_marked_.try_pop(ptr); result) {
-      if (how_many_ref(ptr))
-        marking(ptr);
-    } else {
-      logezhe << "tracing: ohh, stack is empty(((\n";
-
+    if (auto ptr = stack_for_marked_.pop().value_or(0); ptr)
+      marking(ptr);
+    else {
       if (!threads::Threads::instance().count_of_working_threads_)
         throw std::runtime_error("fantom working thread");
 
-      logezhe << "with me, count_of_working_threads = "
-              << threads::Threads::instance().count_of_working_threads_ << "\n";
-
-      if (!--threads::Threads::instance().count_of_working_threads_)
+      if (!--threads::Threads::instance().count_of_working_threads_) {
+        stack_for_marked_.clear();
         break;
+      }
 
-      while (queue_for_marked_.empty())
+      while (stack_for_marked_.empty())
         if (!threads::Threads::instance().count_of_working_threads_)
           return;
       ++threads::Threads::instance().count_of_working_threads_;
     }
   }
-  logezhe << "tracing end\n";
 }
 
 auto GarbageCollector::make_root_and_tracing(ref ssp) -> void {
-  logezhe << "calling make_root_and_tracing\n";
-
   auto hrtptr = threads::Threads::instance().get(ssp);
   logezhe << hrtptr.start_sp << ":\n.\n.\n.\n"
           << ssp << "\n"
@@ -75,26 +63,14 @@ auto GarbageCollector::make_root_and_tracing(ref ssp) -> void {
   for (ref sp = ssp; sp <= hrtptr.start_sp; sp += 1_ref) {
     auto ptr = *reinterpret_cast<ref*>(sp);
     logezhe << "make_root_and_tracing: on stack: " << ptr << "\n";
-    if (ref_in_heap(ptr)) {
+    if (ref_is_real(ptr)) {
       logezhe << "find " << ptr << " in root\n";
-      // memory_.fetch_sub(how_many_ref(ptr));
-      queue_for_marked_.push(ptr);
+      stack_for_marked_.push(ptr);
     }
   }
-  logezhe << "thread completed root\n";
-  // logezhe << "rt number " << q << "\n";
-  // auto end = queue_for_marked_.unsafe_end();
-  // for (auto start = queue_for_marked_.unsafe_begin(); start != end; ++start)
-  // { std::cout << ") " << *start << ":"
-  // << MemoryManager::arena_by_ptr(*start)->tier << "\n";
-  // }
-
   tracing();
 
-  logezhe << "thread completed tracing\n";
-
+  std::atomic_thread_fence(std::memory_order_release);
   threads::Threads::instance()
       .tracing_.release(); // tell gc we`re done! (for start cleaning)
-
-  logezhe << "thread end\n";
 }

@@ -25,6 +25,8 @@ clean_build:
 	@echo "Cleaning build directory..."
 	rm -rf $(BUILD_DIR)
 	mkdir $(BUILD_DIR)
+	rm -rf screens
+	mkdir screens
 
 .PHONY: clean_build release debug
 

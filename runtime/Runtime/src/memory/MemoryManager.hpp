@@ -28,6 +28,8 @@ namespace MemoryManager {
 
   auto ref_in_heap(ref ptr) -> bool;
 
+  auto tier_by_size(size_t size) -> size_t;
+
   auto arena_by_ptr(ref ptr) -> Arena*;
 
   auto free_arena(Arena* a) -> void;

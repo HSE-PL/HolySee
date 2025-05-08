@@ -24,8 +24,6 @@ public:
   size_t k_;
   BitMap(ref from, ref to, size_t k)
       : k_(k), bitset_((to - from) / k), from_(from), to_(to) {
-    logezhe << "init BitMap: " << from_ << " - " << to_
-            << "size: " << (to - from) / k << "\n";
   }
 
   auto set(ref n) -> void;

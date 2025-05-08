@@ -48,43 +48,16 @@ public:
 
   T* get_min_more_then(ref n) {
     guard(mutex_);
-    // print();
     return keys.lower_bound(n) != keys.end() ? *keys.lower_bound(n) : nullptr;
   }
 
   void append(T* a) {
     guard(mutex_);
-    // log << "call insert in thread: " << std::this_thread::get_id() << "\n";
     keys.insert(a);
-    // log << "insert end, ";
   }
 
   void del(T* a) {
     guard(mutex_);
-    // log << a << "\n";
     keys.erase(a);
-  }
-
-  // 4 debug
-  auto printSetTree(typename std::set<T*>::iterator it,
-                    typename std::set<T*>::iterator end, int depth = 0) -> void {
-    if (it == end)
-      return;
-
-    auto right = std::next(it);
-    printSetTree(right, end, depth + 1);
-
-    for (int i = 0; i < depth; ++i)
-      logezhe << "    ";
-    logezhe << std::hex << (*it)->uniq_for_heap() << ":" << (*it)->key_for_heap() << "\n";
-
-    if (it != end)
-      printSetTree(it, it, depth + 1);
-  }
-
-  auto print() {
-    logezhe << "=====>\n";
-    printSetTree(keys.begin(), keys.end());
-    logezhe << "<=====\n";
   }
 };

@@ -18,7 +18,18 @@ namespace MemoryManager {
     auto counts      = std::vector<size_t>(48);
     auto goal_counts = std::vector<size_t>(48, 2);
 
-    auto count_pages = max_heap_size >> 12;
+    int count_pages = max_heap_size >> 13;
+    // int count_regions = sqrt(max_heap_size >> 1) - 1;
+    //
+    // int page_for_reg = count_pages / count_regions;
+    //
+    // for (auto i = 0; i < count_regions; ++i) {
+    //   auto count_page_in_arena = ((1 << i) + 1);
+    //   counts[i]                = page_for_reg / count_page_in_arena;
+    //   count_pages -= counts[i] * count_page_in_arena;
+    // }
+    //
+    // assert(count_pages >= 0);
 
     for (int i = 0; count_pages > 1 << i; ++i) {
       ++counts[i];
@@ -29,6 +40,9 @@ namespace MemoryManager {
         i = -1;
       }
     }
+    for (auto& el : counts)
+      el <<= 1;
+    count_pages >>= 1;
     for (int i = 0; count_pages > 0; ++i) {
       if (count_pages < (1 << (i + 1)) + 1) {
         ++counts[i];
@@ -36,7 +50,6 @@ namespace MemoryManager {
         i = 0;
       }
     }
-
     return counts;
   }
 
@@ -49,6 +62,7 @@ namespace MemoryManager {
   std::atomic_size_t memory = 0;
 
   auto regions() -> std::vector<Region<Arena>*>& {
+    guard(mutex_);
     static auto regs = [] {
       std::vector<Region<Arena>*> result;
 
@@ -73,7 +87,7 @@ namespace MemoryManager {
   }
 
   auto ref_in_heap(ref ptr) -> bool {
-    -- -- -- -- -- -- -- --ptr;
+    ptr -= 1_ref;
     if (heap_start <= ptr && ptr < heap_start + max_heap_size) {
       auto abp = arena_by_ptr(ptr);
       return abp->start != abp->cur;
@@ -81,13 +95,19 @@ namespace MemoryManager {
     return false;
   }
 
+  auto tier_by_size(size_t size) -> size_t {
+    for (size_t tier = 0;; tier++)
+      if (((1 << tier) + 1) * 1_page > size)
+        return tier;
+  }
+
+
   auto arena_by_ptr(ref ptr) -> Arena* {
     int    index;
     auto&& regs = regions();
     for (index = 0; index < regs.size() && ptr >= regs[index]->start; ++index)
       ;
     --index;
-
     auto offset  = ptr - regs[index]->start;
     auto a_index = offset / regs[index]->t_size;
 

@@ -15,7 +15,6 @@ auto Arena::temp_kill() -> void {
 }
 
 auto Arena::kill() -> void {
-  // temp_kill();
   marked_.clear();
   objects.clear(); // 4 debug
 }

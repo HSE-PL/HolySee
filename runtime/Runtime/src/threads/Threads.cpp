@@ -9,12 +9,16 @@ namespace threads {
 
 auto threads::Threads::append(void (&func)()) -> void {
   guard(mutex_);
-  logezhe << "try to append thrd "
-          << "\n";
 
-  const auto thread = new std::thread(func);
+  std::binary_semaphore s(0);
+  std::binary_semaphore e(0);
+  const auto            thread = new std::thread([&]() {
+    s.acquire();
+    std::cout << "start\n";
+    e.release();
+    func();
+  });
 
-  logezhe << "std::thread was create\n";
   const auto pthread = thread->native_handle();
 
   pthread_attr_t attr;
@@ -23,15 +27,17 @@ auto threads::Threads::append(void (&func)()) -> void {
   size_t stack_size;
   pthread_getattr_np(pthread, &attr);
   pthread_attr_getstack(&attr, &stack_addr, &stack_size);
+  pthread_attr_destroy(&attr);
 
   // std::cout << "Thread "
   // << " stack starts at: " << stack_addr << ", size: " << stack_size
   // << " bytes\n";
-  auto hrptr = Horoutine{thread, reinterpret_cast<size_t>(stack_addr) + stack_size -
-                                     4592}; // hehehe
-  logezhe << std::hex << hrptr.start_sp << "\n";
+  auto hrptr = Horoutine{thread, reinterpret_cast<size_t>(stack_addr) +
+                                     stack_size - 4592}; // hehehe
   pool_.insert(hrptr);
-  logezhe << "thrd append\n";
+  s.release();
+  e.acquire();
+  std::cout << "thrd append\n";
 }
 
 Horoutine threads::Threads::get(size_t sp) {
@@ -42,7 +48,6 @@ Horoutine threads::Threads::get(size_t sp) {
 }
 
 auto threads::Threads::wait_end_sp() -> void {
-  if (releaseIfAll(sp_))
-    return;
+  releaseIfAll(sp_);
   sp_.acquire();
 }
