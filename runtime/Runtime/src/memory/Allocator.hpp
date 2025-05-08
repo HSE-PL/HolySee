@@ -10,16 +10,14 @@ class Allocator {
 
 public:
   Heap<Arena> heap;
-  // BitMap       emplaced_; // 4 accurate gc
 
   static Allocator& instance();
   Allocator();
+  ~Allocator() = default;
 
-  virtual ~Allocator() = default;
+  [[nodiscard]] auto alloc(size_t object_size) -> ref;
 
-  virtual auto alloc(size_t object_size) -> ref;
-
-  auto add_active(size_t index) -> Arena*;
+  [[nodiscard]] auto add_active(size_t index) -> Arena*;
 
   auto free(ref ptr) -> void;
 

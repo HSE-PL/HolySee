@@ -19,17 +19,6 @@ namespace MemoryManager {
     auto goal_counts = std::vector<size_t>(48, 2);
 
     int count_pages = max_heap_size >> 13;
-    // int count_regions = sqrt(max_heap_size >> 1) - 1;
-    //
-    // int page_for_reg = count_pages / count_regions;
-    //
-    // for (auto i = 0; i < count_regions; ++i) {
-    //   auto count_page_in_arena = ((1 << i) + 1);
-    //   counts[i]                = page_for_reg / count_page_in_arena;
-    //   count_pages -= counts[i] * count_page_in_arena;
-    // }
-    //
-    // assert(count_pages >= 0);
 
     for (int i = 0; count_pages > 1 << i; ++i) {
       ++counts[i];

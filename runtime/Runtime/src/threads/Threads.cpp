@@ -12,7 +12,8 @@ auto threads::Threads::append(void (&func)()) -> void {
 
   std::binary_semaphore s(0);
   std::binary_semaphore e(0);
-  const auto            thread = new std::thread([&]() {
+
+  const auto thread = std::make_shared<std::thread>([&]() {
     s.acquire();
     std::cout << "start\n";
     e.release();
@@ -29,9 +30,6 @@ auto threads::Threads::append(void (&func)()) -> void {
   pthread_attr_getstack(&attr, &stack_addr, &stack_size);
   pthread_attr_destroy(&attr);
 
-  // std::cout << "Thread "
-  // << " stack starts at: " << stack_addr << ", size: " << stack_size
-  // << " bytes\n";
   auto hrptr = Horoutine{thread, reinterpret_cast<size_t>(stack_addr) +
                                      stack_size - 4592}; // hehehe
   pool_.insert(hrptr);

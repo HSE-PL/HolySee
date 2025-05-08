@@ -27,10 +27,10 @@ start:
     lea rcx, [LinkedList]
     lea r8, [Heap]
     mov r9, 0x300000000 ; 12 gb
-    mov r9, 0x100000000 ; 4  gb
-    mov r9, 0x10000000  ; 256mb
+;    mov r9, 0x100000000 ; 4  gb
+;    mov r9, 0x10000000  ; 256mb
 ;    mov r9, 0x1000000   ; 16 mb
-    mov r9, 0x200000    ; 2  mb
+;    mov r9, 0x200000    ; 2  mb
 ;    mov r9, 0x100000    ; 1  mb
 ;    mov r9, 0x40000     ; 256kb
 ;    mov r9, 0x10000     ; 64 kb
@@ -63,12 +63,12 @@ main:
     mov [rax], r12
     push rax
 
-    mov r13, 2
+    mov r13, 8
 .loop:
     lea rdi, [ebashim_musor]
     _call __go
     dec r13
-    jz .loop
+    jnz .loop
 ;jmp .L1
 ;jmp $
 ;    mov rdi, DynamicPrimitiveArray4

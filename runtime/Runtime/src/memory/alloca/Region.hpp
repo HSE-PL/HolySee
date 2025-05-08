@@ -18,7 +18,6 @@ public:
 
   ThreadSafeVector<T*> slots_;
 
-public:
   const ref    start;
   const size_t size;
   const size_t t_size;

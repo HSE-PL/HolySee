@@ -23,7 +23,7 @@ auto Allocator::alloc(size_t object_size) -> ref {
       (arena->start + arena->size - arena->cur >
            std::max((object_size >> 12) << 12, 1_page) + 1_page &&
        !MemoryManager::regions()[MemoryManager::tier_by_size(object_size)]
-            ->empty()))
+            ->empty())) [[unlikely]]
     return add_active(object_size)->start;
 
   heap.del(arena);

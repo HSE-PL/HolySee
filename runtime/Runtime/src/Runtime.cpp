@@ -6,7 +6,6 @@
 #include "safepoints/Safepoint.hpp"
 #include "system/System.hpp"
 #include "threads/Threads.hpp"
-#include "utils/log.h"
 #include "utils/stb_image_write.h"
 #include <SFML/Graphics.hpp>
 #include <assert.h>
@@ -27,29 +26,11 @@ namespace rt {
 
   std::optional<GarbageCollector> gc;
 
-
-  auto gogc(ref ssp) -> void {
-    auto n = gc->num_of_cleaning.load();
-    std::atomic_thread_fence(std::memory_order_release);
-    ++threads::Threads::instance().count_of_working_threads_;
-    threads::Threads::instance().wait_end_sp();
-
-    gc->make_root_and_tracing(ssp);
-    for (;;) {
-      if (auto new_n = gc->num_of_cleaning.load(); n + 1 == new_n) {
-        threads::Threads::instance()
-            .cleaning_.acquire(); // waiting for the end of cleaning
-        break;
-      }
-    }
-    std::atomic_thread_fence(std::memory_order_acquire);
-    draw();
-  }
-
-  auto aom() -> void {
+  auto handle_aom() -> void {
     void* a;
     sp::off();
-    gogc(reinterpret_cast<ref>(&a));
+    gc->gogc(reinterpret_cast<ref>(&a));
+    draw();
   }
 
   namespace signals {
@@ -58,7 +39,7 @@ namespace rt {
       if (info->si_addr != sp::spd) {
         _exit(228);
       }
-      gogc(static_cast<ucontext_t*>(context)->uc_mcontext.gregs[REG_RSP]);
+      gc->gogc(static_cast<ucontext_t*>(context)->uc_mcontext.gregs[REG_RSP]);
     }
 
 
@@ -78,9 +59,7 @@ namespace rt {
   [[noreturn]] auto run() -> void {
     for (auto i = 0;; ++i) {
       std::this_thread::sleep_for(std::chrono::seconds(2));
-      // sp::off();
-      // for (;;)
-      // ;
+      sp::off();
     }
   }
 
@@ -213,10 +192,10 @@ extern "C" void* __halloc(instance* inst) {
   // std::cout << c << ") " << std::hex << MemoryManager::memory << std::endl;
   c++;
   if (MemoryManager::max_heap_size &&
-      (MemoryManager::memory + inst->size > memory_limit)) {
+      (MemoryManager::memory + inst->size > memory_limit)) [[unlikely]] {
     rt::draw();
     std::cout << c << ") AOM!\n";
-    rt::aom();
+    rt::handle_aom();
   }
 
   ref ptr = 0;
@@ -224,14 +203,14 @@ extern "C" void* __halloc(instance* inst) {
     try {
       ptr = Allocator::instance().alloc(inst->size + 8);
     } catch (std::exception& e) {
-      std::cout << e.what() << i << " extra aom!\n";
+      std::cout << e.what() << i << " extra handle_aom!\n";
       if (i == 1)
         return nullptr;
       // memory_limit >>= 1;
       // memory_limit *= 3;
       rt::need_draw = true;
       rt::draw();
-      rt::aom();
+      rt::handle_aom();
       rt::need_draw = false;
     }
   }
