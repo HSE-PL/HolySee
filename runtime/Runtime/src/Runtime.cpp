@@ -85,7 +85,7 @@ namespace rt {
   }
 
   void draw() {
-    return;
+    // return;
     static int      c = 1;
     const long long w = 2100;
     const long long h = 1000;
@@ -93,7 +93,7 @@ namespace rt {
     std::vector<uint8_t> img(w * h * 3);
     std::memset(img.data(), 255, img.size());
     const int offset = 50;
-    const int pfb    = 2;
+    const int pfb    = 3;
 
     auto regw = w - 2 * offset;
 

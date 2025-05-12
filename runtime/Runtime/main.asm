@@ -30,7 +30,7 @@ start:
 ;    mov r9, 0x100000000 ; 4  gb
 ;    mov r9, 0x10000000  ; 256mb
 ;    mov r9, 0x1000000   ; 16 mb
-;    mov r9, 0x200000    ; 2  mb
+    mov r9, 0x200000    ; 2  mb
 ;    mov r9, 0x100000    ; 1  mb
 ;    mov r9, 0x40000     ; 256kb
 ;    mov r9, 0x10000     ; 64 kb
@@ -63,12 +63,14 @@ main:
     mov [rax], r12
     push rax
 
+    jmp .skip
     mov r13, 8
 .loop:
     lea rdi, [ebashim_musor]
     _call __go
     dec r13
     jnz .loop
+.skip:
 ;jmp .L1
 ;jmp $
 ;    mov rdi, DynamicPrimitiveArray4

@@ -129,14 +129,14 @@ auto GarbageCollector::make_root_and_tracing(ref ssp) -> void {
 }
 
 auto GarbageCollector::gogc(ref ssp) -> void {
-  auto n = num_of_cleaning.load();
+  auto old_n = num_of_cleaning.load();
   std::atomic_thread_fence(std::memory_order_release);
   ++threads::Threads::instance().count_of_working_threads_;
   threads::Threads::instance().wait_end_sp();
 
   make_root_and_tracing(ssp);
   for (;;) {
-    if (auto new_n = num_of_cleaning.load(); n + 1 == new_n) {
+    if (auto new_n = num_of_cleaning.load(); old_n + 1 == new_n) {
       threads::Threads::instance()
           .cleaning_.acquire(); // waiting for the end of cleaning
       break;

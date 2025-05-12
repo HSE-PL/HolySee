@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.29)
 project(Runtime)
+#set(CMAKE_BUILD_TYPE Debug)
 
 set(IS_DEBUG_BUILD CMAKE_BUILD_TYPE STREQUAL "Debug")
 if (${IS_DEBUG_BUILD})
@@ -24,7 +25,8 @@ find_package(TBB REQUIRED COMPONENTS tbb)
 
 target_link_libraries(Runtime PRIVATE TBB::tbb)
 
-target_compile_options(Runtime PRIVATE "-g -O0 -fsanitize=address -ltbb")
+
+target_compile_options(Runtime PRIVATE "-g3 -O0 -fsanitize=address -ltbb")
 set(CMAKE_ASM_NASM_FLAGS "-f elf64 -F dwarf")
 set_source_files_properties(
         main.asm

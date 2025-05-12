@@ -29,4 +29,3 @@ clean_build:
 	mkdir screens
 
 .PHONY: clean_build release debug
-
