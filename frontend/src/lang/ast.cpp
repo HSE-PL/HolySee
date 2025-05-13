@@ -6,7 +6,18 @@ std::unordered_map<Predicate, std::string> predicateString = {
     {Predicate::LE, "<="}, {Predicate::GT, ">"},   {Predicate::LT, "<"},
 };
 
+std::unordered_map<BinOp, std::string> binOps = {
+    {BinOp::Add, "+"},
+    {BinOp::Sub, "-"},
+    {BinOp::Mul, "*"},
+    {BinOp::Mul, "/"},
+};
+
 std::string Cond::toString() {
   return "(" + lhs->toString() + " " + predicateString[p] + " " +
          rhs->toString() + ")";
+}
+
+std::string BinExp::toString() {
+  return "(" + lhs->toString() + " " + binOps[op] + " " + rhs->toString() + ")";
 }

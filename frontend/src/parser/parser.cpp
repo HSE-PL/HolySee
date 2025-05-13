@@ -16,6 +16,7 @@ using parseFn = std::function<spExpr(iter &, iter &)>;
 using umap = std::unordered_map<std::string, parseFn>;
 using tmap = std::unordered_map<std::string, TypeEntry>;
 using precMap = std::unordered_map<LexemeType, size_t>;
+using binOpMap = std::unordered_map<LexemeType, BinOp>;
 using OptionTopLevel = std::optional<std::shared_ptr<TopLevel>>;
 using OptionExpr = std::optional<std::shared_ptr<Expr>>;
 using VarContext = std::unordered_map<std::string, std::shared_ptr<Var>>;
@@ -41,6 +42,23 @@ precMap precedences = {
     {LexemeType::Minus, 5},
     {LexemeType::Plus, 5},
 };
+
+binOpMap binOperators = {
+    {LexemeType::Star, BinOp::Mul},
+    {LexemeType::Div, BinOp::Div},
+    {LexemeType::Minus, BinOp::Sub},
+    {LexemeType::Plus, BinOp::Add},
+};
+
+static bool binOp(Lexeme &lexeme) {
+  auto binops = {LexemeType::Star, LexemeType::Div, LexemeType::Minus,
+                 LexemeType::Plus};
+  for (auto binop : binops) {
+    if (lexeme.type() == binop)
+      return true;
+  }
+  return false;
+}
 
 static void expect(LexemeType expected, Lexeme &actual) {
   if (expected != actual.type())
@@ -320,12 +338,50 @@ static OptionExpr parseId(iter &start, iter &end, Context &ctx) {
   if (peeked.type() == LexemeType::LParen) {
     return parseCall(start, end, ctx);
   }
+  // TODO: here we should check members(fields or methods)
   // TODO: here we should check VarContext
 
   auto type = TypeEntry("int", TypeClass::Int);
   auto ret = std::make_shared<Var>(tok.lexeme(), type);
 
   return ret;
+}
+static std::shared_ptr<Expr> binaryExpr(iter &start, iter &end, Context &ctx,
+                                        std::shared_ptr<Expr> lhs,
+                                        size_t prec) {
+
+  while (true) {
+    auto peekOp = peek(start, end);
+    if (!binOp(peekOp))
+      return lhs;
+
+    auto precedence = precedences[peekOp.type()];
+
+    if (precedence < prec)
+      return lhs;
+
+    auto op = binOperators[peekOp.type()];
+    inc(start, end);
+
+    inc(start, end);
+    auto rhsOpt = maybeExpr(start, end, ctx);
+
+    if (!rhsOpt.has_value()) {
+      throw ParserException("expected right side of binary expression" +
+                            lhs->toString() + " " + peekOp.lexeme());
+    }
+
+    auto rhs = *rhsOpt;
+    auto nextOp = peek(start, end);
+    if (!binOp(nextOp)) {
+      return std::make_shared<BinExp>(lhs, rhs, op);
+    }
+    auto nextPrecedence = precedences[nextOp.type()];
+    if (precedence < nextPrecedence) {
+      rhs = binaryExpr(start, end, ctx, rhs, precedence + 1);
+    }
+    lhs = std::make_shared<BinExp>(lhs, rhs, op);
+  }
 }
 
 static OptionExpr maybeExpr(iter &start, iter &end, Context &ctx) {
@@ -337,11 +393,13 @@ static OptionExpr maybeExpr(iter &start, iter &end, Context &ctx) {
   }
   return std::nullopt;
 }
-
 static std::shared_ptr<Expr> expr(iter &start, iter &end, Context &ctx) {
-  auto ret = maybeExpr(start, end, ctx);
-  if (ret.has_value())
-    return *ret;
+  auto retOpt = maybeExpr(start, end, ctx);
+  if (retOpt.has_value()) {
+    auto ret = *retOpt;
+    return binaryExpr(start, end, ctx, ret, 0);
+  }
+
   throw ParserException("no expressions where expected one");
 }
 

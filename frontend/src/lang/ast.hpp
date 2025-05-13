@@ -29,6 +29,13 @@ enum class TypeClass {
   Custom,
 };
 
+enum class BinOp {
+  Add,
+  Sub,
+  Mul,
+  Div,
+};
+
 struct TypeEntry {
   std::string name;
   TypeClass tclass;
@@ -44,6 +51,17 @@ class Const : public Expr {
 public:
   Const(int value) : value(value) {}
   virtual std::string toString() { return std::to_string(value); }
+};
+
+class BinExp : public Expr {
+  std::shared_ptr<Expr> lhs;
+  std::shared_ptr<Expr> rhs;
+  BinOp op;
+
+public:
+  BinExp(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs, BinOp op)
+      : lhs(lhs), rhs(rhs), op(op) {}
+  virtual std::string toString();
 };
 
 class Var : public Expr {
@@ -65,18 +83,6 @@ struct TypeDeclaration : public TopLevel {
       fieldsString += "  " + field->toString() + "\n";
     }
     return "struct " + type + " {\n" + fieldsString + "}";
-  }
-};
-
-class Add : public Expr {
-  std::shared_ptr<Expr> lhs;
-  std::shared_ptr<Expr> rhs;
-
-public:
-  Add(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs)
-      : lhs(lhs), rhs(rhs) {}
-  virtual std::string toString() {
-    return "(add " + lhs->toString() + " " + rhs->toString() + ")";
   }
 };
 
