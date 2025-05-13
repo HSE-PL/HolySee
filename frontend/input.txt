@@ -1,0 +1,13 @@
+
+
+  hello()
+
+ello.nice.to.meet.ya()
+
+fun main(a1 int) int {}
+
+type hello struct {
+  a1 int;
+}
+
+
