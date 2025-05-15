@@ -9,6 +9,7 @@ Scope::Scope(Printer& printer) : printer(printer) { printer << begin; }
 Scope::~Scope() { printer << end; }
 
 namespace {
+
 using lexing::Indent;
 
 std::ostream& operator<<(std::ostream& out, Indent indent) {
@@ -20,12 +21,16 @@ std::ostream& operator<<(std::ostream& out, Indent indent) {
 }  // namespace
 
 Printer& OStreamPrinter::operator<<(std::string_view raw) {
-  if (newline)
-    out << indent;
-  else
+  if (newline) {
+    if (indent || first)
+      out << indent;
+    else
+      out << "\n";
+  } else
     out << ' ';
   out << raw;
   newline = false;
+  first = false;
   return *this;
 }
 
@@ -43,8 +48,10 @@ Printer& OStreamPrinter::operator<<(Token::Kind token) {
       --indent;
       break;
     case next:
-      out << '\n';
-      newline = true;
+      if (!ignoreNext) {
+        out << '\n';
+        newline = true;
+      }
       break;
     case kw_const:
       printer << "const";
@@ -79,6 +86,10 @@ Printer& OStreamPrinter::operator<<(Token::Kind token) {
     default:
       throw "TODO";
   }
+  if (token != next)
+    ignoreNext = false;
+  if (token == end)
+    ignoreNext = true;
   return *this;
 }
 
@@ -93,25 +104,25 @@ void Field::print(Printer& printer) const { printer << name << *type; }
 void NamedType::print(Printer& printer) const { printer << name; }
 
 void StructType::print(Printer& printer) const {
-  printer << kw_struct << begin;
-  bool first = true;
-  for (const auto& field : fields) {
-    if (!first)
+  printer << kw_struct; 
+  for (int i = 0; const auto& field : fields) {
+    if (i++)
       printer << next;
-    first = false;
     printer << field;
   }
-  printer << end;
 }
 
 void UnionType::print(Printer& printer) const {
-  printer << kw_union << begin;
-  for (const auto& field : fields)
-    printer << field << next;
-  printer << end;
+  printer << kw_union; 
+  print::Scope scope(printer);
+  for (int i = 0; const auto& field : fields) {
+    if (i++)
+      printer << next;
+    printer << field;
+  }
 }
 
 void TypeDecl::print(Printer& printer) const {
-  printer << kw_type << name << *type;
+  printer << kw_type << name << *type << next;
 }
 }  // namespace hsec::frontend::ast

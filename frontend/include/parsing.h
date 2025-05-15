@@ -23,6 +23,29 @@ concept Context = requires(T ctx, Span span) {
 template <typename T, typename U>
 concept Parser = Context<U> && requires(T&& parser, U&& ctx) { parser(ctx); };
 
+class StringViewStream {
+  lexing::Lexer ctx;
+  std::string_view view_;
+  std::optional<Token> buf;
+
+ public:
+  StringViewStream(std::string_view view) : view_(view) {};
+
+  std::string_view view(Span span) { return view_.substr(span.pos, span.len); }
+
+  Token next() {
+    if (buf)
+      return std::exchange(buf, std::nullopt).value();
+    return ctx.next(view_.substr(ctx.getPos()));
+  }
+
+  const Token& peek() {
+    if (!buf)
+      buf = next();
+    return *buf;
+  }
+};
+
 Token expect(Context auto&& ctx, Token::Kind kind) {
   auto token = ctx.next();
   if (token.kind != kind)

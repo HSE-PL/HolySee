@@ -21,11 +21,7 @@ struct Printer {
 
 namespace hsec::frontend::ast::print {
 
-struct Printable {
-  friend struct Printer;
-};
-
-class Scope {
+struct Scope {
   Printer& printer;
   Scope(Printer& printer);
   Scope(const Scope&) = delete;
@@ -41,6 +37,8 @@ class OStreamPrinter : public Printer {
   std::ostream& out;
   lexing::Indent indent;
   bool newline = true;
+  bool ignoreNext = true;
+  bool first = true;
 
  public:
   OStreamPrinter(std::ostream& out, lexing::Indent indent)
