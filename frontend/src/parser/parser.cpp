@@ -1,5 +1,6 @@
 #include "parser.hpp"
 #include "iparser.hpp"
+#include <algorithm>
 #include <cassert>
 #include <complex>
 #include <functional>
@@ -19,6 +20,8 @@ using precMap = std::unordered_map<LexemeType, size_t>;
 using binOpMap = std::unordered_map<LexemeType, BinOp>;
 using OptionTopLevel = std::optional<std::shared_ptr<TopLevel>>;
 using OptionExpr = std::optional<std::shared_ptr<Expr>>;
+using OptionStmt = std::optional<std::shared_ptr<Stmt>>;
+using OptionVar = std::optional<std::shared_ptr<Var>>;
 using VarContext = std::unordered_map<std::string, std::shared_ptr<Var>>;
 
 // TODO: make separate function for parsing types, arrays are cornercase i can't
@@ -26,10 +29,21 @@ using VarContext = std::unordered_map<std::string, std::shared_ptr<Var>>;
 
 struct Context {
   VarContext ctx;
+  void addVar(std::string name, std::shared_ptr<Var> var) {
+    ctx.insert({name, var});
+  }
+
+  OptionVar lookup(std::string name) {
+    if (ctx.contains(name)) {
+      return ctx[name];
+    }
+    return std::nullopt;
+  }
 };
 
 static std::shared_ptr<Expr> expr(iter &start, iter &end, Context &ctx);
-static OptionExpr maybeExpr(iter &start, iter &end, Context &ctx);
+static OptionExpr singleExpr(iter &start, iter &end, Context &ctx);
+static OptionStmt stmt(iter &start, iter &end, Context &ctx);
 
 tmap types = {
     {"int", TypeEntry("int", TypeClass::Int)},
@@ -101,7 +115,7 @@ static void inc(iter &start, iter &end) {
 
 static void dec(iter &start) { --start; }
 
-static std::optional<std::shared_ptr<Var>> varDecl(iter &start, iter &end) {
+static std::optional<std::shared_ptr<Var>> fieldDecl(iter &start, iter &end) {
   auto varName = *start;
   if (varName.type() != LexemeType::Id) {
     return std::nullopt;
@@ -157,7 +171,7 @@ static OptionTopLevel typeDecl(iter &start, iter &end) {
 
   auto tDecl = std::make_shared<TypeDeclaration>(typeName.lexeme());
   while (true) {
-    auto var = varDecl(start, end);
+    auto var = fieldDecl(start, end);
     if (var.has_value()) {
       tDecl->fields.push_back(*var);
     } else {
@@ -238,18 +252,28 @@ static OptionTopLevel functionDecl(iter &start, iter &end) {
     throw ParserException("expected type or left brace");
   }
 
-  /*inc(start, end);*/
-  // TODO: HERE SHOULD BE PARSING OF STATEMENTS
-
+  std::vector<std::shared_ptr<Stmt>> stmts;
+  Context ctx{};
   inc(start, end);
+  while (true) {
+    auto statement = stmt(start, end, ctx);
+    if (!statement.has_value()) {
+      break;
+    }
+    std::cout << (*statement)->toString() << std::endl;
+    stmts.push_back(*statement);
+    inc(start, end);
+  }
+
   auto rbrace = *start;
   expect(LexemeType::RBrace, rbrace);
 
-  auto fn = new Function(fnName.lexeme(), retType, params,
-                         {}); // idk why it can't make_shared here
-  auto ret = std::shared_ptr<Function>(fn);
+  auto fn =
+      std::make_shared<Function>(fnName.lexeme(), retType, params,
+                                 stmts); // idk why it can't make_shared here
+  /*auto ret = std::shared_ptr<Function>(fn);*/
 
-  return ret;
+  return fn;
 }
 
 std::shared_ptr<TopLevel> anyTopLevel(iter &start, iter &end) {
@@ -310,7 +334,7 @@ static OptionExpr parseCall(iter &start, iter &end, Context &ctx) {
   std::vector<std::shared_ptr<Expr>> args;
   inc(start, end);
   while (argCheck) {
-    auto arg = maybeExpr(start, end, ctx);
+    auto arg = singleExpr(start, end, ctx);
     if (arg.has_value()) {
       args.push_back(*arg);
     } else {
@@ -364,7 +388,7 @@ static std::shared_ptr<Expr> binaryExpr(iter &start, iter &end, Context &ctx,
     inc(start, end);
 
     inc(start, end);
-    auto rhsOpt = maybeExpr(start, end, ctx);
+    auto rhsOpt = singleExpr(start, end, ctx);
 
     if (!rhsOpt.has_value()) {
       throw ParserException("expected right side of binary expression" +
@@ -384,7 +408,7 @@ static std::shared_ptr<Expr> binaryExpr(iter &start, iter &end, Context &ctx,
   }
 }
 
-static OptionExpr maybeExpr(iter &start, iter &end, Context &ctx) {
+static OptionExpr singleExpr(iter &start, iter &end, Context &ctx) {
   auto exprs = {parseCall, parseId, parenExpr, parseNumber};
   for (auto &&fn : exprs) {
     auto ret = fn(start, end, ctx);
@@ -393,14 +417,136 @@ static OptionExpr maybeExpr(iter &start, iter &end, Context &ctx) {
   }
   return std::nullopt;
 }
+
+static OptionExpr stmtExpr(iter &start, iter &end, Context &ctx) {
+  auto retOpt = singleExpr(start, end, ctx);
+  if (retOpt.has_value()) {
+    auto ret = *retOpt;
+    auto totalRet = binaryExpr(start, end, ctx, ret, 0);
+    inc(start, end);
+    auto eol = *start;
+    expectEOL(eol);
+    return totalRet;
+  }
+
+  return std::nullopt;
+}
+
 static std::shared_ptr<Expr> expr(iter &start, iter &end, Context &ctx) {
-  auto retOpt = maybeExpr(start, end, ctx);
+  auto retOpt = singleExpr(start, end, ctx);
   if (retOpt.has_value()) {
     auto ret = *retOpt;
     return binaryExpr(start, end, ctx, ret, 0);
   }
 
   throw ParserException("no expressions where expected one");
+}
+
+static OptionStmt varDecl(iter &start, iter &end, Context &ctx) {
+  auto var = *start;
+  if (var.type() != LexemeType::Var) {
+    return std::nullopt;
+  }
+
+  inc(start, end);
+  auto typeLexeme = *start;
+  expect(LexemeType::Id, typeLexeme);
+
+  if (!types.contains(typeLexeme.lexeme())) {
+    throw ParserException("type of var is not defined, found " +
+                          typeLexeme.lexeme());
+  }
+
+  auto type = types.at(typeLexeme.lexeme());
+  std::vector<std::shared_ptr<Var>> vars;
+
+  while (true) {
+    inc(start, end);
+    auto varName = *start;
+    expect(LexemeType::Id, varName);
+
+    auto var = std::make_shared<Var>(varName.lexeme(), type);
+    vars.push_back(var);
+    ctx.addVar(varName.lexeme(), var);
+
+    inc(start, end);
+    auto delim = *start;
+    if (delim.type() == LexemeType::EOL) {
+      auto vardecl = std::make_shared<VarDecl>(vars);
+      return vardecl;
+    }
+    if (delim.type() != LexemeType::Comma) {
+      throw ParserException("unexpected token. waited for EOL or Comma, got " +
+                            delim.lexeme());
+    }
+  }
+}
+
+static OptionStmt returnStmt(iter &start, iter &end, Context &ctx) {
+  auto ret = *start;
+  if (ret.type() != LexemeType::Return) {
+    return std::nullopt;
+  }
+
+  inc(start, end);
+  auto expression = stmtExpr(start, end, ctx);
+  if (expression.has_value()) {
+    return std::make_shared<Ret>(*expression);
+  }
+  auto eol = *start;
+  expectEOL(eol);
+
+  return std::make_shared<Ret>();
+}
+
+static OptionStmt assign(iter &start, iter &end, Context &ctx) {
+  auto varName = *start;
+  if (varName.type() != LexemeType::Id) {
+    return std::nullopt;
+  }
+
+  auto equals = peek(start, end);
+
+  if (equals.type() != LexemeType::Equals) {
+    return std::nullopt;
+  }
+
+  inc(start, end);
+  inc(start, end);
+  auto expression = expr(start, end, ctx);
+
+  inc(start, end);
+  auto eol = *start;
+  expectEOL(eol);
+
+  auto var = ctx.lookup(varName.lexeme());
+  if (!var.has_value()) {
+    throw ParserException("tried to assign to non-declared variable " +
+                          varName.lexeme());
+  }
+
+  auto ret = std::make_shared<Assign>(*var, expression);
+
+  return ret;
+}
+
+static OptionStmt stmt(iter &start, iter &end, Context &ctx) {
+  auto exprs = {varDecl, assign, returnStmt};
+  for (auto &&fn : exprs) {
+    auto ret = fn(start, end, ctx);
+    if (ret.has_value())
+      return *ret;
+  }
+  return stmtExpr(start, end, ctx);
+}
+
+std::optional<std::shared_ptr<Stmt>>
+ParserImpl::parseStmt(std::vector<Lexeme> &lexems) {
+  auto begin = lexems.cbegin();
+  auto end = lexems.cend();
+  Context ctx{};
+  auto statement = stmt(begin, end, ctx);
+  return statement;
 }
 
 std::shared_ptr<Expr> ParserImpl::parse(std::vector<Lexeme> &lexems) {

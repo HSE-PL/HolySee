@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -73,6 +74,21 @@ public:
   virtual std::string toString() { return id + " " + type.name; }
 };
 
+class Ret : public Stmt {
+  std::optional<std::shared_ptr<Expr>> retExpr;
+
+public:
+  Ret(std::shared_ptr<Expr> expr) : retExpr(expr) {}
+  Ret() : retExpr(std::nullopt) {}
+  virtual std::string toString() {
+    if (retExpr.has_value()) {
+      return "ret " + (*retExpr)->toString();
+    } else {
+      return "ret _";
+    }
+  }
+};
+
 struct TypeDeclaration : public TopLevel {
   std::string type;
   std::vector<std::shared_ptr<Var>> fields;
@@ -83,6 +99,36 @@ struct TypeDeclaration : public TopLevel {
       fieldsString += "  " + field->toString() + "\n";
     }
     return "struct " + type + " {\n" + fieldsString + "}";
+  }
+};
+
+class Assign : public Stmt {
+  std::shared_ptr<Var> var;
+  std::shared_ptr<Expr> expr;
+
+public:
+  Assign(std::shared_ptr<Var> var, std::shared_ptr<Expr> expr)
+      : var(var), expr(expr) {}
+
+  std::string toString() { return var->toString() + " = " + expr->toString(); }
+};
+
+class VarDecl : public Stmt {
+  std::vector<std::shared_ptr<Var>> vars;
+
+public:
+  VarDecl(std::vector<std::shared_ptr<Var>> vars) : vars(vars) {}
+  std::string toString() {
+    std::string varNames{};
+    for (auto &&var : vars) {
+      varNames += var->toString() + ", ";
+    }
+    if (vars.size() > 0) {
+      varNames.pop_back();
+      varNames.pop_back();
+    }
+
+    return "var " + varNames;
   }
 };
 
@@ -119,22 +165,6 @@ public:
   virtual std::string toString() {
     return "(if " + cond->toString() + tbranch->toString() + " " +
            fbranch->toString() + ")";
-  }
-};
-
-class Let : public Expr {
-  std::string id;
-  std::shared_ptr<Expr> given;
-  std::shared_ptr<Expr> expression;
-
-public:
-  Let(std::string id, std::shared_ptr<Expr> given,
-      std::shared_ptr<Expr> expression)
-      : id(id), given(given), expression(expression) {}
-
-  virtual std::string toString() {
-    return "(let " + id + " " + given->toString() + " in " +
-           expression->toString() + ")";
   }
 };
 

@@ -14,7 +14,8 @@ using lexemeMap = std::unordered_map<LexemeType, std::string>;
 kmap keywordsLexeme = {
     {"type", LexemeType::Type},   {"struct", LexemeType::Struct},
     {"fun", LexemeType::Fun},     {"true", LexemeType::True},
-    {"false", LexemeType::False},
+    {"false", LexemeType::False}, {"var", LexemeType::Var},
+    {"ret", LexemeType::Return},
 };
 
 lexemeMap lexemes = {
@@ -27,7 +28,8 @@ lexemeMap lexemes = {
     {LexemeType::True, "true"},     {LexemeType::False, "false"},
     {LexemeType::Dot, "dot"},       {LexemeType::Plus, "Plus"},
     {LexemeType::Minus, "Minus"},   {LexemeType::Star, "*"},
-    {LexemeType::Div, "/"},
+    {LexemeType::Div, "/"},         {LexemeType::Var, "Var"},
+    {LexemeType::Return, "Return"},
 };
 
 static void skipWhitespace(iter &input, iter &end) {

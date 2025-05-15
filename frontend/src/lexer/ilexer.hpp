@@ -25,6 +25,8 @@ enum class LexemeType {
   Minus,
   Div,
   Star,
+  Var,
+  Return,
 };
 
 class LexerException {
