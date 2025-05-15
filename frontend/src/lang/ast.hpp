@@ -7,6 +7,9 @@
 #include <vector>
 
 class Expr;
+struct Program;
+struct TypeDeclaration;
+struct Function;
 
 class TopLevel {
 public:
@@ -65,7 +68,7 @@ public:
   virtual std::string toString();
 };
 
-class Var : public Expr {
+struct Var : public Expr {
   std::string id;
   TypeEntry type;
 
@@ -168,7 +171,7 @@ public:
   }
 };
 
-class Function : public TopLevel {
+struct Function : public TopLevel {
   std::string id;
   TypeEntry type;
   std::vector<std::shared_ptr<Var>> params;
@@ -215,5 +218,46 @@ public:
       argsString.pop_back();
     }
     return fn + "(" + argsString + ")";
+  }
+};
+
+// not really program, more like translation unit.
+struct Program {
+  std::unordered_map<std::string, TypeEntry> types = {
+      {"int", TypeEntry("int", TypeClass::Int)},
+      {"bool", TypeEntry("bool", TypeClass::Bool)}};
+  std::unordered_map<std::string, std::shared_ptr<TypeDeclaration>> typeDecls;
+  std::unordered_map<std::string, std::shared_ptr<Function>> funs;
+
+  void addFn(std::string name, std::shared_ptr<Function> fn) {
+    funs.insert({name, fn});
+  }
+  void addType(std::string name, TypeEntry type) { types.insert({name, type}); }
+  void addTypeDecl(std::string name, std::shared_ptr<TypeDeclaration> type) {
+    typeDecls.insert({name, type});
+  }
+  std::optional<std::shared_ptr<Function>> fnLookup(std::string name) {
+    if (funs.contains(name)) {
+      return funs[name];
+    }
+    return std::nullopt;
+  }
+  std::optional<TypeEntry> typeLookup(std::string name) {
+    if (types.contains(name)) {
+      return types[name];
+    }
+    return std::nullopt;
+  }
+  std::string toString() {
+    std::string res{};
+    res += "Types:\n";
+    for (auto &&type : typeDecls) {
+      res += type.second->toString() + "\n";
+    }
+    res += "Source code:\n";
+    for (auto &&fn : funs) {
+      res += fn.second->toString() + "\n";
+    }
+    return res;
   }
 };

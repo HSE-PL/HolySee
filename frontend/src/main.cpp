@@ -24,9 +24,9 @@ int main(int argc, char *argv[]) {
     for (auto &&lexeme : lexed) {
       std::cout << lexeme.toString() << std::endl;
     }
-    auto parsed = *parser.parseTopLevel(lexed);
+    auto parsed = parser.parse(lexed);
     std::cout << "PARSING: " << std::endl;
-    std::cout << parsed->toString() << std::endl;
+    std::cout << parsed.toString() << std::endl;
   } catch (ParserException &exception) {
     std::cout << exception.error_msg << std::endl;
   } catch (LexerException &exception) {

@@ -14,6 +14,6 @@ public:
 class IParser {
 
 public:
-  virtual std::shared_ptr<Expr> parse(std::vector<Lexeme> &lexemes) = 0;
+  /*virtual std::shared_ptr<Expr> parse(std::vector<Lexeme> &lexemes) = 0;*/
   virtual ~IParser() {};
 };

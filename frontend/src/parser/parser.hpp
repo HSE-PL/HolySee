@@ -6,8 +6,9 @@
 class ParserImpl : public IParser {
 
 public:
-  std::optional<std::shared_ptr<TopLevel>>
-  parseTopLevel(std::vector<Lexeme> &lexems);
+  /*std::optional<std::shared_ptr<TopLevel>>*/
+  /*parseTopLevel(std::vector<Lexeme> &lexems);*/
   std::optional<std::shared_ptr<Stmt>> parseStmt(std::vector<Lexeme> &lexems);
-  virtual std::shared_ptr<Expr> parse(std::vector<Lexeme> &lexemes);
+  /*virtual std::shared_ptr<Expr> parse(std::vector<Lexeme> &lexemes);*/
+  Program parse(std::vector<Lexeme> &lexemes);
 };

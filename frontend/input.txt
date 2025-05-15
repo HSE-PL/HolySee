@@ -1,13 +1,17 @@
-
-
-  hello() + 134 * hehe * haha
-
-ello.nice.to.meet.ya()
-
-fun main(a1 int) int {}
-
-type hello struct {
-  a1 int;
+fun main(a1 int, a2 int) int {
+  var bool a;
+  a = a1 + a2 * a1;
+  ret a;
 }
 
+type Hellouw struct {
+  a1 int;
+  a2 bool;
+  helloo bool;
+}
 
+fun comeow(a1 int, a2 int) int {
+  var Hellouw a;
+  meow(a);
+  ret a;
+}

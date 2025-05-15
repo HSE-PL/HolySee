@@ -1,10 +1,7 @@
 #include "parser.hpp"
 #include "iparser.hpp"
-#include <algorithm>
 #include <cassert>
-#include <complex>
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -29,10 +26,15 @@ using VarContext = std::unordered_map<std::string, std::shared_ptr<Var>>;
 
 struct Context {
   VarContext ctx;
+  tmap &typeCtx; // very questionable reference. but as of now i always know
+                 // that this reference will outlive every Context.
+                 // if it starts exploding look this way.
+  Context(tmap &typeCtx) : typeCtx(typeCtx) {}
   void addVar(std::string name, std::shared_ptr<Var> var) {
     ctx.insert({name, var});
   }
 
+  void addType(std::string name, TypeEntry var) { typeCtx.insert({name, var}); }
   OptionVar lookup(std::string name) {
     if (ctx.contains(name)) {
       return ctx[name];
@@ -44,11 +46,6 @@ struct Context {
 static std::shared_ptr<Expr> expr(iter &start, iter &end, Context &ctx);
 static OptionExpr singleExpr(iter &start, iter &end, Context &ctx);
 static OptionStmt stmt(iter &start, iter &end, Context &ctx);
-
-tmap types = {
-    {"int", TypeEntry("int", TypeClass::Int)},
-    {"bool", TypeEntry("bool", TypeClass::Bool)},
-};
 
 precMap precedences = {
     {LexemeType::Star, 10},
@@ -81,21 +78,11 @@ static void expect(LexemeType expected, Lexeme &actual) {
                           ", actual: " + actual.lexeme());
 }
 
-static void expectId(Lexeme &actual, std::string expected) {
-  if (actual.type() != LexemeType::Id || actual.lexeme() != expected) {
-    throw ParserException("expected id " + expected);
-  }
-}
-
 static void expectLeftParen(Lexeme &lexeme) {
   expect(LexemeType::LParen, lexeme);
 }
 
 static void expectEOL(Lexeme &lexeme) { expect(LexemeType::EOL, lexeme); }
-
-static void expectRightParen(Lexeme &lexeme) {
-  expect(LexemeType::RParen, lexeme);
-}
 
 static Lexeme peek(iter &start, iter &end) {
   auto peekachu = ++start;
@@ -109,13 +96,15 @@ static Lexeme peek(iter &start, iter &end) {
 
 static void inc(iter &start, iter &end) {
   ++start;
-  if (start == end)
+  if (start == end) {
     throw ParserException("end is too soon");
+  }
 }
 
 static void dec(iter &start) { --start; }
 
-static std::optional<std::shared_ptr<Var>> fieldDecl(iter &start, iter &end) {
+static std::optional<std::shared_ptr<Var>> fieldDecl(iter &start, iter &end,
+                                                     tmap &types) {
   auto varName = *start;
   if (varName.type() != LexemeType::Id) {
     return std::nullopt;
@@ -140,13 +129,12 @@ static std::optional<std::shared_ptr<Var>> fieldDecl(iter &start, iter &end) {
   auto cur = *start;
 
   expectEOL(cur);
-  inc(start, end);
 
   auto ret = std::make_shared<Var>(varName.lexeme(), type);
   return ret;
 }
 
-static OptionTopLevel typeDecl(iter &start, iter &end) {
+static OptionTopLevel typeDecl(iter &start, iter &end, tmap &types) {
   auto cur = *start;
   if (cur.type() != LexemeType::Type) {
     return std::nullopt;
@@ -171,13 +159,17 @@ static OptionTopLevel typeDecl(iter &start, iter &end) {
 
   auto tDecl = std::make_shared<TypeDeclaration>(typeName.lexeme());
   while (true) {
-    auto var = fieldDecl(start, end);
+    auto var = fieldDecl(start, end, types);
     if (var.has_value()) {
       tDecl->fields.push_back(*var);
+      inc(start, end);
     } else {
       break;
     }
   }
+
+  auto rbrace = *start;
+  expect(LexemeType::RBrace, rbrace);
 
   return tDecl;
 }
@@ -198,11 +190,12 @@ static std::optional<std::shared_ptr<Var>> parseParam(iter &start, iter &end) {
   return ret;
 }
 
-static OptionTopLevel functionDecl(iter &start, iter &end) {
+static OptionTopLevel functionDecl(iter &start, iter &end, tmap &types) {
   auto cur = *start;
   if (cur.type() != LexemeType::Fun) {
     return std::nullopt;
   }
+  Context ctx{types};
 
   inc(start, end);
 
@@ -224,7 +217,9 @@ static OptionTopLevel functionDecl(iter &start, iter &end) {
   while (paramCheck) {
     auto param = parseParam(start, end);
     if (param.has_value()) {
-      params.push_back(*param);
+      auto variable = *param;
+      params.push_back(variable);
+      ctx.addVar(variable->id, variable);
     } else {
       throw ParserException("expected parameter got" + start->lexeme());
     }
@@ -253,14 +248,12 @@ static OptionTopLevel functionDecl(iter &start, iter &end) {
   }
 
   std::vector<std::shared_ptr<Stmt>> stmts;
-  Context ctx{};
   inc(start, end);
   while (true) {
     auto statement = stmt(start, end, ctx);
     if (!statement.has_value()) {
       break;
     }
-    std::cout << (*statement)->toString() << std::endl;
     stmts.push_back(*statement);
     inc(start, end);
   }
@@ -276,21 +269,20 @@ static OptionTopLevel functionDecl(iter &start, iter &end) {
   return fn;
 }
 
-std::shared_ptr<TopLevel> anyTopLevel(iter &start, iter &end) {
+std::shared_ptr<TopLevel> anyTopLevel(iter &start, iter &end, tmap &types) {
   auto topLevel = {typeDecl, functionDecl};
   for (auto &&fn : topLevel) {
-    auto ret = fn(start, end);
-    if (ret.has_value())
+    auto ret = fn(start, end, types);
+    if (ret.has_value()) {
+      ++start;
       return *ret;
+    }
   }
   throw ParserException("no top level constructions where expected one");
 }
 
-OptionTopLevel ParserImpl::parseTopLevel(std::vector<Lexeme> &lexems) {
-  auto begin = lexems.cbegin();
-  auto end = lexems.cend();
-  auto tl = anyTopLevel(begin, end);
-  return tl;
+OptionTopLevel parseTopLevel(iter &start, iter &end, tmap &types) {
+  return anyTopLevel(start, end, types);
 }
 
 static OptionExpr parenExpr(iter &start, iter &end, Context &ctx) {
@@ -364,11 +356,14 @@ static OptionExpr parseId(iter &start, iter &end, Context &ctx) {
   }
   // TODO: here we should check members(fields or methods)
   // TODO: here we should check VarContext
+  auto var = ctx.lookup(tok.lexeme());
+  if (!var.has_value()) {
+    throw ParserException("use of undeclared variable " + tok.lexeme());
+  }
+  /*auto type = TypeEntry("int", TypeClass::Int);*/
+  /*auto ret = std::make_shared<Var>(tok.lexeme(), type);*/
 
-  auto type = TypeEntry("int", TypeClass::Int);
-  auto ret = std::make_shared<Var>(tok.lexeme(), type);
-
-  return ret;
+  return *var;
 }
 static std::shared_ptr<Expr> binaryExpr(iter &start, iter &end, Context &ctx,
                                         std::shared_ptr<Expr> lhs,
@@ -452,12 +447,12 @@ static OptionStmt varDecl(iter &start, iter &end, Context &ctx) {
   auto typeLexeme = *start;
   expect(LexemeType::Id, typeLexeme);
 
-  if (!types.contains(typeLexeme.lexeme())) {
+  if (!ctx.typeCtx.contains(typeLexeme.lexeme())) {
     throw ParserException("type of var is not defined, found " +
                           typeLexeme.lexeme());
   }
 
-  auto type = types.at(typeLexeme.lexeme());
+  auto type = ctx.typeCtx.at(typeLexeme.lexeme());
   std::vector<std::shared_ptr<Var>> vars;
 
   while (true) {
@@ -540,19 +535,29 @@ static OptionStmt stmt(iter &start, iter &end, Context &ctx) {
   return stmtExpr(start, end, ctx);
 }
 
-std::optional<std::shared_ptr<Stmt>>
-ParserImpl::parseStmt(std::vector<Lexeme> &lexems) {
-  auto begin = lexems.cbegin();
-  auto end = lexems.cend();
-  Context ctx{};
-  auto statement = stmt(begin, end, ctx);
-  return statement;
-}
-
-std::shared_ptr<Expr> ParserImpl::parse(std::vector<Lexeme> &lexems) {
-  auto begin = lexems.cbegin();
-  auto end = lexems.cend();
-  Context ctx{};
-  auto expression = expr(begin, end, ctx);
-  return expression;
+Program ParserImpl::parse(std::vector<Lexeme> &lexemes) {
+  auto begin = lexemes.cbegin();
+  auto end = lexemes.cend();
+  Program program{};
+  while (begin != end) {
+    auto topLevelOpt = parseTopLevel(begin, end, program.types);
+    // very questionable break.
+    // don't care as of now tho.
+    if (!topLevelOpt.has_value()) {
+      break;
+    }
+    auto topLevel = *topLevelOpt;
+    auto tryFn = std::dynamic_pointer_cast<Function>(topLevel);
+    if (tryFn) {
+      program.addFn(tryFn->id, tryFn);
+      continue;
+    }
+    auto tryType = std::dynamic_pointer_cast<TypeDeclaration>(topLevel);
+    if (tryType) {
+      program.addTypeDecl(tryType->type, tryType);
+      continue;
+    }
+    throw ParserException("not typedecl or function but some other toplevel");
+  }
+  return program;
 }
