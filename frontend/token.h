@@ -13,23 +13,18 @@ struct Span {
   Span(size_t pos) : Span(pos, 0) {}
   Span(size_t pos, size_t len) : pos(pos), len(len) {}
 
-  size_t begin() const { return pos; }
-  size_t end() const { return pos + len; }
-
-  Span operator+(const Span& other) const {
-    return Span(pos, other.pos - len + other.len);
-  };
+  bool operator==(const Span& other) const = default;
 };
 
 struct Token {
-  enum Kind {
+  enum class Kind {
     bad,
     begin,
     end,
     eof,
     integer,
-    next,
     ident,
+    next,
 
     kw_const,
     kw_else,
@@ -51,6 +46,7 @@ struct Token {
   Token(Kind kind, Args&&... args)
       : kind(kind), span(std::forward<Args>(args)...) {}
 
+  operator Kind() const { return kind; }
   operator Span() const { return span; }
 };
 

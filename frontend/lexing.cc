@@ -1,8 +1,9 @@
-#include "lexing.h"
+#include "lexer.h"
 
 using Kind = hsec::frontend::Token::Kind;
+using namespace hsec::frontend::lexing;
 
-namespace hsec::frontend::lexing {
+namespace hsec::frontend {
 
 inline namespace {
 
@@ -133,4 +134,4 @@ std::optional<Token> Lexer::nextOnline(std::string_view view) {
   return token;
 }
 
-}  // namespace hsec::frontend::lexing
+}  // namespace hsec::frontend

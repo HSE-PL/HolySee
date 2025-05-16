@@ -1,3 +1,0 @@
-type Smth struct
-    x unit
-    y unit

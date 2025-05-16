@@ -6,7 +6,15 @@
 
 #include "token.h"
 
-namespace hsec::frontend::lexing {
+namespace hsec::frontend {
+
+namespace lexing {
+
+enum class Region : char {
+  Parens = '(',
+  Brackets = '[',
+  Braces = '{',
+};
 
 struct Indent {
   enum class Style : char {
@@ -42,10 +50,12 @@ struct Indent {
   }
 };
 
+};  // namespace lexing
+
 class Lexer {
   size_t pos = 0;
 
-  Indent indent;
+  lexing::Indent indent;
   size_t num_ends = 0;
 
  public:
@@ -63,6 +73,6 @@ class Lexer {
   };
 };
 
-}  // namespace hsec::frontend::lexing
+}  // namespace hsec::frontend
 
 #endif
