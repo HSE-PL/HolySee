@@ -32,6 +32,7 @@ public:
   virtual ReturnType visit(AST::Assign &as) = 0;
   virtual ReturnType visit(AST::Function &fn) = 0;
   virtual ReturnType visit(AST::Call &call) = 0;
+  virtual ~ASTVisitor() {}
 };
 
 } // namespace AST

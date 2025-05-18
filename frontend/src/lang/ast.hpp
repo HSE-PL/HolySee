@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../ast_translator/translator.hpp"
 #include <memory>
 #include <optional>
 #include <string>
@@ -16,12 +17,20 @@ struct Function;
 class TopLevel {
 public:
   virtual std::string toString() = 0;
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) = 0;
+  // WHY can't i do template and virtual
+  // WTF
+  // what's the point of this language
+  // it's legitimately useless whenever i have actual problems
+  /*template <typename Return>*/
+  /*virtual Return accept(ASTVisitor<Return>& visitor) {}*/
   virtual ~TopLevel() {};
 };
 
 class Stmt {
 public:
   virtual std::string toString() = 0;
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) = 0;
   virtual ~Stmt() {};
 };
 
@@ -56,6 +65,9 @@ class Const : public Expr {
 
 public:
   Const(int value) : value(value) {}
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
   virtual std::string toString() { return std::to_string(value); }
 };
 
@@ -65,6 +77,9 @@ class BinExp : public Expr {
   BinOp op;
 
 public:
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
   BinExp(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs, BinOp op)
       : lhs(lhs), rhs(rhs), op(op) {}
   virtual std::string toString();
@@ -75,6 +90,9 @@ struct Var : public Expr {
   TypeEntry type;
 
 public:
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
   Var(std::string id, TypeEntry type) : id(id), type(type) {}
   virtual std::string toString() { return id + " " + type.name; }
 };
@@ -83,6 +101,9 @@ class Ret : public Stmt {
   std::optional<std::shared_ptr<Expr>> retExpr;
 
 public:
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
   Ret(std::shared_ptr<Expr> expr) : retExpr(expr) {}
   Ret() : retExpr(std::nullopt) {}
   virtual std::string toString() {
@@ -97,6 +118,9 @@ public:
 struct TypeDeclaration : public TopLevel {
   std::string type;
   std::vector<std::shared_ptr<Var>> fields;
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
   TypeDeclaration(std::string type) : type(type) {}
   std::string toString() {
     std::string fieldsString{};
@@ -112,6 +136,9 @@ class Assign : public Stmt {
   std::shared_ptr<Expr> expr;
 
 public:
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
   Assign(std::shared_ptr<Var> var, std::shared_ptr<Expr> expr)
       : var(var), expr(expr) {}
 
@@ -122,6 +149,9 @@ class VarDecl : public Stmt {
   std::vector<std::shared_ptr<Var>> vars;
 
 public:
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
   VarDecl(std::vector<std::shared_ptr<Var>> vars) : vars(vars) {}
   std::string toString() {
     std::string varNames{};
@@ -164,6 +194,9 @@ class If : public Expr {
   std::shared_ptr<Expr> fbranch;
 
 public:
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
   If(std::shared_ptr<Cond> cond, std::shared_ptr<Expr> tbranch,
      std::shared_ptr<Expr> fbranch)
       : cond(cond), tbranch(tbranch), fbranch(fbranch) {}
@@ -180,6 +213,9 @@ struct Function : public TopLevel {
   std::vector<std::shared_ptr<Stmt>> body;
 
 public:
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
   Function(std::string id, TypeEntry type,
            std::vector<std::shared_ptr<Var>> params,
            std::vector<std::shared_ptr<Stmt>> body)
@@ -208,6 +244,9 @@ class Call : public Expr {
   std::vector<std::shared_ptr<Expr>> args;
 
 public:
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
   Call(std::string fn, std::vector<std::shared_ptr<Expr>> args)
       : fn(fn), args(args) {}
   virtual std::string toString() {

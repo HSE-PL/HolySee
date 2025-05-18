@@ -1,14 +1,16 @@
 #pragma once
 
 #include "../ir/program.hpp"
-#include "../lang/ast.hpp"
 #include "../lang/ast_visitor.hpp"
 
-class ASTTranslator : public AST::ASTVisitor<std::shared_ptr<Value>> {
-  using VarPtr = std::shared_ptr<Value>;
+class ASTTranslator : public AST::ASTVisitor<std::shared_ptr<IR::Value>> {
+  using VarPtr = std::shared_ptr<IR::Value>;
+  /*FnBuilder cfn;*/
+  /*BBuilder cblock;*/
 
 public:
-  Program translate(AST::TranslationUnit &unit);
+  /*ASTTranslator() : cfn(FnBuilder()), cblock(BBuilder("")) {}*/
+  IR::Program translate(AST::TranslationUnit &unit);
   VarPtr visit(AST::Stmt &stmt) = 0;
   VarPtr visit(AST::TopLevel &tl) = 0;
   VarPtr visit(AST::Expr &expr) = 0;

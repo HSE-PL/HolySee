@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
   std::string inputStr = input.str();
   std::cout << inputStr << std::endl;
   auto lexer = LexerImpl();
-  auto parser = ParserImpl();
+  auto parser = AST::ParserImpl();
   try {
     auto lexed = lexer.lex(inputStr);
     /*std::cout << "LEXING: " << std::endl;*/

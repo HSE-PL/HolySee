@@ -7,21 +7,21 @@
 #include <string>
 #include <unordered_map>
 
-using namespace AST;
+namespace AST {
 
 using buffer = std::vector<Lexeme>;
 using iter = buffer::const_iterator;
-using spExpr = std::shared_ptr<Expr>;
+using spExpr = std::shared_ptr<AST::Expr>;
 using parseFn = std::function<spExpr(iter &, iter &)>;
 using umap = std::unordered_map<std::string, parseFn>;
 using tmap = std::unordered_map<std::string, TypeEntry>;
 using precMap = std::unordered_map<LexemeType, size_t>;
 using binOpMap = std::unordered_map<LexemeType, BinOp>;
-using OptionTopLevel = std::optional<std::shared_ptr<TopLevel>>;
-using OptionExpr = std::optional<std::shared_ptr<Expr>>;
-using OptionStmt = std::optional<std::shared_ptr<Stmt>>;
-using OptionVar = std::optional<std::shared_ptr<Var>>;
-using VarContext = std::unordered_map<std::string, std::shared_ptr<Var>>;
+using OptionTopLevel = std::optional<std::shared_ptr<AST::TopLevel>>;
+using OptionExpr = std::optional<std::shared_ptr<AST::Expr>>;
+using OptionStmt = std::optional<std::shared_ptr<AST::Stmt>>;
+using OptionVar = std::optional<std::shared_ptr<AST::Var>>;
+using VarContext = std::unordered_map<std::string, std::shared_ptr<AST::Var>>;
 
 // TODO: make separate function for parsing types, arrays are cornercase i can't
 // do the way im doing it right now.
@@ -32,7 +32,7 @@ struct Context {
                  // that this reference will outlive every Context.
                  // if it starts exploding look this way.
   Context(tmap &typeCtx) : typeCtx(typeCtx) {}
-  void addVar(std::string name, std::shared_ptr<Var> var) {
+  void addVar(std::string name, std::shared_ptr<AST::Var> var) {
     ctx.insert({name, var});
   }
 
@@ -45,7 +45,7 @@ struct Context {
   }
 };
 
-static std::shared_ptr<Expr> expr(iter &start, iter &end, Context &ctx);
+static std::shared_ptr<AST::Expr> expr(iter &start, iter &end, Context &ctx);
 static OptionExpr singleExpr(iter &start, iter &end, Context &ctx);
 static OptionStmt stmt(iter &start, iter &end, Context &ctx);
 
@@ -325,7 +325,7 @@ static OptionExpr parseCall(iter &start, iter &end, Context &ctx) {
   if (peeked.type() == LexemeType::RParen)
     argCheck = false;
 
-  std::vector<std::shared_ptr<Expr>> args;
+  std::vector<std::shared_ptr<AST::Expr>> args;
   inc(start, end);
   while (argCheck) {
     auto arg = singleExpr(start, end, ctx);
@@ -344,7 +344,7 @@ static OptionExpr parseCall(iter &start, iter &end, Context &ctx) {
     }
   }
 
-  auto ret = std::make_shared<Call>(fnName.lexeme(), args);
+  auto ret = std::make_shared<AST::Call>(fnName.lexeme(), args);
   return ret;
 }
 
@@ -367,9 +367,10 @@ static OptionExpr parseId(iter &start, iter &end, Context &ctx) {
 
   return *var;
 }
-static std::shared_ptr<Expr> binaryExpr(iter &start, iter &end, Context &ctx,
-                                        std::shared_ptr<Expr> lhs,
-                                        size_t prec) {
+static std::shared_ptr<AST::Expr> binaryExpr(iter &start, iter &end,
+                                             Context &ctx,
+                                             std::shared_ptr<AST::Expr> lhs,
+                                             size_t prec) {
 
   while (true) {
     auto peekOp = peek(start, end);
@@ -395,13 +396,13 @@ static std::shared_ptr<Expr> binaryExpr(iter &start, iter &end, Context &ctx,
     auto rhs = *rhsOpt;
     auto nextOp = peek(start, end);
     if (!binOp(nextOp)) {
-      return std::make_shared<BinExp>(lhs, rhs, op);
+      return std::make_shared<AST::BinExp>(lhs, rhs, op);
     }
     auto nextPrecedence = precedences[nextOp.type()];
     if (precedence < nextPrecedence) {
       rhs = binaryExpr(start, end, ctx, rhs, precedence + 1);
     }
-    lhs = std::make_shared<BinExp>(lhs, rhs, op);
+    lhs = std::make_shared<AST::BinExp>(lhs, rhs, op);
   }
 }
 
@@ -429,7 +430,7 @@ static OptionExpr stmtExpr(iter &start, iter &end, Context &ctx) {
   return std::nullopt;
 }
 
-static std::shared_ptr<Expr> expr(iter &start, iter &end, Context &ctx) {
+static std::shared_ptr<AST::Expr> expr(iter &start, iter &end, Context &ctx) {
   auto retOpt = singleExpr(start, end, ctx);
   if (retOpt.has_value()) {
     auto ret = *retOpt;
@@ -455,21 +456,21 @@ static OptionStmt varDecl(iter &start, iter &end, Context &ctx) {
   }
 
   auto type = ctx.typeCtx.at(typeLexeme.lexeme());
-  std::vector<std::shared_ptr<Var>> vars;
+  std::vector<std::shared_ptr<AST::Var>> vars;
 
   while (true) {
     inc(start, end);
     auto varName = *start;
     expect(LexemeType::Id, varName);
 
-    auto var = std::make_shared<Var>(varName.lexeme(), type);
+    auto var = std::make_shared<AST::Var>(varName.lexeme(), type);
     vars.push_back(var);
     ctx.addVar(varName.lexeme(), var);
 
     inc(start, end);
     auto delim = *start;
     if (delim.type() == LexemeType::EOL) {
-      auto vardecl = std::make_shared<VarDecl>(vars);
+      auto vardecl = std::make_shared<AST::VarDecl>(vars);
       return vardecl;
     }
     if (delim.type() != LexemeType::Comma) {
@@ -488,12 +489,12 @@ static OptionStmt returnStmt(iter &start, iter &end, Context &ctx) {
   inc(start, end);
   auto expression = stmtExpr(start, end, ctx);
   if (expression.has_value()) {
-    return std::make_shared<Ret>(*expression);
+    return std::make_shared<AST::Ret>(*expression);
   }
   auto eol = *start;
   expectEOL(eol);
 
-  return std::make_shared<Ret>();
+  return std::make_shared<AST::Ret>();
 }
 
 static OptionStmt assign(iter &start, iter &end, Context &ctx) {
@@ -522,7 +523,7 @@ static OptionStmt assign(iter &start, iter &end, Context &ctx) {
                           varName.lexeme());
   }
 
-  auto ret = std::make_shared<Assign>(*var, expression);
+  auto ret = std::make_shared<AST::Assign>(*var, expression);
 
   return ret;
 }
@@ -549,12 +550,12 @@ TranslationUnit ParserImpl::parse(std::vector<Lexeme> &lexemes) {
       break;
     }
     auto topLevel = *topLevelOpt;
-    auto tryFn = std::dynamic_pointer_cast<Function>(topLevel);
+    auto tryFn = std::dynamic_pointer_cast<AST::Function>(topLevel);
     if (tryFn) {
       program.addFn(tryFn->id, tryFn);
       continue;
     }
-    auto tryType = std::dynamic_pointer_cast<TypeDeclaration>(topLevel);
+    auto tryType = std::dynamic_pointer_cast<AST::TypeDeclaration>(topLevel);
     if (tryType) {
       program.addTypeDecl(tryType->type, tryType);
       continue;
@@ -563,3 +564,4 @@ TranslationUnit ParserImpl::parse(std::vector<Lexeme> &lexemes) {
   }
   return program;
 }
+} // namespace AST

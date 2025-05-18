@@ -1,7 +1,8 @@
 #include "translator.hpp"
+#include "../ir/factory/ifactory.hpp"
 
-Program ASTTranslator::translate(AST::TranslationUnit &unit) {
+IR::Program ASTTranslator::translate(AST::TranslationUnit &unit) {
   //
 }
 
-std::shared_ptr<Value> ASTTranslator::visit(AST::Const &c) {}
+std::shared_ptr<IR::Value> ASTTranslator::visit(AST::Const &c) {}
