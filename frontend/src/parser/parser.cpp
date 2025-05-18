@@ -7,6 +7,8 @@
 #include <string>
 #include <unordered_map>
 
+using namespace AST;
+
 using buffer = std::vector<Lexeme>;
 using iter = buffer::const_iterator;
 using spExpr = std::shared_ptr<Expr>;
@@ -535,10 +537,10 @@ static OptionStmt stmt(iter &start, iter &end, Context &ctx) {
   return stmtExpr(start, end, ctx);
 }
 
-Program ParserImpl::parse(std::vector<Lexeme> &lexemes) {
+TranslationUnit ParserImpl::parse(std::vector<Lexeme> &lexemes) {
   auto begin = lexemes.cbegin();
   auto end = lexemes.cend();
-  Program program{};
+  TranslationUnit program{};
   while (begin != end) {
     auto topLevelOpt = parseTopLevel(begin, end, program.types);
     // very questionable break.

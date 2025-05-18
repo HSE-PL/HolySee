@@ -6,8 +6,10 @@
 #include <unordered_map>
 #include <vector>
 
+namespace AST {
+
 class Expr;
-struct Program;
+struct TranslationUnit;
 struct TypeDeclaration;
 struct Function;
 
@@ -221,8 +223,7 @@ public:
   }
 };
 
-// not really program, more like translation unit.
-struct Program {
+struct TranslationUnit {
   std::unordered_map<std::string, TypeEntry> types = {
       {"int", TypeEntry("int", TypeClass::Int)},
       {"bool", TypeEntry("bool", TypeClass::Bool)}};
@@ -261,3 +262,5 @@ struct Program {
     return res;
   }
 };
+
+} // namespace AST

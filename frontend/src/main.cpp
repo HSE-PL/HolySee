@@ -20,10 +20,10 @@ int main(int argc, char *argv[]) {
   auto parser = ParserImpl();
   try {
     auto lexed = lexer.lex(inputStr);
-    std::cout << "LEXING: " << std::endl;
-    for (auto &&lexeme : lexed) {
-      std::cout << lexeme.toString() << std::endl;
-    }
+    /*std::cout << "LEXING: " << std::endl;*/
+    /*for (auto &&lexeme : lexed) {*/
+    /*  std::cout << lexeme.toString() << std::endl;*/
+    /*}*/
     auto parsed = parser.parse(lexed);
     std::cout << "PARSING: " << std::endl;
     std::cout << parsed.toString() << std::endl;

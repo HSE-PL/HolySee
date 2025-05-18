@@ -1,6 +1,8 @@
 #include "ast.hpp"
 #include <unordered_map>
 
+using namespace AST;
+
 std::unordered_map<Predicate, std::string> predicateString = {
     {Predicate::EQ, "=="}, {Predicate::NEQ, "!="}, {Predicate::GE, ">="},
     {Predicate::LE, "<="}, {Predicate::GT, ">"},   {Predicate::LT, "<"},
