@@ -4,7 +4,7 @@ project(
   default_options: ['cpp_std=c++23'],
 )
 
-lexer_dep = declare_dependency(include_directories: '.', sources: ['lexing.cc'])
+lexer_dep = declare_dependency(include_directories: '.', sources: ['lexer.cc'])
 
 gtest_proj = subproject('gtest')
 gtest_dep = gtest_proj.get_variable('gtest_dep')

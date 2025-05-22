@@ -3,6 +3,7 @@
 
 #include <optional>
 #include <string_view>
+#include <vector>
 
 #include "token.h"
 
@@ -11,29 +12,29 @@ namespace hsec::frontend {
 namespace lexing {
 
 enum class Region : char {
-  Parens = '(',
-  Brackets = '[',
-  Braces = '{',
+  scope = '}',
+  parens = ')',
+  brackets = ']',
 };
 
 struct Indent {
-  enum class Style : char {
-    spaces = ' ',
-    tabs = '\t',
-  } style;
-  size_t width = 0;
-  size_t level = 0;
+  struct Style {
+    char character;
+    size_t width{};
 
-  size_t length() const { return width * level; }
+    Style() = default;
+    Style(char character, size_t width) : character(character), width(width) {}
+  };
+
+  Style style;
+  size_t level{};
+
+  Indent() : style{} {};
+  Indent(Style style, size_t level = 0) : style(style), level(level) {}
+
+  size_t length() const { return style.width * level; }
 
   explicit operator bool() const { return level; }
-  explicit operator char() const { return (char)style; }
-
-  Indent pattern() const {
-    auto pattern = *this;
-    pattern.level = 0;
-    return pattern;
-  }
 
   ptrdiff_t operator-(const Indent& other) const {
     return (ptrdiff_t)level - other.level;
@@ -50,13 +51,17 @@ struct Indent {
   }
 };
 
+struct Context {
+  size_t pos{};
+  Indent indent;
+  std::vector<Region> regions;
+  bool skipNewline = true;
+};
+
 };  // namespace lexing
 
-class Lexer {
-  size_t pos = 0;
-
-  lexing::Indent indent;
-  size_t num_ends = 0;
+class Lexer : lexing::Context {
+  size_t num_pending_scope_ends{};
 
  public:
   Token next(std::string_view);
@@ -64,13 +69,10 @@ class Lexer {
 
   size_t getPos() const { return pos; }
 
-  explicit operator bool() const { return !indent; };
+  explicit operator bool() const { return regions.empty() && !indent; };
 
  private:
-  size_t advance(size_t count) {
-    pos += count;
-    return count;
-  };
+  std::optional<Token> pendingToken();
 };
 
 }  // namespace hsec::frontend
