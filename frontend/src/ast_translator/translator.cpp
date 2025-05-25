@@ -157,6 +157,36 @@ std::shared_ptr<IR::Value> ASTTranslator::visit(AST::BinExp &bin) {
     dest = createTemp(t);
     instr = ifactory.createOr(dest, lhs, rhs);
   } break;
+  case AST::BinOp::Less: {
+    auto t = AST::TypeClass::Bool;
+    dest = createTemp(t);
+    instr = ifactory.createCmp(dest, lhs, rhs, IR::Predicate::LT);
+  } break;
+  case AST::BinOp::LessEqual: {
+    auto t = AST::TypeClass::Bool;
+    dest = createTemp(t);
+    instr = ifactory.createCmp(dest, lhs, rhs, IR::Predicate::LE);
+  } break;
+  case AST::BinOp::Greater: {
+    auto t = AST::TypeClass::Bool;
+    dest = createTemp(t);
+    instr = ifactory.createCmp(dest, lhs, rhs, IR::Predicate::GT);
+  } break;
+  case AST::BinOp::GreaterEqual: {
+    auto t = AST::TypeClass::Bool;
+    dest = createTemp(t);
+    instr = ifactory.createCmp(dest, lhs, rhs, IR::Predicate::GE);
+  } break;
+  case AST::BinOp::Equals: {
+    auto t = AST::TypeClass::Bool;
+    dest = createTemp(t);
+    instr = ifactory.createCmp(dest, lhs, rhs, IR::Predicate::EQ);
+  } break;
+  case AST::BinOp::NotEqual: {
+    auto t = AST::TypeClass::Bool;
+    dest = createTemp(t);
+    instr = ifactory.createCmp(dest, lhs, rhs, IR::Predicate::NEQ);
+  } break;
   }
   cblock.addInstr(instr);
   return dest;

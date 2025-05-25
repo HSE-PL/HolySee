@@ -31,7 +31,9 @@ lexemeMap lexemes = {
     {LexemeType::Minus, "Minus"},   {LexemeType::Star, "*"},
     {LexemeType::Div, "/"},         {LexemeType::Var, "Var"},
     {LexemeType::Return, "Return"}, {LexemeType::Or, "or"},
-    {LexemeType::And, "and"},
+    {LexemeType::And, "and"},       {LexemeType::Less, "<"},
+    {LexemeType::LessEqual, "<="},  {LexemeType::GreaterEqual, ">="},
+    {LexemeType::Greater, ">"},     {LexemeType::NotEqual, "!="},
 };
 
 static void skipWhitespace(iter &input, iter &end) {
@@ -91,6 +93,36 @@ static Lexeme lex(iter &input, iter &inputEnd) {
     ++input;
     return Lexeme(LexemeType::Star, lexemeStr);
   } break;
+  case '<': {
+    ++input;
+    if (*input == '=') {
+      ++input;
+      auto lexemeStr = std::string("<=");
+      return Lexeme(LexemeType::LessEqual, lexemeStr);
+    }
+    auto lexemeStr = std::string{ch};
+    return Lexeme(LexemeType::Less, lexemeStr);
+  } break;
+  case '>': {
+    ++input;
+    if (*input == '=') {
+      ++input;
+      auto lexemeStr = std::string(">=");
+      return Lexeme(LexemeType::GreaterEqual, lexemeStr);
+    }
+    auto lexemeStr = std::string{ch};
+    return Lexeme(LexemeType::Greater, lexemeStr);
+  } break;
+  case '!': {
+    ++input;
+    if (*input == '=') {
+      ++input;
+      auto lexemeStr = std::string("!=");
+      return Lexeme(LexemeType::NotEqual, lexemeStr);
+    } else {
+      throw "bang without = afterwards.";
+    }
+  } break;
   case '-': {
     auto lexemeStr = std::string{ch};
     ++input;
@@ -129,6 +161,7 @@ static Lexeme lex(iter &input, iter &inputEnd) {
   case '=': {
     ++input;
     if (*input == '=') {
+      ++input;
       auto lexemeStr = std::string("==");
       return Lexeme(LexemeType::Equality, lexemeStr);
     }

@@ -51,6 +51,11 @@ enum struct BinOp {
   And,
   Or,
   Equals,
+  Less,
+  LessEqual,
+  Greater,
+  GreaterEqual,
+  NotEqual,
 };
 
 struct TypeEntry {

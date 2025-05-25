@@ -30,6 +30,11 @@ enum class LexemeType {
   Return,
   And,
   Or,
+  Less,
+  LessEqual,
+  Greater,
+  GreaterEqual,
+  NotEqual,
 };
 
 class LexerException {

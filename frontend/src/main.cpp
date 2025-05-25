@@ -14,13 +14,13 @@ std::vector<Lexeme> lex(std::string &string, bool verbose) {
   auto lexer = LexerImpl();
   try {
     auto lexed = lexer.lex(string);
-    return lexed;
     if (verbose) {
       std::cout << "LEXING: " << std::endl;
       for (auto &&lexeme : lexed) {
         std::cout << lexeme.toString() << std::endl;
       }
     }
+    return lexed;
   } catch (LexerException &exception) {
     std::cout << exception.error_msg << std::endl;
     throw;

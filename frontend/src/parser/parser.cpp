@@ -50,22 +50,35 @@ static OptionExpr singleExpr(iter &start, iter &end, Context &ctx);
 static OptionStmt stmt(iter &start, iter &end, Context &ctx);
 
 precMap precedences = {
-    {LexemeType::Star, 10},    {LexemeType::Div, 10}, {LexemeType::Minus, 5},
-    {LexemeType::Plus, 5},     {LexemeType::Or, 3},   {LexemeType::And, 3},
-    {LexemeType::Equality, 3},
+    {LexemeType::Star, 10},        {LexemeType::Div, 10},
+    {LexemeType::Minus, 5},        {LexemeType::Plus, 5},
+    {LexemeType::Or, 3},           {LexemeType::And, 3},
+    {LexemeType::Equality, 3},     {LexemeType::Greater, 3},
+    {LexemeType::GreaterEqual, 3}, {LexemeType::Less, 3},
+    {LexemeType::LessEqual, 3},    {LexemeType::NotEqual, 3},
 };
 
 binOpMap binOperators = {
-    {LexemeType::Star, BinOp::Mul},        {LexemeType::And, BinOp::And},
-    {LexemeType::Or, BinOp::Or},           {LexemeType::Div, BinOp::Div},
-    {LexemeType::Minus, BinOp::Sub},       {LexemeType::Plus, BinOp::Add},
+    {LexemeType::Star, BinOp::Mul},
+    {LexemeType::And, BinOp::And},
+    {LexemeType::Or, BinOp::Or},
+    {LexemeType::Div, BinOp::Div},
+    {LexemeType::Minus, BinOp::Sub},
+    {LexemeType::Plus, BinOp::Add},
     {LexemeType::Equality, BinOp::Equals},
+    {LexemeType::Less, BinOp::Less},
+    {LexemeType::LessEqual, BinOp::LessEqual},
+    {LexemeType::GreaterEqual, BinOp::GreaterEqual},
+    {LexemeType::Greater, BinOp::Greater},
+    {LexemeType::NotEqual, BinOp::NotEqual},
 };
 
 static bool binOp(Lexeme &lexeme) {
-  auto binops = {LexemeType::Star,    LexemeType::Div, LexemeType::Minus,
-                 LexemeType::Plus,    LexemeType::And, LexemeType::Or,
-                 LexemeType::Equality};
+  auto binops = {
+      LexemeType::Star,      LexemeType::Div,     LexemeType::Minus,
+      LexemeType::Plus,      LexemeType::And,     LexemeType::Or,
+      LexemeType::Equality,  LexemeType::Greater, LexemeType::GreaterEqual,
+      LexemeType::LessEqual, LexemeType::Less,    LexemeType::NotEqual};
   for (auto binop : binops) {
     if (lexeme.type() == binop)
       return true;

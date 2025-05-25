@@ -1,6 +1,9 @@
 fun main(a1 int, a2 int) int {
   var bool a;
+  var bool b;
   a = a1 + a2 * a1;
+  a = a1 < a2;
+  b = a1 != 1;
   a = a and a;
   main(a1, a2);
   ret a;
