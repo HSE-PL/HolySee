@@ -5,7 +5,7 @@ SRC := $(shell find src/ -name '*.cpp')
 EXE := ./build/exec
 
 run: cmp
-	$(EXE) input.txt
+	$(EXE) input.txt --dump-ir --dump-parser
 
 clean:
 	rm $(EXE)
