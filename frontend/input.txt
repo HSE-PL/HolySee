@@ -1,17 +1,8 @@
 fun main(a1 int, a2 int) int {
   var bool a;
   a = a1 + a2 * a1;
+  a = a and a;
+  main(a1, a2);
   ret a;
 }
 
-type Hellouw struct {
-  a1 int;
-  a2 bool;
-  helloo bool;
-}
-
-fun comeow(a1 int, a2 int) int {
-  var Hellouw a;
-  meow(a);
-  ret a;
-}

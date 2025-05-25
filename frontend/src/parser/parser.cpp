@@ -50,22 +50,22 @@ static OptionExpr singleExpr(iter &start, iter &end, Context &ctx);
 static OptionStmt stmt(iter &start, iter &end, Context &ctx);
 
 precMap precedences = {
-    {LexemeType::Star, 10},
-    {LexemeType::Div, 10},
-    {LexemeType::Minus, 5},
-    {LexemeType::Plus, 5},
+    {LexemeType::Star, 10},    {LexemeType::Div, 10}, {LexemeType::Minus, 5},
+    {LexemeType::Plus, 5},     {LexemeType::Or, 3},   {LexemeType::And, 3},
+    {LexemeType::Equality, 3},
 };
 
 binOpMap binOperators = {
-    {LexemeType::Star, BinOp::Mul},
-    {LexemeType::Div, BinOp::Div},
-    {LexemeType::Minus, BinOp::Sub},
-    {LexemeType::Plus, BinOp::Add},
+    {LexemeType::Star, BinOp::Mul},        {LexemeType::And, BinOp::And},
+    {LexemeType::Or, BinOp::Or},           {LexemeType::Div, BinOp::Div},
+    {LexemeType::Minus, BinOp::Sub},       {LexemeType::Plus, BinOp::Add},
+    {LexemeType::Equality, BinOp::Equals},
 };
 
 static bool binOp(Lexeme &lexeme) {
-  auto binops = {LexemeType::Star, LexemeType::Div, LexemeType::Minus,
-                 LexemeType::Plus};
+  auto binops = {LexemeType::Star,    LexemeType::Div, LexemeType::Minus,
+                 LexemeType::Plus,    LexemeType::And, LexemeType::Or,
+                 LexemeType::Equality};
   for (auto binop : binops) {
     if (lexeme.type() == binop)
       return true;
@@ -176,7 +176,8 @@ static OptionTopLevel typeDecl(iter &start, iter &end, tmap &types) {
   return tDecl;
 }
 
-static std::optional<std::shared_ptr<Var>> parseParam(iter &start, iter &end) {
+static std::optional<std::shared_ptr<Var>> parseParam(iter &start, iter &end,
+                                                      tmap &types) {
   auto varName = *start;
   if (varName.type() != LexemeType::Id) {
     dec(start);
@@ -187,7 +188,7 @@ static std::optional<std::shared_ptr<Var>> parseParam(iter &start, iter &end) {
   auto tName = *start;
   expect(LexemeType::Id, tName);
 
-  auto type = TypeEntry(tName.lexeme(), TypeClass::Custom);
+  auto type = types[tName.lexeme()];
   auto ret = std::make_shared<Var>(varName.lexeme(), type);
   return ret;
 }
@@ -217,7 +218,7 @@ static OptionTopLevel functionDecl(iter &start, iter &end, tmap &types) {
 
   inc(start, end);
   while (paramCheck) {
-    auto param = parseParam(start, end);
+    auto param = parseParam(start, end, types);
     if (param.has_value()) {
       auto variable = *param;
       params.push_back(variable);
@@ -241,7 +242,7 @@ static OptionTopLevel functionDecl(iter &start, iter &end, tmap &types) {
   auto retTypeLexeme = *start;
   TypeEntry retType{"void", TypeClass::Void};
   if (retTypeLexeme.type() == LexemeType::Id) {
-    retType = TypeEntry(retTypeLexeme.lexeme(), TypeClass::Custom);
+    retType = types[retTypeLexeme.lexeme()];
     inc(start, end);
     auto lbrace = *start;
     expect(LexemeType::LBrace, lbrace);

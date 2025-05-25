@@ -15,7 +15,8 @@ kmap keywordsLexeme = {
     {"type", LexemeType::Type},   {"struct", LexemeType::Struct},
     {"fun", LexemeType::Fun},     {"true", LexemeType::True},
     {"false", LexemeType::False}, {"var", LexemeType::Var},
-    {"ret", LexemeType::Return},
+    {"ret", LexemeType::Return},  {"or", LexemeType::Or},
+    {"and", LexemeType::And},
 };
 
 lexemeMap lexemes = {
@@ -29,7 +30,8 @@ lexemeMap lexemes = {
     {LexemeType::Dot, "dot"},       {LexemeType::Plus, "Plus"},
     {LexemeType::Minus, "Minus"},   {LexemeType::Star, "*"},
     {LexemeType::Div, "/"},         {LexemeType::Var, "Var"},
-    {LexemeType::Return, "Return"},
+    {LexemeType::Return, "Return"}, {LexemeType::Or, "or"},
+    {LexemeType::And, "and"},
 };
 
 static void skipWhitespace(iter &input, iter &end) {
@@ -125,8 +127,12 @@ static Lexeme lex(iter &input, iter &inputEnd) {
     return Lexeme(LexemeType::EOL, lexemeStr);
   } break;
   case '=': {
-    auto lexemeStr = std::string{ch};
     ++input;
+    if (*input == '=') {
+      auto lexemeStr = std::string("==");
+      return Lexeme(LexemeType::Equality, lexemeStr);
+    }
+    auto lexemeStr = std::string{ch};
     return Lexeme(LexemeType::Equals, lexemeStr);
   } break;
 

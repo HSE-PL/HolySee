@@ -9,15 +9,14 @@
 
 namespace AST {
 
-class Expr;
+struct Expr;
 struct TranslationUnit;
 struct TypeDeclaration;
 struct Function;
 
-class TopLevel {
+struct TopLevel {
 public:
   virtual std::string toString() = 0;
-  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) = 0;
   // WHY can't i do template and virtual
   // WTF
   // what's the point of this language
@@ -27,28 +26,31 @@ public:
   virtual ~TopLevel() {};
 };
 
-class Stmt {
+struct Stmt {
 public:
   virtual std::string toString() = 0;
   virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) = 0;
   virtual ~Stmt() {};
 };
 
-class Expr : public Stmt {};
+struct Expr : public Stmt {};
 
-// ha-ha typeclass haha not the one from haskell tho
-enum class TypeClass {
+// ha-ha typestruct haha not the one from haskell tho
+enum struct TypeClass {
   Int,
   Bool,
   Void,
   Custom,
 };
 
-enum class BinOp {
+enum struct BinOp {
   Add,
   Sub,
   Mul,
   Div,
+  And,
+  Or,
+  Equals,
 };
 
 struct TypeEntry {
@@ -60,7 +62,7 @@ struct TypeEntry {
   std::string toString() { return name; }
 };
 
-class Const : public Expr {
+struct Const : public Expr {
   int value;
 
 public:
@@ -71,7 +73,7 @@ public:
   virtual std::string toString() { return std::to_string(value); }
 };
 
-class BinExp : public Expr {
+struct BinExp : public Expr {
   std::shared_ptr<Expr> lhs;
   std::shared_ptr<Expr> rhs;
   BinOp op;
@@ -97,7 +99,7 @@ public:
   virtual std::string toString() { return id + " " + type.name; }
 };
 
-class Ret : public Stmt {
+struct Ret : public Stmt {
   std::optional<std::shared_ptr<Expr>> retExpr;
 
 public:
@@ -118,9 +120,6 @@ public:
 struct TypeDeclaration : public TopLevel {
   std::string type;
   std::vector<std::shared_ptr<Var>> fields;
-  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
-    return translator.visit(*this);
-  }
   TypeDeclaration(std::string type) : type(type) {}
   std::string toString() {
     std::string fieldsString{};
@@ -131,7 +130,7 @@ struct TypeDeclaration : public TopLevel {
   }
 };
 
-class Assign : public Stmt {
+struct Assign : public Stmt {
   std::shared_ptr<Var> var;
   std::shared_ptr<Expr> expr;
 
@@ -145,7 +144,7 @@ public:
   std::string toString() { return var->toString() + " = " + expr->toString(); }
 };
 
-class VarDecl : public Stmt {
+struct VarDecl : public Stmt {
   std::vector<std::shared_ptr<Var>> vars;
 
 public:
@@ -167,7 +166,7 @@ public:
   }
 };
 
-enum class Predicate {
+enum struct Predicate {
   LE,
   GE,
   LT,
@@ -177,7 +176,7 @@ enum class Predicate {
 };
 
 // TODO: delete if i don't see any further usage
-class Cond : public Expr {
+struct Cond : public Expr {
   std::shared_ptr<Expr> lhs;
   std::shared_ptr<Expr> rhs;
   Predicate p;
@@ -188,7 +187,7 @@ public:
   virtual std::string toString();
 };
 
-class If : public Expr {
+struct If : public Expr {
   std::shared_ptr<Expr> cond;
   std::shared_ptr<Expr> tbranch;
   std::shared_ptr<Expr> fbranch;
@@ -213,9 +212,6 @@ struct Function : public TopLevel {
   std::vector<std::shared_ptr<Stmt>> body;
 
 public:
-  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
-    return translator.visit(*this);
-  }
   Function(std::string id, TypeEntry type,
            std::vector<std::shared_ptr<Var>> params,
            std::vector<std::shared_ptr<Stmt>> body)
@@ -239,7 +235,7 @@ public:
   }
 };
 
-class Call : public Expr {
+struct Call : public Expr {
   std::string fn;
   std::vector<std::shared_ptr<Expr>> args;
 

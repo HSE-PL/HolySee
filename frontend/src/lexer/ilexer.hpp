@@ -15,6 +15,7 @@ enum class LexemeType {
   Id,
   Int,
   Equals,
+  Equality,
   Type,
   Struct,
   Fun,
@@ -27,6 +28,8 @@ enum class LexemeType {
   Star,
   Var,
   Return,
+  And,
+  Or,
 };
 
 class LexerException {
