@@ -35,6 +35,9 @@ enum class LexemeType {
   Greater,
   GreaterEqual,
   NotEqual,
+  If,
+  While,
+  Else,
 };
 
 class LexerException {

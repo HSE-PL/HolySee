@@ -16,7 +16,8 @@ kmap keywordsLexeme = {
     {"fun", LexemeType::Fun},     {"true", LexemeType::True},
     {"false", LexemeType::False}, {"var", LexemeType::Var},
     {"ret", LexemeType::Return},  {"or", LexemeType::Or},
-    {"and", LexemeType::And},
+    {"and", LexemeType::And},     {"while", LexemeType::While},
+    {"if", LexemeType::If},       {"else", LexemeType::Else},
 };
 
 lexemeMap lexemes = {

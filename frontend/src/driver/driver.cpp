@@ -90,5 +90,5 @@ void run(int argc, char *argv[]) {
   auto input = getInput(argv[1], inputVerbose);
   auto lexems = lex(input, lexerVerbose);
   auto parsed = parse(lexems, parserVerbose);
-  auto program = ir(parsed, irVerbose);
+  /*auto program = ir(parsed, irVerbose);*/
 }

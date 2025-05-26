@@ -194,19 +194,61 @@ public:
 
 struct If : public Expr {
   std::shared_ptr<Expr> cond;
-  std::shared_ptr<Expr> tbranch;
-  std::shared_ptr<Expr> fbranch;
+  std::vector<std::shared_ptr<Stmt>> tbranch;
+  struct ElseBlock {
+    std::optional<std::shared_ptr<Expr>> cond;
+    std::vector<std::shared_ptr<Stmt>> elsebranch;
+    ElseBlock(std::vector<std::shared_ptr<Stmt>> b)
+        : cond(std::nullopt), elsebranch(b) {}
+    ElseBlock(std::shared_ptr<Expr> cond, std::vector<std::shared_ptr<Stmt>> b)
+        : cond(std::optional(cond)), elsebranch(b) {}
+    std::string toString() {
+      std::string ret{};
+      if (cond.has_value()) {
+        ret += " else if (" + (*cond)->toString() + ") {\n";
+      }
+      for (auto &&stmt : elsebranch) {
+        ret += "      " + stmt->toString() + "\n";
+      }
+      return ret + "    }";
+    }
+  };
+  std::optional<std::shared_ptr<ElseBlock>> elseBlock;
 
 public:
   virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
     return translator.visit(*this);
   }
-  If(std::shared_ptr<Cond> cond, std::shared_ptr<Expr> tbranch,
-     std::shared_ptr<Expr> fbranch)
-      : cond(cond), tbranch(tbranch), fbranch(fbranch) {}
+  If(std::shared_ptr<Expr> cond, std::vector<std::shared_ptr<Stmt>> body) {
+    this->cond = cond;
+    tbranch = body;
+    elseBlock = std::nullopt;
+  }
+  If(std::shared_ptr<Expr> cond, std::vector<std::shared_ptr<Stmt>> body,
+     std::vector<std::shared_ptr<Stmt>> fbranch) {
+    this->cond = cond;
+    tbranch = body;
+    auto block = std::make_shared<ElseBlock>(fbranch);
+    elseBlock.emplace(block);
+  }
+  If(std::shared_ptr<Expr> cond, std::vector<std::shared_ptr<Stmt>> body,
+     std::shared_ptr<Expr> elseCond,
+     std::vector<std::shared_ptr<Stmt>> fbranch) {
+    this->cond = cond;
+    tbranch = body;
+    auto block = std::make_shared<ElseBlock>(elseCond, fbranch);
+    elseBlock.emplace(block);
+  }
   virtual std::string toString() {
-    return "(if " + cond->toString() + tbranch->toString() + " " +
-           fbranch->toString() + ")";
+    std::string tb{};
+    for (auto &&stmt : tbranch) {
+      tb += "      " + stmt->toString() + "\n";
+    }
+    std::string elsestr{};
+    if (elseBlock.has_value()) {
+      elsestr += elseBlock.value()->toString();
+    }
+    return "if " + cond->toString() + " {\n" + tb + "    }" + elsestr;
   }
 };
 

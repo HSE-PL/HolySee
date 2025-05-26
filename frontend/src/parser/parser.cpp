@@ -2,6 +2,7 @@
 #include "iparser.hpp"
 #include <cassert>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -454,6 +455,73 @@ static std::shared_ptr<AST::Expr> expr(iter &start, iter &end, Context &ctx) {
   throw ParserException("no expressions where expected one");
 }
 
+static OptionStmt parseIf(iter &start, iter &end, Context &ctx) {
+  auto tok = *start;
+  if (tok.type() != LexemeType::If) {
+    return std::nullopt;
+  }
+  inc(start, end);
+  auto expression = expr(start, end, ctx);
+  inc(start, end);
+  if (start->type() != LexemeType::LBrace) {
+    throw ParserException("expected scope opening got " + start->lexeme());
+  }
+
+  inc(start, end);
+  std::vector<std::shared_ptr<Stmt>> stmts;
+  while (true) {
+    auto statementOpt = stmt(start, end, ctx);
+    if (!statementOpt.has_value()) {
+      break;
+    }
+    stmts.push_back(*statementOpt);
+    inc(start, end);
+  }
+
+  if (start->type() != LexemeType::RBrace) {
+    throw ParserException("Expected end of scope, got " + start->lexeme());
+  }
+  auto elsepeek = peek(start, end);
+  if (!(elsepeek.type() == LexemeType::Else)) {
+    auto ifret = std::make_shared<If>(expression, stmts);
+    return ifret;
+  }
+  inc(start, end);
+  inc(start, end);
+  std::optional<std::shared_ptr<Expr>> elseCond{std::nullopt};
+  if (start->type() == LexemeType::If) {
+    inc(start, end);
+    auto elsecond = expr(start, end, ctx);
+    elseCond = elsecond;
+    inc(start, end);
+  }
+  if (!(start->type() == LexemeType::LBrace)) {
+    throw ParserException(
+        "expected either if-else block or just else block, got " +
+        start->lexeme());
+  }
+  inc(start, end);
+  std::vector<std::shared_ptr<Stmt>> elseBody;
+  while (true) {
+    auto statementOpt = stmt(start, end, ctx);
+    if (!statementOpt.has_value()) {
+      break;
+    }
+    elseBody.push_back(*statementOpt);
+    inc(start, end);
+  }
+  if (!(start->type() == LexemeType::RBrace)) {
+    throw ParserException("Expected end of scope, got " + start->lexeme());
+  }
+  if (elseCond.has_value()) {
+    auto ifret = std::make_shared<If>(expression, stmts, *elseCond, elseBody);
+    return ifret;
+  } else {
+    auto ifret = std::make_shared<If>(expression, stmts, elseBody);
+    return ifret;
+  }
+}
+
 static OptionStmt varDecl(iter &start, iter &end, Context &ctx) {
   auto var = *start;
   if (var.type() != LexemeType::Var) {
@@ -543,11 +611,12 @@ static OptionStmt assign(iter &start, iter &end, Context &ctx) {
 }
 
 static OptionStmt stmt(iter &start, iter &end, Context &ctx) {
-  auto exprs = {varDecl, assign, returnStmt};
+  auto exprs = {parseIf, varDecl, assign, returnStmt};
   for (auto &&fn : exprs) {
     auto ret = fn(start, end, ctx);
-    if (ret.has_value())
+    if (ret.has_value()) {
       return *ret;
+    }
   }
   return stmtExpr(start, end, ctx);
 }
