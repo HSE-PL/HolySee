@@ -32,6 +32,7 @@ public:
   ValPtr visit(AST::Const &c);
   ValPtr visit(AST::BinExp &bin); // TODO
   ValPtr visit(AST::Var &var);
+  ValPtr visit(AST::While &wh);
   ValPtr visit(AST::Ret &ret);
   ValPtr visit(AST::If &iff, std::string end);
   ValPtr visit(AST::Assign &as);

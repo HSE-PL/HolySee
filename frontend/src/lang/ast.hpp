@@ -192,6 +192,23 @@ public:
   virtual std::string toString();
 };
 
+struct While : public Expr {
+  std::shared_ptr<Expr> cond;
+  std::vector<std::shared_ptr<Stmt>> body;
+  While(std::shared_ptr<Expr> cond, std::vector<std::shared_ptr<Stmt>> body)
+      : cond(cond), body(body) {}
+  virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
+    return translator.visit(*this);
+  }
+  virtual std::string toString() {
+    std::string ret = "while " + cond->toString() + " {\n";
+    for (auto &&stmt : body) {
+      ret += "      " + stmt->toString() + "\n";
+    }
+    return ret + "    }";
+  }
+};
+
 struct If : public Expr {
   std::shared_ptr<Expr> cond;
   std::vector<std::shared_ptr<Stmt>> tbranch;
@@ -265,7 +282,7 @@ public:
       paramsString.pop_back();
       paramsString.pop_back();
     }
-    return "fun " + id + "(" + paramsString + ") " + type.toString() + "  {\n" +
+    return "fun " + id + "(" + paramsString + ") " + type.toString() + " {\n" +
            bodyString + "}";
   }
 };

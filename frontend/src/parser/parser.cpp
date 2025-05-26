@@ -455,6 +455,38 @@ static std::shared_ptr<AST::Expr> expr(iter &start, iter &end, Context &ctx) {
   throw ParserException("no expressions where expected one");
 }
 
+static OptionStmt parseWhile(iter &start, iter &end, Context &ctx) {
+  if (!(start->type() == LexemeType::While)) {
+    return std::nullopt;
+  }
+  inc(start, end);
+  auto cond = expr(start, end, ctx);
+  inc(start, end);
+  if (start->type() != LexemeType::LBrace) {
+    throw ParserException("expected start of the scope, got " +
+                          start->lexeme());
+  }
+  inc(start, end);
+
+  std::vector<std::shared_ptr<Stmt>> stmts;
+
+  while (true) {
+    auto statementOpt = stmt(start, end, ctx);
+    if (!statementOpt.has_value()) {
+      break;
+    }
+    stmts.push_back(*statementOpt);
+    inc(start, end);
+  }
+
+  if (start->type() != LexemeType::RBrace) {
+    throw ParserException("expected end of scope, got " + start->lexeme());
+  }
+
+  auto wh = std::make_shared<While>(cond, stmts);
+  return wh;
+}
+
 static OptionStmt parseIf(iter &start, iter &end, Context &ctx) {
   auto tok = *start;
   if (tok.type() != LexemeType::If) {
@@ -608,7 +640,7 @@ static OptionStmt assign(iter &start, iter &end, Context &ctx) {
 }
 
 static OptionStmt stmt(iter &start, iter &end, Context &ctx) {
-  auto exprs = {parseIf, varDecl, assign, returnStmt};
+  auto exprs = {parseIf, parseWhile, varDecl, assign, returnStmt};
   for (auto &&fn : exprs) {
     auto ret = fn(start, end, ctx);
     if (ret.has_value()) {

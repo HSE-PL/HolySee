@@ -9,6 +9,9 @@ static size_t tcounter = 0;
 static size_t fcounter = 0;
 static size_t ecounter = 0;
 static size_t endcounter = 0;
+static size_t wccounter = 0;
+static size_t wendcounter = 0;
+static size_t wbcounter = 0;
 
 static std::string ttToString(IR::TypeType tt) {
   switch (tt) {
@@ -287,6 +290,36 @@ std::shared_ptr<IR::Value> ASTTranslator::visit(AST::If &iff, std::string end) {
 
 std::shared_ptr<IR::Value> ASTTranslator::visit(AST::If &iff) {
   return visit(iff, "if.end" + std::to_string(endcounter++));
+}
+
+std::shared_ptr<IR::Value> ASTTranslator::visit(AST::While &wh) {
+
+  auto end = "while.end" + std::to_string(wendcounter++);
+  auto cond = "while.cond" + std::to_string(wccounter++);
+  auto body = "while.body" + std::to_string(wbcounter++);
+
+  auto condb = vfactory.createLabel(cond);
+  auto bodyb = vfactory.createLabel(body);
+  auto endb = vfactory.createLabel(end);
+
+  auto jmpToLoop = ifactory.createJmp(condb);
+  cblock.addInstr(jmpToLoop);
+  endBlock(cond);
+
+  auto cd = wh.cond->accept(*this);
+  auto br = ifactory.createBr(cd, bodyb, endb);
+  cblock.addInstr(br);
+  endBlock(body);
+
+  for (auto &&stmt : wh.body) {
+    stmt->accept(*this);
+  }
+
+  auto jmpToStart = ifactory.createJmp(condb);
+  cblock.addInstr(jmpToStart);
+  endBlock(end);
+
+  return endb;
 }
 
 IR::Program ASTTranslator::translate(AST::TranslationUnit &unit) {

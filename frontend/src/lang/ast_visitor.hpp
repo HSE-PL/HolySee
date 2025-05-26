@@ -16,6 +16,7 @@ struct Function;
 struct Call;
 struct VarDecl;
 struct If;
+struct While;
 enum class TypeClass;
 
 // noooo clang format noooo....

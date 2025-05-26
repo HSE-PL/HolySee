@@ -1,6 +1,10 @@
 fun main(a1 int, a2 int) int {
   var bool a;
   var bool b;
+  while a1 < a2 {
+    var int he;
+    he = 3;
+  }
   if a1 < a2 {
     main(a1, a2);
   }
