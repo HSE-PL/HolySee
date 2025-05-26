@@ -35,6 +35,7 @@ lexemeMap lexemes = {
     {LexemeType::And, "and"},       {LexemeType::Less, "<"},
     {LexemeType::LessEqual, "<="},  {LexemeType::GreaterEqual, ">="},
     {LexemeType::Greater, ">"},     {LexemeType::NotEqual, "!="},
+    {LexemeType::While, "while"},
 };
 
 static void skipWhitespace(iter &input, iter &end) {
