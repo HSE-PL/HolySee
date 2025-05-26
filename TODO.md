@@ -1,0 +1,20 @@
+# TODO
+- vardecl. DONE.
+- assign. DONE.
+- RETURNS. DONE.
+- make function parsing to the end. DONE.
+- afterwards we can actually patch everything sort of together. DONE.
+- then after it we go for ifs and whiles. SKIPPED
+- then after it we parse types and do arrays. SKIPPED
+- then after it we parse member exprs for structs. SKIPPED
+- well loooks like frontend is ready, nice! NOT REALLY
+- go on to make fucking ast translator, boyo, your duty is not yet over. ON THIS
+- well, we shall start with refactoring a bit of ir. id and cmp have to fucking go.
+- well, afterwards we also should go for adding custom types.
+- so, that's quite nice. now we go onto actually translating stuff.
+- start with simple types of exprs. literals and stuff like that, assigns, decls, everything's quite easy here.
+- then we go onto translating ifs. ifs are quite nice to translate, although quite hard(tbh hardest one esp. from simpler ones).
+- and after all this we translate whiles. big milestone here to check that everything so far works as expected and nice.
+- afterwards we start the second big boss in the translator subdirectory, we go onto GEPs and stores and loads.
+- well. if you're actually alive after all'at and you actually did it in reasonable timeframe, im honestly so happy for you.
+- and yeah. go onto making actually good codegen. work is never fucking done.

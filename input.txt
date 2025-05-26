@@ -1,0 +1,11 @@
+fun main() bool {
+  var int a;
+  a = 10;
+  while a >= 0 {
+    var int he;
+    he = 3;
+    a = a - 1;
+  }
+  ret a;
+}
+
