@@ -69,12 +69,26 @@ IR::Program ir(AST::TranslationUnit &tu, bool verbose) {
   }
 }
 
+std::shared_ptr<Machine::Mach> codegen(IR::Program &program, bool verbose) {
+  auto factory =
+      std::make_shared<Machine::MFactoryNaive>(Machine::MFactoryNaive());
+  auto mctx = Machine::MCtx(factory);
+  auto emitted = program.emit(mctx);
+
+  if (verbose) {
+    std::cout << emitted->emit() << std::endl;
+  }
+
+  return emitted;
+}
+
 void run(int argc, char *argv[]) {
   auto cmdl = argh::parser(argc, argv);
   bool inputVerbose = false;
   bool lexerVerbose = false;
   bool parserVerbose = false;
   bool irVerbose = false;
+  bool codegenVerbose = true;
   if (cmdl["--dump-input"]) {
     parserVerbose = true;
   }
@@ -91,4 +105,5 @@ void run(int argc, char *argv[]) {
   auto lexems = lex(input, lexerVerbose);
   auto parsed = parse(lexems, parserVerbose);
   auto program = ir(parsed, irVerbose);
+  auto _ = codegen(program, codegenVerbose);
 }

@@ -248,6 +248,7 @@ std::shared_ptr<IR::Value> ASTTranslator::visit(AST::If &iff, std::string end) {
   auto br = ifactory.createBr(cond, ltrue, lfalse);
   cblock.addInstr(br);
   endBlock(trueName);
+
   for (auto &&stmt : iff.tbranch) {
     stmt->accept(*this);
   }
