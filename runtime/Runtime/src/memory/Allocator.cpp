@@ -60,7 +60,7 @@ auto Allocator::add_active(size_t object_size) -> Arena* {
       }
     }
   }
-  throw std::runtime_error("no available arenas");
+  throw std::runtime_error("no available arenas ");
 }
 
 auto Allocator::free_arena(Arena* a) -> void {

@@ -55,7 +55,7 @@ auto GarbageCollector::marking(ref ptr) -> void {
     if (ref_is_real(ptr + offset)) {
       if (auto field = *reinterpret_cast<ref*>(ptr); ref_is_real(field)) {
         logezhe << "marking_push: " << ptr << "\n";
-        stack_for_marked_.push(field);
+        queue_for_marked_.push(field);
       }
     }
   }
@@ -79,25 +79,26 @@ auto GarbageCollector::GC() -> void {
   threads::Threads::instance().cleaning_.release(
       static_cast<std::ptrdiff_t>(threads::Threads::instance().count()));
 
-  std::cout << "STW end, time: " << std::fixed << std::setprecision(3)
-            << 1000 * static_cast<double>(clock() - s) / CLOCKS_PER_SEC
-            << "ms \n";
+  // std::cout << "STW end, time: " << std::fixed << std::setprecision(3)
+  // << 1000 * static_cast<double>(clock() - s) / CLOCKS_PER_SEC
+  // << "ms \n";
 }
 
 auto GarbageCollector::tracing() -> void {
   while (true) {
-    if (auto ptr = stack_for_marked_.pop().value_or(0); ptr)
+    ref ptr = 0;
+    if (queue_for_marked_.try_pop(ptr); ptr)
       marking(ptr);
     else {
       if (!threads::Threads::instance().count_of_working_threads_)
         throw std::runtime_error("fantom working thread");
 
       if (!--threads::Threads::instance().count_of_working_threads_) {
-        stack_for_marked_.clear();
+        queue_for_marked_.clear();
         break;
       }
 
-      while (stack_for_marked_.empty())
+      while (queue_for_marked_.empty())
         if (!threads::Threads::instance().count_of_working_threads_)
           return;
       ++threads::Threads::instance().count_of_working_threads_;
@@ -118,7 +119,7 @@ auto GarbageCollector::make_root_and_tracing(ref ssp) -> void {
     logezhe << "make_root_and_tracing: on stack: " << ptr << "\n";
     if (ref_is_real(ptr)) {
       logezhe << "find " << ptr << " in root\n";
-      stack_for_marked_.push(ptr);
+      queue_for_marked_.push(ptr);
     }
   }
   tracing();

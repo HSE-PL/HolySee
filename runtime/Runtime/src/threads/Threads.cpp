@@ -35,7 +35,7 @@ auto threads::Threads::append(void (&func)()) -> void {
   pool_.insert(hrptr);
   s.release();
   e.acquire();
-  std::cout << "thrd append\n";
+  // std::cout << "thrd append\n";
 }
 
 Horoutine threads::Threads::get(size_t sp) {

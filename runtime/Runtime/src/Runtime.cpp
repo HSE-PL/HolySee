@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <optional>
 #include <pthread.h>
@@ -85,7 +86,7 @@ namespace rt {
   }
 
   void draw() {
-    // return;
+    return;
     static int      c = 1;
     const long long w = 2100;
     const long long h = 1000;
@@ -188,13 +189,11 @@ extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp,
 extern "C" void* __halloc(instance* inst) {
   static auto memory_limit = MemoryManager::max_heap_size >> 1;
   static auto c            = 0;
-  // if (!(c & 0xfff))
-  // std::cout << c << ") " << std::hex << MemoryManager::memory << std::endl;
   c++;
   if (MemoryManager::max_heap_size &&
       (MemoryManager::memory + inst->size > memory_limit)) [[unlikely]] {
     rt::draw();
-    std::cout << c << ") AOM!\n";
+    // std::cout << c << ") AOM!\n";
     rt::handle_aom();
   }
 
@@ -203,11 +202,9 @@ extern "C" void* __halloc(instance* inst) {
     try {
       ptr = Allocator::instance().alloc(inst->size + 8);
     } catch (std::exception& e) {
-      std::cout << e.what() << i << " extra handle_aom!\n";
+      // std::cout << e.what() << i << " extra handle_aom!\n";
       if (i == 1)
         return nullptr;
-      // memory_limit >>= 1;
-      // memory_limit *= 3;
       rt::need_draw = true;
       rt::draw();
       rt::handle_aom();

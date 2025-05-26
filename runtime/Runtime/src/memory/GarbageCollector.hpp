@@ -1,9 +1,10 @@
 #pragma once
 #include "MemoryManager.hpp"
+#include "tbb/concurrent_queue.h"
 
 class GarbageCollector {
 
-  ThreadSafeVector<ref> stack_for_marked_;
+  tbb::concurrent_queue<ref> queue_for_marked_;
 
   inteval<instance> inteval_;
 
@@ -24,7 +25,6 @@ class GarbageCollector {
 
 public:
   GarbageCollector(instance*, instance*);
-  // ~GarbageCollector() = delete;
 
   auto gogc(ref ssp) -> void;
   void GC();

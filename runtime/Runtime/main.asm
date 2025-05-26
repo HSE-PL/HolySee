@@ -64,7 +64,7 @@ main:
     push rax
 
     jmp .skip
-    mov r13, 8
+    mov r13, 4
 .loop:
     lea rdi, [ebashim_musor]
     _call __go
