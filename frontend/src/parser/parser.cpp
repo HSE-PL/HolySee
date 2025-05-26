@@ -488,14 +488,16 @@ static OptionStmt parseIf(iter &start, iter &end, Context &ctx) {
   }
   inc(start, end);
   inc(start, end);
-  std::optional<std::shared_ptr<Expr>> elseCond{std::nullopt};
   if (start->type() == LexemeType::If) {
-    inc(start, end);
-    auto elsecond = expr(start, end, ctx);
-    elseCond = elsecond;
-    inc(start, end);
-  }
-  if (!(start->type() == LexemeType::LBrace)) {
+    auto elsecond = parseIf(start, end, ctx);
+    if (!elsecond.has_value()) {
+      throw ParserException("expected if-else block");
+    }
+    auto exprif = *elsecond;
+    auto elseif = std::dynamic_pointer_cast<If>(exprif);
+    auto finalif = std::make_shared<If>(expression, stmts, elseif);
+    return finalif;
+  } else if (!(start->type() == LexemeType::LBrace)) {
     throw ParserException(
         "expected either if-else block or just else block, got " +
         start->lexeme());
@@ -513,13 +515,8 @@ static OptionStmt parseIf(iter &start, iter &end, Context &ctx) {
   if (!(start->type() == LexemeType::RBrace)) {
     throw ParserException("Expected end of scope, got " + start->lexeme());
   }
-  if (elseCond.has_value()) {
-    auto ifret = std::make_shared<If>(expression, stmts, *elseCond, elseBody);
-    return ifret;
-  } else {
-    auto ifret = std::make_shared<If>(expression, stmts, elseBody);
-    return ifret;
-  }
+  auto ifret = std::make_shared<If>(expression, stmts, elseBody);
+  return ifret;
 }
 
 static OptionStmt varDecl(iter &start, iter &end, Context &ctx) {

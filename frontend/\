@@ -224,22 +224,21 @@ std::shared_ptr<IR::Fn> ASTTranslator::visitFn(AST::Function &fn) {
   return function;
 }
 
-std::shared_ptr<IR::Value> ASTTranslator::visit(AST::If &iff, std::string end) {
+std::shared_ptr<IR::Value> ASTTranslator::visit(AST::If &iff) {
   auto cond = iff.cond->accept(*this);
   auto trueName = "if.true" + std::to_string(tcounter++);
   std::string falseName;
   bool recend = (!iff.elseBody.has_value()) && (!iff.elseif.has_value());
   bool haselse = iff.elseBody.has_value();
   bool haselseif = iff.elseif.has_value();
-
   if (recend) {
-    falseName = end;
+    falseName = "if.end" + std::to_string(endcounter++);
   } else if (haselse) {
     falseName = "if.false" + std::to_string(fcounter++);
   } else if (haselseif) {
-    falseName = "if.else" + std::to_string(ecounter++);
+    falseName = "if.else" + std::to_string(fcounter++);
   }
-
+  /*auto falseName = "if.false" + std::to_string(fcounter++);*/
   auto ltrue = vfactory.createLabel(trueName);
   auto lfalse = vfactory.createLabel(falseName);
   auto br = ifactory.createBr(cond, ltrue, lfalse);
@@ -248,45 +247,14 @@ std::shared_ptr<IR::Value> ASTTranslator::visit(AST::If &iff, std::string end) {
   for (auto &&stmt : iff.tbranch) {
     stmt->accept(*this);
   }
+  endBlock(falseName);
 
-  if (recend) {
-    auto jmptrue = ifactory.createJmp(lfalse);
-    cblock.addInstr(jmptrue);
-    endBlock(falseName);
-    return lfalse;
-  }
-
-  if (haselse) {
-    auto endName = end;
-    auto lend = vfactory.createLabel(endName);
-    auto jmptrue = ifactory.createJmp(lend);
-    cblock.addInstr(jmptrue);
-    endBlock(falseName);
-    auto elsebody = *iff.elseBody;
-    for (auto &&stmt : elsebody) {
-      stmt->accept(*this);
-    }
-    jmptrue = ifactory.createJmp(lend);
-    cblock.addInstr(jmptrue);
-    endBlock(endName);
-    return lend;
-  }
-
-  if (haselseif) {
-    auto elseif = *iff.elseif;
-    auto endName = end;
-    auto lend = vfactory.createLabel(endName);
-    auto jmptrue = ifactory.createJmp(lend);
-    cblock.addInstr(jmptrue);
-    endBlock(falseName);
-    visit(*elseif, end);
-    return lend;
-  }
-  throw "i didn't think we could get there tbh";
-}
-
-std::shared_ptr<IR::Value> ASTTranslator::visit(AST::If &iff) {
-  return visit(iff, "if.end" + std::to_string(endcounter++));
+  /*if (!iff.elseBlock.has_value()) {*/
+  /*  return cond;*/
+  /*}*/
+  /*auto elseBlock = *iff.elseBlock;*/
+  return cond;
+  //
 }
 
 IR::Program ASTTranslator::translate(AST::TranslationUnit &unit) {

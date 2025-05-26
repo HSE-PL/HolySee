@@ -195,25 +195,8 @@ public:
 struct If : public Expr {
   std::shared_ptr<Expr> cond;
   std::vector<std::shared_ptr<Stmt>> tbranch;
-  struct ElseBlock {
-    std::optional<std::shared_ptr<Expr>> cond;
-    std::vector<std::shared_ptr<Stmt>> elsebranch;
-    ElseBlock(std::vector<std::shared_ptr<Stmt>> b)
-        : cond(std::nullopt), elsebranch(b) {}
-    ElseBlock(std::shared_ptr<Expr> cond, std::vector<std::shared_ptr<Stmt>> b)
-        : cond(std::optional(cond)), elsebranch(b) {}
-    std::string toString() {
-      std::string ret{};
-      if (cond.has_value()) {
-        ret += " else if (" + (*cond)->toString() + ") {\n";
-      }
-      for (auto &&stmt : elsebranch) {
-        ret += "      " + stmt->toString() + "\n";
-      }
-      return ret + "    }";
-    }
-  };
-  std::optional<std::shared_ptr<ElseBlock>> elseBlock;
+  std::optional<std::shared_ptr<If>> elseif;
+  std::optional<std::vector<std::shared_ptr<Stmt>>> elseBody;
 
 public:
   virtual std::shared_ptr<IR::Value> accept(ASTTranslator &translator) {
@@ -222,22 +205,22 @@ public:
   If(std::shared_ptr<Expr> cond, std::vector<std::shared_ptr<Stmt>> body) {
     this->cond = cond;
     tbranch = body;
-    elseBlock = std::nullopt;
+    elseif = std::nullopt;
+    elseBody = std::nullopt;
   }
   If(std::shared_ptr<Expr> cond, std::vector<std::shared_ptr<Stmt>> body,
      std::vector<std::shared_ptr<Stmt>> fbranch) {
     this->cond = cond;
     tbranch = body;
-    auto block = std::make_shared<ElseBlock>(fbranch);
-    elseBlock.emplace(block);
+    elseBody.emplace(fbranch);
+    elseif = std::nullopt;
   }
   If(std::shared_ptr<Expr> cond, std::vector<std::shared_ptr<Stmt>> body,
-     std::shared_ptr<Expr> elseCond,
-     std::vector<std::shared_ptr<Stmt>> fbranch) {
+     std::shared_ptr<If> elseif) {
     this->cond = cond;
     tbranch = body;
-    auto block = std::make_shared<ElseBlock>(elseCond, fbranch);
-    elseBlock.emplace(block);
+    elseBody = std::nullopt;
+    this->elseif = elseif;
   }
   virtual std::string toString() {
     std::string tb{};
@@ -245,8 +228,13 @@ public:
       tb += "      " + stmt->toString() + "\n";
     }
     std::string elsestr{};
-    if (elseBlock.has_value()) {
-      elsestr += elseBlock.value()->toString();
+    if (elseif.has_value()) {
+      elsestr += " else " + elseif.value()->toString();
+    } else if (elseBody.has_value()) {
+      auto body = *elseBody;
+      for (auto &&stmt : body) {
+        tb += "      " + stmt->toString() + "\n";
+      }
     }
     return "if " + cond->toString() + " {\n" + tb + "    }" + elsestr;
   }
