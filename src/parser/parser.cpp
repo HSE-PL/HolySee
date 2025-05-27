@@ -654,6 +654,7 @@ TranslationUnit ParserImpl::parse(std::vector<Lexeme> &lexemes) {
   auto begin = lexemes.cbegin();
   auto end = lexemes.cend();
   TranslationUnit program{};
+  bool mained = false;
   while (begin != end) {
     auto topLevelOpt = parseTopLevel(begin, end, program.types);
     // very questionable break.
@@ -664,6 +665,8 @@ TranslationUnit ParserImpl::parse(std::vector<Lexeme> &lexemes) {
     auto topLevel = *topLevelOpt;
     auto tryFn = std::dynamic_pointer_cast<AST::Function>(topLevel);
     if (tryFn) {
+      if (tryFn->id == "main")
+        mained = true;
       program.addFn(tryFn->id, tryFn);
       continue;
     }
@@ -673,6 +676,9 @@ TranslationUnit ParserImpl::parse(std::vector<Lexeme> &lexemes) {
       continue;
     }
     throw ParserException("not typedecl or function but some other toplevel");
+  }
+  if (mained == false) {
+    throw ParserException("No main.");
   }
   return program;
 }
