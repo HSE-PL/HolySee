@@ -320,6 +320,7 @@ struct TranslationUnit {
   void addFn(std::string name, std::shared_ptr<Function> fn) {
     funs.insert({name, fn});
   }
+
   void addType(std::string name, TypeEntry type) { types.insert({name, type}); }
   void addTypeDecl(std::string name, std::shared_ptr<TypeDeclaration> type) {
     typeDecls.insert({name, type});

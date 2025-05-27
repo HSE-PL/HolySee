@@ -1,5 +1,16 @@
-fun main() bool {
+type Struct struct {
+  a1 bool;
+  a2 int;
+}
+
+fun hehe(a1 int) int {
+  ret a1 + 1;
+}
+
+fun main() int {
   var int a;
+  var Struct s;
+  hehe(13);
   a = 10;
   while a >= 0 {
     var int he;

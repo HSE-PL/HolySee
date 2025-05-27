@@ -70,13 +70,17 @@ IR::Program ir(AST::TranslationUnit &tu, bool verbose) {
 }
 
 std::shared_ptr<Machine::Mach> codegen(IR::Program &program, bool verbose) {
+  auto filename = "lol.nasm";
   auto factory =
       std::make_shared<Machine::MFactoryNaive>(Machine::MFactoryNaive());
   auto mctx = Machine::MCtx(factory);
   auto emitted = program.emit(mctx);
 
   if (verbose) {
-    std::cout << emitted->emit() << std::endl;
+    std::ofstream os{filename};
+    os << emitted->emit() << std::endl;
+    os.close();
+    /*std::cout << emitted->emit() << std::endl;*/
   }
 
   return emitted;
