@@ -26,7 +26,7 @@ public:
   ASTTranslator() {}
   IR::Program translate(AST::TranslationUnit &unit);
   ValPtr visit(AST::Stmt &stmt);
-  ValPtr visit(AST::VarDecl &vd) { return vfactory.createUnit(); }
+  ValPtr visit(AST::VarDecl &vd);
   ValPtr visit(AST::Expr &expr);
   ValPtr visit(AST::If &expr);
   ValPtr visit(AST::Const &c);
@@ -36,6 +36,7 @@ public:
   ValPtr visit(AST::Ret &ret);
   ValPtr visit(AST::If &iff, std::string end);
   ValPtr visit(AST::Assign &as);
+  std::shared_ptr<IR::CompositeType> visitTDecl(AST::TypeDeclaration &td);
   std::shared_ptr<IR::Fn> visitFn(AST::Function &fn); // TODO
   ValPtr visit(AST::Call &call);
 };

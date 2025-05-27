@@ -2,6 +2,7 @@
 #include "../ir/factory/ifactory.hpp"
 #include "../lang/ast.hpp"
 #include <iostream>
+#include <memory>
 #include <string>
 
 static size_t counter = 0;
@@ -55,7 +56,7 @@ void ASTTranslator::endBlock(std::string new_block) {
 
 static IR::Type irType(AST::TypeClass tc) {
   auto typetype = type2type(tc);
-  return IR::Type{0, typetype};
+  return IR::Type{ttToString(type2type(tc)), typetype};
 }
 
 static IR::Type irType(AST::TypeEntry entry) {
@@ -65,7 +66,7 @@ static IR::Type irType(AST::TypeEntry entry) {
   auto tt = type2type(entry.tclass);
   // here we should do lookup in typestuff.
 
-  return IR::Type{0, tt};
+  return IR::Type{entry.name, tt};
 }
 
 std::string createTempName() { return "%" + std::to_string(counter++); }
@@ -126,6 +127,23 @@ std::shared_ptr<IR::Value> ASTTranslator::visit(AST::Call &call) {
 
   return dest;
 }
+
+std::shared_ptr<IR::CompositeType>
+ASTTranslator::visitTDecl(AST::TypeDeclaration &td) {
+  auto typeName = td.type;
+  std::vector<IR::Type> types;
+  std::vector<std::string> fieldnames;
+  for (auto &&field : td.fields) {
+    fieldnames.push_back(field->id);
+    auto type = irType(field->type);
+    types.push_back(type);
+  }
+  auto ret = std::make_shared<IR::CompositeType>(typeName, types, fieldnames);
+
+  return ret;
+}
+
+std::shared_ptr<IR::Value> visit(AST::VarDecl &vd) {}
 
 std::shared_ptr<IR::Value> ASTTranslator::visit(AST::Stmt &stmt) {
   return stmt.accept(*this);
@@ -326,6 +344,10 @@ std::shared_ptr<IR::Value> ASTTranslator::visit(AST::While &wh) {
 IR::Program ASTTranslator::translate(AST::TranslationUnit &unit) {
   IR::Program program;
   ctx.tu = &unit;
+  for (auto &&[name, type] : unit.typeDecls) {
+    auto irtype = visitTDecl(*type);
+    program.addType(name, irtype);
+  }
   for (auto &&[_, fn] : unit.funs) {
     auto function = visitFn(*fn);
     program.addFunc(function);

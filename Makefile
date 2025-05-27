@@ -9,7 +9,7 @@ OBJ := main.o
 BIN := bin
 
 run: cmp
-	$(EXE) input.txt
+	$(EXE) input.txt --dump-ir
 
 asm:
 	nasm -felf64 -g -F dwarf $(ASMSRC) -o $(OBJ) 

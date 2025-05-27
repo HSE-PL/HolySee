@@ -1,5 +1,11 @@
+type Struct struct {
+  a1 bool;
+  a2 int;
+}
+
 fun main() bool {
   var int a;
+  var Struct s;
   a = 10;
   while a >= 0 {
     var int he;
