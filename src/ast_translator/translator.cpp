@@ -143,7 +143,22 @@ ASTTranslator::visitTDecl(AST::TypeDeclaration &td) {
   return ret;
 }
 
-std::shared_ptr<IR::Value> visit(AST::VarDecl &vd) {}
+std::shared_ptr<IR::Value> ASTTranslator::visit(AST::VarDecl &vd) {
+  for (auto &&var : vd.vars) {
+    //
+    if (var->type.isPrimitive()) {
+      // TODO: here we just need to zero it out.
+      continue;
+    }
+    // now the real war begins.
+    auto type = irType(var->type);
+    auto dest = vfactory.createRef(type, var->id);
+    auto tptr = std::make_shared<IR::Type>(type);
+    auto alloc = ifactory.createAlloc(dest, tptr);
+    cblock.addInstr(alloc);
+  }
+  return vfactory.createUnit();
+}
 
 std::shared_ptr<IR::Value> ASTTranslator::visit(AST::Stmt &stmt) {
   return stmt.accept(*this);
