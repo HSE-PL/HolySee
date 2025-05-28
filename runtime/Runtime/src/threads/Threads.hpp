@@ -57,10 +57,21 @@ namespace threads {
 
     auto append(void (&func)()) -> void;
 
+    auto deappend(ref sp) -> void;
+
     auto count() const -> size_t {
       return pool_.size();
     }
 
     auto get(size_t sp) -> Horoutine;
+
+    auto begin() const {
+      return pool_.begin();
+    }
+
+    auto end() const {
+      return pool_.end();
+    }
+
   }; // namespace threads
 } // namespace threads

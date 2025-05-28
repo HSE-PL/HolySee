@@ -149,9 +149,8 @@ namespace rt {
   }
 
 
-  [[noreturn]] auto init(void (&__start)(), void** spdptr, void* sp,
-                         instance* meta, instance* end, size_t max_heap_size)
-      -> void {
+  auto init(void (&__start)(), void** spdptr, void* sp, instance* meta,
+            instance* end, size_t max_heap_size) -> void {
     MemoryManager::max_heap_size =
         max_heap_size ? max_heap_size : MemoryManager::max_heap_size;
     sys::reserve(MemoryManager::max_heap_size);
@@ -170,10 +169,23 @@ namespace rt {
     threads::Threads::instance().append(__start);
 
 
-    while (true) {
+    while (threads::Threads::instance().count()) {
+      std::vector<ref> deads;
+      for (auto&& worker : threads::Threads::instance()) {
+        if (worker.routine->joinable()) {
+          worker.routine->join();
+          deads.push_back(worker.start_sp);
+        }
+      }
+      for (auto&& dead : deads) {
+        threads::Threads::instance().deappend(dead);
+      }
+
       if (sp::sp)
         gc->GC();
     }
+
+    std::cout << "gg proebali\n";
   }
 
 } // namespace rt
@@ -182,6 +194,7 @@ namespace rt {
 extern "C" void __rt_init(void (&__start)(), void** spdptr, void* sp,
                           instance* meta, instance* end, size_t max_size_heap) {
   rt::init(__start, spdptr, sp, meta, end, max_size_heap);
+  _exit(0);
 }
 
 
@@ -223,4 +236,11 @@ extern "C" void __go(void (&func)()) {
 
 extern "C" void __sleep(size_t n) {
   std::this_thread::sleep_for(std::chrono::seconds(n));
+}
+
+extern "C" void __printf(const char* f, ...) {
+  va_list args;
+  va_start(args, f);
+  printf(f, args);
+  va_end(args);
 }
