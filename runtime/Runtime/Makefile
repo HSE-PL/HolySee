@@ -4,6 +4,15 @@ CMAKERELEASE = cmake
 CMAKEDEBUG = cmake -DCMAKE_BUILD_TYPE=Debug
 MAKE = make
 
+debug: clean_build
+	@echo "Debug build:"
+	@echo "Running cmake..."
+	cd $(BUILD_DIR) && $(CMAKEDEBUG) ..
+	@echo "Building the project..."
+	$(MAKE) -C $(BUILD_DIR)
+	$(BUILD_DIR)/Runtime
+
+
 release: clean_build
 	@echo "Release build:"
 	@echo "Running cmake..."
@@ -17,14 +26,6 @@ lol:
 	ld hi.o
 	./a.out
 
-
-debug: clean_build
-	@echo "Debug build:"
-	@echo "Running cmake..."
-	cd $(BUILD_DIR) && $(CMAKEDEBUG) ..
-	@echo "Building the project..."
-	$(MAKE) -C $(BUILD_DIR)
-	$(BUILD_DIR)/Runtime
 
 
 clean_build:

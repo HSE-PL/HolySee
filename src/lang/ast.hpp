@@ -67,6 +67,10 @@ struct TypeEntry {
   std::string toString() { return name; }
 };
 
+struct Print : public Expr {
+  //
+};
+
 struct Const : public Expr {
   int value;
 

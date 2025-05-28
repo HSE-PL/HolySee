@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.29)
 project(Runtime)
-#set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(IS_DEBUG_BUILD CMAKE_BUILD_TYPE STREQUAL "Debug")
 if (${IS_DEBUG_BUILD})

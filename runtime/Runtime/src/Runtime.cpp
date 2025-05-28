@@ -23,7 +23,7 @@
 #include <unistd.h>
 namespace rt {
 
-  static bool need_draw = false;
+  static bool need_draw = true;
 
   std::optional<GarbageCollector> gc;
 
@@ -86,7 +86,6 @@ namespace rt {
   }
 
   void draw() {
-    return;
     static int      c = 1;
     const long long w = 2100;
     const long long h = 1000;
