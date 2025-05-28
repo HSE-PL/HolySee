@@ -3,9 +3,20 @@ type Struct struct {
   a2 int;
 }
 
+type Struct2 struct {
+  a1 bool;
+  a2 Struct;
+}
+
+type Struct3 struct {
+  a1 Struct;
+  a2 Struct2;
+}
+
 fun hehe(a1 int) int {
   ret a1 + 1;
 }
+
 
 fun main() int {
   var int a;
