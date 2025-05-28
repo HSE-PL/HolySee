@@ -70,7 +70,7 @@ IR::Program ir(AST::TranslationUnit &tu, bool verbose) {
 }
 
 std::shared_ptr<Machine::Mach> codegen(IR::Program &program, bool verbose) {
-  auto filename = "asm/lol.nasm";
+  auto filename = "runtime/Runtime/main.asm";
   auto factory =
       std::make_shared<Machine::MFactoryNaive>(Machine::MFactoryNaive());
   auto mctx = Machine::MCtx(factory);

@@ -12,6 +12,12 @@ release: clean_build
 	$(MAKE) -C $(BUILD_DIR)
 	$(BUILD_DIR)/Runtime
 
+lol:
+	nasm -felf64 -g -F dwarf main.nasm -o hi.o
+	ld hi.o
+	./a.out
+
+
 debug: clean_build
 	@echo "Debug build:"
 	@echo "Running cmake..."

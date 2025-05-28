@@ -45,7 +45,7 @@ namespace rt {
 
 
     auto init() -> void {
-      struct sigaction sa {};
+      struct sigaction sa{};
       sa.sa_sigaction = handler;
       sigemptyset(&sa.sa_mask);
       sa.sa_flags = SA_SIGINFO;
@@ -193,7 +193,7 @@ extern "C" void* __halloc(instance* inst) {
   if (MemoryManager::max_heap_size &&
       (MemoryManager::memory + inst->size > memory_limit)) [[unlikely]] {
     rt::draw();
-    // std::cout << c << ") AOM!\n";
+    std::cout << c << ") AOM!\n";
     rt::handle_aom();
   }
 
@@ -202,7 +202,7 @@ extern "C" void* __halloc(instance* inst) {
     try {
       ptr = Allocator::instance().alloc(inst->size + 8);
     } catch (std::exception& e) {
-      // std::cout << e.what() << i << " extra handle_aom!\n";
+      std::cout << e.what() << i << " extra handle_aom!\n";
       if (i == 1)
         return nullptr;
       rt::need_draw = true;
