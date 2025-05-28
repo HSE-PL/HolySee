@@ -82,9 +82,10 @@ main:
 section .data
 Struct:
 dq 16
-dq StructTODOMANGLING, 10
+dq StructTODOMANGLING
 dq 0
 
 spd: dq 0
 StructTODOMANGLING:
 dq StructTODOMANGLING, 10
+
