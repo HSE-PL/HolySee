@@ -38,7 +38,12 @@ auto threads::Threads::append(void (&func)()) -> void {
   // std::cout << "thrd append\n";
 }
 
-Horoutine threads::Threads::get(size_t sp) {
+auto threads::Threads::deappend(ref sp) -> void {
+  pool_.extract(pool_.lower_bound(sp));
+}
+
+
+auto threads::Threads::get(size_t sp) -> Horoutine {
   guard(mutex_);
   auto el = pool_.lower_bound(sp);
   assert(el != pool_.end());
