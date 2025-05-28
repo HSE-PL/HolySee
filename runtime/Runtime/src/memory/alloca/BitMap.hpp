@@ -1,16 +1,16 @@
 #pragma once
 #include "utils/defines.h"
 #include "utils/log.h"
-#include <boost/dynamic_bitset.hpp>
 
 #include <cassert>
 #include <mutex>
+#include <utils/FuckTBBnBOOST.hpp>
 
 class BitMap {
 
   mutable std::recursive_mutex mutex_;
 
-  boost::dynamic_bitset<> bitset_;
+  std::vector<bool> bitset_;
 
   auto map(size_t n) const -> size_t {
     assert(from_ <= n);
@@ -22,8 +22,7 @@ public:
   ref    from_;
   ref    to_;
   size_t k_;
-  BitMap(ref from, ref to, size_t k)
-      : k_(k), bitset_((to - from) / k), from_(from), to_(to) {
+  BitMap(ref from, ref to, size_t k) : k_(k), from_(from), to_(to) {
   }
 
   auto set(ref n) -> void;

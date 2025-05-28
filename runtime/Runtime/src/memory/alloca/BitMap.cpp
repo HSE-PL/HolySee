@@ -2,27 +2,28 @@
 
 auto BitMap::set(ref n) -> void {
   guard(mutex_);
-  bitset_.set(map(n));
+  bitset_[map(n)] = true;
 }
 
 auto BitMap::unset(ref n) -> void {
   guard(mutex_);
-  bitset_.reset(map(n));
+  bitset_[map(n)] = false;
 }
 
 auto BitMap::clear(uint64_t start, size_t count) -> void {
-  bitset_.reset(map(start), count);
+  guard(mutex_);
+  std::fill_n(bitset_.begin() + start, count, false);
 }
 
 
 auto BitMap::clear() -> void {
   guard(mutex_);
-  bitset_.reset();
+  bitset_.clear();
 }
 
 auto BitMap::check_and_set(ref n) -> bool {
   guard(mutex_);
-  auto check = bitset_.test(map(n));
+  auto check = bitset_[map(n)];
   set(n);
   return check;
 }
