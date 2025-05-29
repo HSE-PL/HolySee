@@ -172,7 +172,7 @@ namespace rt {
     while (threads::Threads::instance().count()) {
       std::vector<ref> deads;
       for (auto&& worker : threads::Threads::instance()) {
-        if (*worker.died) {
+        if (*(worker.died)) {
           std::cout << "find dead thread\n";
           worker.routine->join();
           deads.push_back(worker.start_sp);
@@ -241,11 +241,4 @@ extern "C" void __go(void (&func)(...), ...) {
 
 extern "C" void __sleep(size_t n) {
   std::this_thread::sleep_for(std::chrono::seconds(n));
-}
-
-extern "C" void __printf(const char* f, ...) {
-  va_list args;
-  va_start(args, f);
-  printf(f, args);
-  va_end(args);
 }
