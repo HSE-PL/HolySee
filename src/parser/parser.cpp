@@ -49,6 +49,7 @@ struct Context {
 static std::shared_ptr<AST::Expr> expr(iter &start, iter &end, Context &ctx);
 static OptionExpr singleExpr(iter &start, iter &end, Context &ctx);
 static OptionStmt stmt(iter &start, iter &end, Context &ctx);
+static OptionExpr optional_expr(iter &start, iter &end, Context &ctx);
 
 precMap precedences = {
     {LexemeType::Star, 10},        {LexemeType::Div, 10},
@@ -343,7 +344,7 @@ static OptionExpr parseCall(iter &start, iter &end, Context &ctx) {
   std::vector<std::shared_ptr<AST::Expr>> args;
   inc(start, end);
   while (argCheck) {
-    auto arg = singleExpr(start, end, ctx);
+    auto arg = optional_expr(start, end, ctx);
     if (arg.has_value()) {
       args.push_back(*arg);
     } else {
@@ -440,6 +441,16 @@ static OptionExpr stmtExpr(iter &start, iter &end, Context &ctx) {
     auto eol = *start;
     expectEOL(eol);
     return totalRet;
+  }
+
+  return std::nullopt;
+}
+
+static OptionExpr optional_expr(iter &start, iter &end, Context &ctx) {
+  auto retOpt = singleExpr(start, end, ctx);
+  if (retOpt.has_value()) {
+    auto ret = *retOpt;
+    return binaryExpr(start, end, ctx, ret, 0);
   }
 
   return std::nullopt;
