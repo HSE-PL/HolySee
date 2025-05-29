@@ -22,7 +22,7 @@ public:
   ref    from_;
   ref    to_;
   size_t k_;
-  BitMap(ref from, ref to, size_t k) : k_(k), from_(from), to_(to) {
+         BitMap(ref from, ref to, size_t k) : k_(k), from_(from), to_(to) {
   }
 
   auto set(ref n) -> void;
