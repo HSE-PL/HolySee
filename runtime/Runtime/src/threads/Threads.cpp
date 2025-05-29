@@ -17,15 +17,16 @@ auto threads::Threads::append(void (&func)(...), const va_list args) -> void {
   std::binary_semaphore s(0);
   std::binary_semaphore e(0);
 
-  const auto thread_is_died = std::make_shared<bool>(false);
+  const auto thread_is_died = new bool(false);
 
-  const auto thread = std::make_shared<std::thread>([&]() {
+  const auto thread = std::make_shared<std::thread>([&, thread_is_died]() {
     s.acquire();
     std::cout << "start\n";
     e.release();
     func(args);
     std::cout << "end\n";
     *thread_is_died = true;
+    return;
   });
 
   const auto pthread = thread->native_handle();
