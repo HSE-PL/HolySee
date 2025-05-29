@@ -5,6 +5,23 @@ type Struct struct {
 
 type Struct2 struct {
   a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
+  a1 bool;
   a2 Struct;
 }
 
@@ -12,10 +29,19 @@ fun hehe(a1 int) int {
   ret a1 + 1;
 }
 
+fun fib(a1 int) int {
+  if a1 <= 1 {
+    ret 1;
+  }
+  var Struct2 s1, s2, s3, s4, s5, s6, s7, s8, s9;
+  ret fib(a1 - 1) + fib(a1 - 2);
+}
+
 
 fun main() int {
   var int a, i;
   hehe(13);
+  println(fib(20));
   a = 10;
   i = 0;
   println(a + 48);
