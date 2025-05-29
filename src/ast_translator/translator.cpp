@@ -113,14 +113,19 @@ std::shared_ptr<IR::Value> ASTTranslator::visit(AST::Assign &as) {
 
 std::shared_ptr<IR::Value> ASTTranslator::visit(AST::Call &call) {
   auto fnOpt = ctx.tu->fnLookup(call.fn);
-  if (!fnOpt.has_value()) {
+  if (!fnOpt.has_value() && call.fn != "println") {
     throw "call of undefined function " + call.fn;
   }
-  auto fn = *fnOpt;
   std::list<std::shared_ptr<IR::Value>> args;
   for (auto &&arg : call.args) {
     args.push_back(arg->accept(*this));
   }
+  if (call.fn == "println") {
+    auto printing = ifactory.createPrint(args);
+    cblock.addInstr(printing);
+    return printing;
+  }
+  auto fn = *fnOpt;
   auto dest = createTemp(fn->type.tclass);
   auto calli = ifactory.createCall(call.fn, dest, args);
   cblock.addInstr(calli);
