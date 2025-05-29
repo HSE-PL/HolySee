@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <atomic>
 #include <source_location>
-#include <utils/FuckTBB.hpp>
+#include <utils/FuckTBBnBOOST.hpp>
 #include <vector>
 
 template <typename T>
@@ -24,8 +24,8 @@ public:
 
   Region(ref start_region, size_t count_items, size_t t_size,
          size_t region_tier)
-      : start(start_region), size(count_items * t_size), t_size(t_size),
-        items_() {
+      : items_(), start(start_region), size(count_items * t_size),
+        t_size(t_size) {
 
     for (int i = 0; i < count_items; i++) {
       T* a = new T(t_size, start_region + t_size * i, region_tier);

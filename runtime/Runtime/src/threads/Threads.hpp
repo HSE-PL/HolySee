@@ -52,10 +52,10 @@ namespace threads {
     std::counting_semaphore<> cleaning_;
 
     std::atomic_uint_fast64_t count_of_working_threads_;
-    Threads() : counter_(0), sp_(0), cleaning_(0), tracing_(0) {
+    Threads() : counter_(0), sp_(0), tracing_(0), cleaning_(0) {
     }
 
-    auto append(void (&func)()) -> void;
+    auto append(void (&func)(...), const va_list args) -> void;
 
     auto deappend(ref sp) -> void;
 

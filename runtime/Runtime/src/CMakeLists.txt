@@ -12,7 +12,7 @@ add_library(src STATIC
         memory/alloca/Arena.cpp
         memory/alloca/BitMap.cpp
         memory/alloca/Region.cpp
-        utils/FuckTBB.cpp
+        utils/FuckTBBnBOOST.cpp
 )
 
 target_include_directories(src PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

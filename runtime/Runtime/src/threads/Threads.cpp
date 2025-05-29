@@ -7,17 +7,25 @@ namespace threads {
   }
 } // namespace threads
 
-auto threads::Threads::append(void (&func)()) -> void {
+auto threads::Threads::deappend(ref sp) -> void {
+  pool_.extract(pool_.lower_bound(sp));
+}
+
+auto threads::Threads::append(void (&func)(...), const va_list args) -> void {
   guard(mutex_);
 
   std::binary_semaphore s(0);
   std::binary_semaphore e(0);
 
+  const auto thread_is_died = std::make_shared<bool>(false);
+
   const auto thread = std::make_shared<std::thread>([&]() {
     s.acquire();
     std::cout << "start\n";
     e.release();
-    func();
+    func(args);
+    std::cout << "end\n";
+    *thread_is_died = true;
   });
 
   const auto pthread = thread->native_handle();
@@ -30,16 +38,13 @@ auto threads::Threads::append(void (&func)()) -> void {
   pthread_attr_getstack(&attr, &stack_addr, &stack_size);
   pthread_attr_destroy(&attr);
 
-  auto hrptr = Horoutine{thread, reinterpret_cast<size_t>(stack_addr) +
-                                     stack_size - 4592}; // hehehe
+  auto hrptr = Horoutine{
+      thread, reinterpret_cast<size_t>(stack_addr) + stack_size - 4592,
+      thread_is_died}; // hehehe
   pool_.insert(hrptr);
   s.release();
   e.acquire();
   // std::cout << "thrd append\n";
-}
-
-auto threads::Threads::deappend(ref sp) -> void {
-  pool_.extract(pool_.lower_bound(sp));
 }
 
 
