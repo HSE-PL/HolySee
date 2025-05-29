@@ -86,7 +86,7 @@ namespace rt {
   }
 
   void draw() {
-    /*// return;*/
+    return;
     static int      c = 1;
     const long long w = 4100;
     const long long h = 1000;

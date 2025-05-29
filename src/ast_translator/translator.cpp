@@ -152,7 +152,13 @@ std::shared_ptr<IR::Value> ASTTranslator::visit(AST::VarDecl &vd) {
   for (auto &&var : vd.vars) {
     //
     if (var->type.isPrimitive()) {
-      // TODO: here we just need to zero it out.
+      /*auto lhsConst = createTemp(var->type.tclass);*/
+      /*auto rhsConst = vfactory.createInt(0);*/
+      /*auto rhs = ifactory.createConst(lhsConst, rhsConst);*/
+      /*cblock.addInstr(rhs);*/
+      /*auto lhs = vfactory.createRef(irType(var->type), var->id);*/
+      /*auto mov = ifactory.createMov(lhs, lhsConst);*/
+      /*cblock.addInstr(mov);*/
       continue;
     }
     // now the real war begins.

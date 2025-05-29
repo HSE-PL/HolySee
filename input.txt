@@ -14,13 +14,14 @@ fun hehe(a1 int) int {
 
 
 fun main() int {
-  var int a;
+  var int a, i;
   hehe(13);
   a = 10;
-  while a > 0 {
-    var Struct s;
-    var int he;
-    he = 3;
+  i = 0;
+  println(a + 48);
+  while a < 20 {
+    println(a);
+    a = a + 1;
   }
   ret a;
 }
