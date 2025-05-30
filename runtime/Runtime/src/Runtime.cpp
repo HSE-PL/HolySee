@@ -27,10 +27,10 @@ namespace rt {
 
   std::optional<GarbageCollector> gc;
 
-  auto handle_aom() -> void {
+  auto handle_aom(size_t diff) -> void {
     void* a;
     sp::off();
-    gc->gogc(reinterpret_cast<ref>(&a));
+    gc->gogc(reinterpret_cast<ref>(&a) + diff);
     draw();
   }
 
@@ -86,10 +86,10 @@ namespace rt {
   }
 
   void draw() {
-    return;
+    // return;
     static int      c = 1;
-    const long long w = 4100;
-    const long long h = 1000;
+    const long long w = 3100;
+    const long long h = 800;
 
     std::vector<uint8_t> img(w * h * 3);
     std::memset(img.data(), 255, img.size());
@@ -142,15 +142,16 @@ namespace rt {
     }
     std::string name = "screens/heap";
     name += std::to_string(c);
-    std::cout << name << std::endl;
+    // std::cout << name << std::endl;
     stbi_write_png((name + std::string(".png")).c_str(), w, h, 3, img.data(),
                    w * 3);
     c++;
   }
 
 
-  auto init(void (&__start)(...), void** spdptr, void* sp, instance* meta,
-            instance* end, size_t max_heap_size) -> void {
+  auto init(void (&__start)(__holy_def_args), void** spdptr, void* sp,
+            instance* meta, instance* end, size_t max_heap_size) -> void {
+
     MemoryManager::max_heap_size =
         max_heap_size ? max_heap_size : MemoryManager::max_heap_size;
     sys::reserve(MemoryManager::max_heap_size);
@@ -166,20 +167,20 @@ namespace rt {
       throw std::runtime_error("gc bobo");
 
     threads::Threads::instance().count_of_working_threads_.store(0);
-    threads::Threads::instance().append(__start, {});
+    threads::Threads::instance().append(__start, __holy_empty_args);
 
 
     while (threads::Threads::instance().count()) {
       std::vector<ref> deads;
       for (auto&& worker : threads::Threads::instance()) {
         if (*(worker.died)) {
-          std::cout << "find dead thread\n";
+          // std::cout << "find dead thread\n";
           worker.routine->join();
           deads.push_back(worker.start_sp);
         }
       }
       for (auto&& dead : deads) {
-        std::cout << "kill thread\n";
+        // std::cout << "kill thread\n";
         threads::Threads::instance().deappend(dead);
       }
 
@@ -187,14 +188,15 @@ namespace rt {
         gc->GC();
     }
 
-    std::cout << "gg proebali\n";
+    // std::cout << "gg proebali\n";
   }
 
 } // namespace rt
 
 
-extern "C" void __rt_init(void (&__start)(...), void** spdptr, void* sp,
-                          instance* meta, instance* end, size_t max_size_heap) {
+extern "C" void __rt_init(void (&__start)(__holy_def_args), void** spdptr,
+                          void* sp, instance* meta, instance* end,
+                          size_t max_size_heap) {
   rt::init(__start, spdptr, sp, meta, end, max_size_heap);
   _exit(0);
 }
@@ -208,8 +210,8 @@ extern "C" void* __halloc(instance* inst) {
   if (MemoryManager::max_heap_size &&
       (MemoryManager::memory + inst->size > memory_limit)) [[unlikely]] {
     rt::draw();
-    std::cout << c << ") AOM!\n";
-    rt::handle_aom();
+    // std::cout << c << ") AOM!\n";
+    rt::handle_aom(0);
   }
 
   ref ptr = 0;
@@ -217,12 +219,12 @@ extern "C" void* __halloc(instance* inst) {
     try {
       ptr = Allocator::instance().alloc(inst->size + 8);
     } catch (std::exception& e) {
-      std::cout << e.what() << i << " extra handle_aom!\n";
+      // std::cout << e.what() << i << " extra handle_aom!\n";
       if (i == 1)
         return nullptr;
       rt::need_draw = true;
       rt::draw();
-      rt::handle_aom();
+      rt::handle_aom(0x70);
       rt::need_draw = false;
     }
   }
@@ -232,11 +234,8 @@ extern "C" void* __halloc(instance* inst) {
   return reinterpret_cast<void*>(reinterpret_cast<size_t>(ptr_on_object) + 8);
 }
 
-extern "C" void __go(void (&func)(...), ...) {
-  va_list args;
-  va_start(args, func);
-  threads::Threads::instance().append(func, args);
-  va_end(args);
+extern "C" void __go(void (&func)(__holy_def_args), __holy_def_args) {
+  threads::Threads::instance().append(func, __holy_args);
 }
 
 extern "C" void __sleep(size_t n) {

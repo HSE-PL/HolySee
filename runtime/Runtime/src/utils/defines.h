@@ -1,9 +1,13 @@
 #pragma once
 #include <cstddef>
+#include <sys/types.h>
 #define guard(mutex) std::lock_guard _(mutex)
+#define __holy_def_args                                                        \
+  u_int64_t _1, u_int64_t _2, u_int64_t _3, u_int64_t _4, u_int64_t _5
+#define __holy_args _1, _2, _3, _4, _5
+#define __holy_empty_args 0, 0, 0, 0, 0
 typedef unsigned long long ref;
-
-static void* __dso_handle = nullptr;
+static void*               __dso_handle = nullptr;
 
 struct instance {
   size_t      size;

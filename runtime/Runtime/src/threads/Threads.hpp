@@ -55,7 +55,45 @@ namespace threads {
     Threads() : counter_(0), sp_(0), tracing_(0), cleaning_(0) {
     }
 
-    auto append(void (&func)(...), const va_list args) -> void;
+    auto append(void (&func)(__holy_def_args), __holy_def_args) -> void {
+      guard(mutex_);
+
+      std::binary_semaphore s(0);
+      std::binary_semaphore e(0);
+
+      const auto thread_is_died = new bool(false);
+
+
+      const auto thread =
+          std::make_shared<std::thread>([&, thread_is_died, __holy_args]() {
+            s.acquire();
+            // std::cout << "start\n";
+            e.release();
+            func(__holy_args);
+            // std::cout << "end\n";
+            *thread_is_died = true;
+            return;
+          });
+
+      const auto pthread = thread->native_handle();
+
+      pthread_attr_t attr;
+
+      void*  stack_addr;
+      size_t stack_size;
+      pthread_getattr_np(pthread, &attr);
+      pthread_attr_getstack(&attr, &stack_addr, &stack_size);
+      pthread_attr_destroy(&attr);
+
+      auto hrptr = Horoutine{
+          thread, reinterpret_cast<size_t>(stack_addr) + stack_size - 4592,
+          thread_is_died}; // hehehe
+
+      pool_.insert(hrptr);
+      s.release();
+      e.acquire();
+      // std::cout << "thrd append\n";
+    }
 
     auto deappend(ref sp) -> void;
 

@@ -40,11 +40,11 @@ auto GarbageCollector::cleaning() -> void {
 }
 
 auto GarbageCollector::marking(ref ptr) -> void {
-  if (ref_is_real(ptr)) {
-    auto i = (*reinterpret_cast<instance**>(ptr - 1_ref));
-    logezhe << "marking: try to marking " << ptr << " type (" << i->name
-            << ")\n";
-  }
+  // if (ref_is_real(ptr)) {
+  //   auto i = (*reinterpret_cast<instance**>(ptr - 1_ref));
+  //   // logezhe << "marking: try to marking " << ptr << " type (" << i->name
+  //   // << ")\n";
+  // }
   auto arena = MemoryManager::arena_by_ptr(ptr);
   if (arena->marked_.check_and_set(ptr))
     return;
@@ -54,12 +54,12 @@ auto GarbageCollector::marking(ref ptr) -> void {
   for (auto offset = 0; offset < size; offset += 1_ref) {
     if (ref_is_real(ptr + offset)) {
       if (auto field = *reinterpret_cast<ref*>(ptr); ref_is_real(field)) {
-        logezhe << "marking_push: " << ptr << "\n";
+        // logezhe << "marking_push: " << ptr << "\n";
         queue_for_marked_.push(field);
       }
     }
   }
-  logezhe << "marking object: end\n";
+  // logezhe << "marking object: end\n";
 }
 
 auto GarbageCollector::ref_is_real(ref ptr) -> bool {
@@ -108,17 +108,17 @@ auto GarbageCollector::tracing() -> void {
 
 auto GarbageCollector::make_root_and_tracing(ref ssp) -> void {
   auto hrtptr = threads::Threads::instance().get(ssp);
-  logezhe << hrtptr.start_sp << ":\n.\n.\n.\n"
-          << ssp << "\n"
-          << "summary diff: " /*<< std::hex*/
-          << hrtptr.start_sp - ssp << "\n";
+  // logezhe << hrtptr.start_sp << ":\n.\n.\n.\n"
+  //         << ssp << "\n"
+  //         << "summary diff: " /*<< std::hex*/
+  //         << hrtptr.start_sp - ssp << "\n";
 
   assert(ssp < hrtptr.start_sp);
   for (ref sp = ssp; sp <= hrtptr.start_sp; sp += 1_ref) {
     auto ptr = *reinterpret_cast<ref*>(sp);
-    logezhe << "make_root_and_tracing: on stack: " << ptr << "\n";
+    // logezhe << "make_root_and_tracing: on stack: " << ptr << "\n";
     if (ref_is_real(ptr)) {
-      logezhe << "find " << ptr << " in root\n";
+      // std::cout << "find " << ptr << " in root\n";
       queue_for_marked_.push(ptr);
     }
   }

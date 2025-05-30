@@ -23,7 +23,7 @@ auto BitMap::clear() -> void {
 
 auto BitMap::check_and_set(ref n) -> bool {
   guard(mutex_);
-  auto check = bitset_[map(n)];
+  auto check = bitset_[map(n)] == true;
   set(n);
   return check;
 }
