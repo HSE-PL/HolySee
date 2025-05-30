@@ -35,10 +35,10 @@ hehe:
 fib:
   push rbp
   mov rbp, rsp
-  sub rsp, 96
+  sub rsp, 176
   mov qword [rbp - 8], rdi
 .fib:
-  mov qword [rbp - 16], 2
+  mov qword [rbp - 16], 1
   mov r14, qword [rbp - 8]
   mov r15, qword [rbp - 16]
   xor r13, r13
@@ -59,31 +59,58 @@ fib:
   test rax, [rax]
   jmp .if.end1
 .if.end1:
-  mov qword [rbp - 40], 2
+  mov rdi, Struct2
+  call __halloc
+  mov qword [rbp - 40], rdi
+  mov rdi, Struct2
+  call __halloc
+  mov qword [rbp - 48], rdi
+  mov rdi, Struct2
+  call __halloc
+  mov qword [rbp - 56], rdi
+  mov rdi, Struct2
+  call __halloc
+  mov qword [rbp - 64], rdi
+  mov rdi, Struct2
+  call __halloc
+  mov qword [rbp - 72], rdi
+  mov rdi, Struct2
+  call __halloc
+  mov qword [rbp - 80], rdi
+  mov rdi, Struct2
+  call __halloc
+  mov qword [rbp - 88], rdi
+  mov rdi, Struct2
+  call __halloc
+  mov qword [rbp - 96], rdi
+  mov rdi, Struct2
+  call __halloc
+  mov qword [rbp - 104], rdi
+  mov qword [rbp - 112], 2
   mov r15, qword [rbp - 8]
-  mov r14, qword [rbp - 40]
+  mov r14, qword [rbp - 112]
   sub r15, r14
-  mov qword [rbp - 48], r15
-  mov rdi, qword [rbp - 48]
+  mov qword [rbp - 120], r15
+  mov rdi, qword [rbp - 120]
   call fib
-  mov qword [rbp - 56], rax
+  mov qword [rbp - 128], rax
   mov rax, [spd]
   test rax, [rax]
-  mov qword [rbp - 64], 1
+  mov qword [rbp - 136], 1
   mov r14, qword [rbp - 8]
-  mov r15, qword [rbp - 64]
+  mov r15, qword [rbp - 136]
   sub r14, r15
-  mov qword [rbp - 72], r14
-  mov rdi, qword [rbp - 72]
+  mov qword [rbp - 144], r14
+  mov rdi, qword [rbp - 144]
   call fib
-  mov qword [rbp - 80], rax
+  mov qword [rbp - 152], rax
   mov rax, [spd]
   test rax, [rax]
-  mov r15, qword [rbp - 80]
-  mov r14, qword [rbp - 56]
+  mov r15, qword [rbp - 152]
+  mov r14, qword [rbp - 128]
   add r15, r14
-  mov qword [rbp - 88], r15
-  mov rax, qword [rbp - 88]
+  mov qword [rbp - 160], r15
+  mov rax, qword [rbp - 160]
   mov rsp, rbp
   pop rbp
   ret
@@ -135,7 +162,7 @@ fact:
 main:
   push rbp
   mov rbp, rsp
-  sub rsp, 176
+  sub rsp, 144
 .main:
   mov qword [rbp - 8], 0
   mov r15, qword [rbp - 8]
@@ -149,9 +176,9 @@ main:
   mov qword [rbp - 48], rax
   mov rax, [spd]
   test rax, [rax]
-  mov qword [rbp - 56], 5
+  mov qword [rbp - 56], 20
   mov rdi, qword [rbp - 56]
-  call fact
+  call fib
   mov qword [rbp - 64], rax
   mov rax, [spd]
   test rax, [rax]
@@ -159,66 +186,44 @@ main:
   mov rsi, qword [rbp - 64]
   call printf
   mov qword [rbp - 72], 10
-  mov rdi, qword [rbp - 72]
-  call fact
-  mov qword [rbp - 80], rax
-  mov rax, [spd]
-  test rax, [rax]
-  mov qword [rbp - 88], 11
-  mov rdi, qword [rbp - 88]
-  call fact
-  mov qword [rbp - 96], rax
-  mov rax, [spd]
-  test rax, [rax]
-  mov rdi, str.1
-  mov rsi, qword [rbp - 80]
-  mov rdx, qword [rbp - 96]
-  call printf
-  mov qword [rbp - 104], 20
-  mov rdi, qword [rbp - 104]
-  call fib
-  mov qword [rbp - 112], rax
-  mov rax, [spd]
-  test rax, [rax]
-  mov rdi, str.2
-  mov rsi, qword [rbp - 112]
-  call printf
-  mov qword [rbp - 120], 0
-  mov r15, qword [rbp - 120]
+  mov r15, qword [rbp - 72]
+  mov qword [rbp - 16], r15
+  mov qword [rbp - 80], 0
+  mov r15, qword [rbp - 80]
   mov qword [rbp - 32], r15
-  mov qword [rbp - 128], 48
+  mov qword [rbp - 88], 48
   mov r15, qword [rbp - 16]
-  mov r14, qword [rbp - 128]
+  mov r14, qword [rbp - 88]
   add r15, r14
-  mov qword [rbp - 136], r15
-  mov rdi, str.3
-  mov rsi, qword [rbp - 136]
+  mov qword [rbp - 96], r15
+  mov rdi, str.1
+  mov rsi, qword [rbp - 96]
   call printf
   mov rax, [spd]
   test rax, [rax]
   jmp .while.cond0
 .while.cond0:
-  mov qword [rbp - 144], 20
+  mov qword [rbp - 104], 20
   mov r14, qword [rbp - 16]
-  mov r15, qword [rbp - 144]
+  mov r15, qword [rbp - 104]
   xor r13, r13
   cmp r14, r15
   setl r13b
-  mov qword [rbp - 152], r13
-  mov r15, qword [rbp - 152]
+  mov qword [rbp - 112], r13
+  mov r15, qword [rbp - 112]
   test r15, r15
   je .while.end0
   jne .while.body0
 .while.body0:
-  mov rdi, str.4
+  mov rdi, str.2
   mov rsi, qword [rbp - 16]
   call printf
-  mov qword [rbp - 160], 1
+  mov qword [rbp - 120], 1
   mov r15, qword [rbp - 16]
-  mov r14, qword [rbp - 160]
+  mov r14, qword [rbp - 120]
   add r15, r14
-  mov qword [rbp - 168], r15
-  mov r14, qword [rbp - 168]
+  mov qword [rbp - 128], r15
+  mov r14, qword [rbp - 128]
   mov qword [rbp - 16], r14
   mov rax, [spd]
   test rax, [rax]
@@ -249,11 +254,7 @@ dq "Struct2"
 str.0:
 db " %zu", 10, 0
 str.1:
-db " %zu %zu", 10, 0
+db " %zu", 10, 0
 str.2:
-db " %zu", 10, 0
-str.3:
-db " %zu", 10, 0
-str.4:
 db " %zu", 10, 0
 

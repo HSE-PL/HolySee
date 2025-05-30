@@ -37,6 +37,13 @@ fun fib(a1 int) int {
   ret fib(a1 - 1) + fib(a1 - 2);
 }
 
+fun fact(num int) int {
+  if num <= 1 {
+    ret 1;
+  }
+  ret fact(num - 1) * num;
+}
+
 
 fun main() int {
   var int a, i;
